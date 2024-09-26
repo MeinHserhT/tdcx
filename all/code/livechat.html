@@ -1,0 +1,11 @@
+<script>
+	var LC_API = LC_API || {};
+	LC_API.on_chat_started = function () {
+		// track this chat in Google AdWords
+		var google_conversion_id, google_conversion_label, img;
+		google_conversion_id = 'YOUR_CONVERSION_ID';
+		google_conversion_label = 'YOUR_CONVERSION_LABEL';
+		img = new Image(1, 1);
+		img.src = 'https://www.googleadservices.com/pagead/conversion/' + google_conversion_id + '/?label=' + google_conversion_label + '&script=0';
+	};
+</script>

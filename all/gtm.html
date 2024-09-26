@@ -1,0 +1,38 @@
+<!-- Google Tag Manager -->
+<script>(function (w, d, s, l, i) {
+		w[l] = w[l] || []; w[l].push({
+			'gtm.start':
+				new Date().getTime(), event: 'gtm.js'
+		}); var f = d.getElementsByTagName(s)[0],
+			j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+				'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+	})(window, document, 'script', 'dataLayer', 'GTM-PK5JR6DH');</script>
+<!-- End Google Tag Manager -->
+
+
+<!-- Google tag (gtag.js) -->
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=AW-11016119411"></script>
+
+<script>
+	window.dataLayer = window.dataLayer || [];
+	function gtag() { dataLayer.push(arguments); }
+	gtag('js', new Date());
+
+	gtag('config', 'AW-11016119411', { 'allow_enhanced_conversions': true });
+</script>
+
+<!-- Event snippet for Mua hàng 1-10 conversion page -->
+<script>
+	var urlParams = new window.URLSearchParams(window.location.search);
+	var phone = urlParams.get('phone');
+	if (phone) {
+		phone = '+84' + phone.slice(1, phone.length)
+		gtag('set', 'user_data', {
+			"phone_number": phone
+		});
+
+		gtag('event', 'conversion', {
+			'send_to': 'AW-11016119411/OOjxCIDns-cYEPPI8oQp'
+		});
+	}
+</script>
