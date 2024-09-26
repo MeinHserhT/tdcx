@@ -78,29 +78,8 @@ _ec();
 
 // -----------------------------------------------------------------------------
 // Purchase
-document.querySelector(".devvn-order-btn").addEventListener("click", p);
+document.querySelector(".button.alt").addEventListener("click", p);
 function p() {
-	window.dataLayer = window.dataLayer || [];
-	var ph = document.querySelector('input[id*="phone"]'),
-		v_ph = document.querySelector('input[name*="valid-phone"]'),
-		nm = document.querySelector('input[name*="name"]'),
-		oj = {},
-		t = 0,
-		v = +document
-			.querySelector(".popup_quickbuy_total_calc")
-			.innerText.replace(/[^\d]/g, "");
-
-	if (ph.value == v_ph.value) t = 1;
-	9 === (ph = ph.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
-		(oj.phone = "+84" + ph);
-	Object.keys(oj).length &&
-		t &&
-		nm.value &&
-		v &&
-		window.dataLayer.push({ event: "muahang", total: v, obj: oj });
-}
-
-document.querySelector(".button.alt").addEventListener("click", function p() {
 	window.dataLayer = window.dataLayer || [];
 	var a = document.querySelector('input[id*="email"]'),
 		b = document.querySelector('input[id*="phone"]'),
@@ -124,7 +103,7 @@ document.querySelector(".button.alt").addEventListener("click", function p() {
 		h.value &&
 		v &&
 		window.dataLayer.push({ event: "muahang", total: v, obj: o });
-});
+};
 
 // -----------------------------------------------------------------------------
 document.querySelector(".btn-submit").addEventListener("click", function p() {
