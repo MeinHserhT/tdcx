@@ -76,65 +76,7 @@ function _ec() {
 }
 _ec();
 
-// -----------------------------------------------------------------------------
-// WP Form
-document.querySelector(".wpforms-submit").addEventListener("click", f);
-function f() {
-	window.dataLayer = window.dataLayer || [];
-	var o = {},
-		n = document.querySelector('[name*="[fields][1]"]'),
-		b = document.querySelector('[name*="[fields][2]"]');
-	9 === (b = b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
-		(o.phone = "+84" + b);
-	Object.keys(o).length &&
-		n.value &&
-		window.dataLayer.push({
-			event: "form_dangky",
-			obj: o,
-		});
-}
-// -----------------------------------------------------------------------------
 
-// -----------------------------------------------------------------------------
-// WPCF7
-document.addEventListener("wpcf7mailsent", function (e) {
-	window.dataLayer = window.dataLayer || [];
-	window.dataLayer.push({
-		event: "form_dangky",
-		formID: e.detail.contactFormId,
-	});
-});
-// Email
-document.addEventListener("wpcf7mailsent", function (e) {
-	window.dataLayer = window.dataLayer || [];
-	var o = {},
-		d = e.detail.inputs,
-		a = d.find(function (n) {
-			return n.name.includes("email");
-		});
-	a.value.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/) && (o.email = a.value);
-	Object.keys(o).length &&
-		window.dataLayer.push({
-			event: "form_yeucau",
-			obj: o,
-		});
-});
-// Phone
-document.addEventListener("wpcf7mailsent", function (e) {
-	window.dataLayer = window.dataLayer || [];
-	var o = {},
-		d = e.detail.inputs,
-		b = d.find(function (n) {
-			return n.name.includes("nhapdienthoai");
-		});
-	9 === (b = b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
-		(o.phone = "+84" + b);
-	Object.keys(o).length &&
-		window.dataLayer.push({
-			event: "form_dangky",
-			obj: o,
-		});
-});
 
 // -----------------------------------------------------------------------------
 // Purchase

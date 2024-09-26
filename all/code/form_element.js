@@ -15,7 +15,6 @@ function a() {
 	return "";
 }
 
-form-field-field_2b6f2c6
 function a() {
 	var e = /^(\d{3})[-]?(\d{3})[-]?(\d{4})$/,
 		a = {{Form Element}}.querySelector('#form-field-field_2b6f2c6').value;
