@@ -20,25 +20,49 @@ function _check_form_submit() {
 }
 _check_form_submit();
 
-function _gtm_form() {
-	var fst = "",
-		snd = "",
-		ph = "",
-		phRegex = /^\d{10}|^\d{11}/;
-	document.querySelectorAll("input").forEach(function (e) {
-		if (e.name.includes("number") && e.value.match(phRegex))
-			ph = e.value.replace(/^0|^84|^([^0])/, "+84");
-		if (e.name.includes("first") && e.value) fst = e.value;
-		if (e.name.includes("last") && e.value) snd = e.value;
+
+document.querySelectorAll("form button").forEach(function (e) {
+	e.addEventListener("click", function (e) {
+		var t = e.target.form,
+			l = {},
+			n = t.querySelector("[name='email']"),
+			e = t.querySelector("[name='dienthoai']"),
+			t = t.querySelector("[name='hoten']");
+		n &&
+			n.value.match(/^\w+([\.-]?\w+)@\w+([\.-]?\w+)(\.\w{2,3})+$/) &&
+			(l.email = n.value);
+		!e ||
+			(9 ===
+				(e = e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
+				(l.phone = "+84" + e));
+		t && t.value && (l.name = t);
+		2 == Object.keys.length && console.log(l);
+	});
+});
+
+function _ec() {
+	window.dataLayer = window.dataLayer || [];
+	var o = {},
+		b = "",
+		n = "";
+
+	document.querySelectorAll('[name*="phone"]').forEach(function (e) {
+		if (e.value) b = e;
+	});
+	document.querySelectorAll('[name*="name"]').forEach(function (e) {
+		if (e.value) n = e;
 	});
 
-	if (fst && snd && ph) {
-		window.dataLayer = window.dataLayer || [];
+	!b ||
+		(9 === (b = b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
+			(o.phone = "+84" + b));
+
+	Object.keys(o).length &&
+		n.value &&
 		window.dataLayer.push({
-			event: "form_dangky",
-			phone: ph,
+			event: "form_lienhe",
+			obj: o,
 		});
-	}
 }
-_gtm_form();
+_ec();
 

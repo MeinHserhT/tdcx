@@ -76,8 +76,6 @@ function _ec() {
 }
 _ec();
 
-
-
 // -----------------------------------------------------------------------------
 // Purchase
 document.querySelector(".devvn-order-btn").addEventListener("click", p);
@@ -127,35 +125,6 @@ document.querySelector(".button.alt").addEventListener("click", function p() {
 		v &&
 		window.dataLayer.push({ event: "muahang", total: v, obj: o });
 });
-
-// -----------------------------------------------------------------------------
-function _gtm_tracking_purchase() {
-	window.dataLayer = window.dataLayer || [];
-	var e = {},
-		c = "VND";
-	"object" == typeof Haravan && (e = Haravan),
-		"object" == typeof Bizweb &&
-			((e = Bizweb), (c = BizwebAnalytics.meta.currency || c)),
-		"object" == typeof Shopify &&
-			((e = Shopify), (c = ShopifyAnalytics.meta.currency || c));
-	var a = "";
-	e.checkout.order_number && (a = e.checkout.order_number),
-		e.checkout.order_id && (a = e.checkout.order_id);
-	var t = {
-		event: "purchase_complete",
-		total_price: +e.checkout.total_price,
-		transaction_id: a,
-		currency: c,
-		phone: e.checkout.billing_address.phone.replace(
-			/^0|^(84)|^(\+84)[0]*/,
-			"+84"
-		),
-	};
-	e.checkout.phone && (t.phone = e.checkout.phone);
-	a && dataLayer.push(t);
-}
-_gtm_tracking_purchase();
-// -----------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------
 document.querySelector(".btn-submit").addEventListener("click", function p() {
