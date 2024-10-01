@@ -76,6 +76,25 @@ function _ec() {
 }
 _ec();
 
+
+function _ec() {
+	window.dataLayer = window.dataLayer || [];
+	var o = {},
+		a = document.querySelector('input[name*="email"]'),
+		b = document.querySelector('input[name*="phone"]'),
+		c = document.querySelector('input[name*="name"]'),
+		d = document.querySelector('[name*="content"]');
+
+	a.value.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/) && (o.email = a.value);
+	9 === (b = b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
+		(o.phone = "+84" + b);
+	2 === Object.keys(o).length &&
+		c.value &&
+		d.value &&
+		window.dataLayer.push({ event: "form_dangky", obj: o });
+}
+_ec();
+
 // -----------------------------------------------------------------------------
 // Purchase
 document.querySelector(".button.alt").addEventListener("click", p);
