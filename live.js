@@ -96,6 +96,31 @@ function _ec() {
 _ec();
 
 // -----------------------------------------------------------------------------
+document.querySelector(".btn-submit").addEventListener("click", function p() {
+	window.dataLayer = window.dataLayer || [];
+	var em = document.querySelector('input[id*="Email"]'),
+		ph = document.querySelector('input[id*="Phone"]'),
+		nm = document.querySelector('input[id*="Name"]'),
+		pass = document.querySelector('input[id="Password"]'),
+		c_pass = document.querySelector('input[id*="Confirm"]'),
+		ct = document.querySelector('[id*="Province"]'),
+		dt = document.querySelector('[id*="Dist"]'),
+		oj = {};
+
+	em.value.match(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)(\.\w{2,3})+$/) &&
+		(oj.email = em.value);
+	9 === (ph = ph.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
+		(oj.phone = "+84" + ph);
+	2 === Object.keys(oj).length &&
+		nm.value &&
+		ct.value !== "0" &&
+		dt.value !== "0" &&
+		pass.value == c_pass.value &&
+		window.dataLayer.push({ event: "form_ct", obj: oj });
+});
+
+
+// -----------------------------------------------------------------------------
 // Purchase
 document.querySelector(".button.alt").addEventListener("click", p);
 function p() {
@@ -123,41 +148,3 @@ function p() {
 		v &&
 		window.dataLayer.push({ event: "muahang", total: v, obj: o });
 };
-
-// -----------------------------------------------------------------------------
-document.querySelector(".btn-submit").addEventListener("click", function p() {
-	window.dataLayer = window.dataLayer || [];
-	var em = document.querySelector('input[id*="Email"]'),
-		ph = document.querySelector('input[id*="Phone"]'),
-		nm = document.querySelector('input[id*="Name"]'),
-		pass = document.querySelector('input[id="Password"]'),
-		c_pass = document.querySelector('input[id*="Confirm"]'),
-		ct = document.querySelector('[id*="Province"]'),
-		dt = document.querySelector('[id*="Dist"]'),
-		oj = {};
-
-	em.value.match(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)(\.\w{2,3})+$/) &&
-		(oj.email = em.value);
-	9 === (ph = ph.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
-		(oj.phone = "+84" + ph);
-	2 === Object.keys(oj).length &&
-		nm.value &&
-		ct.value !== "0" &&
-		dt.value !== "0" &&
-		pass.value == c_pass.value &&
-		window.dataLayer.push({ event: "form_ct", obj: oj });
-});
-// -----------------------------------------------------------------------------
-
-// [data-type="form_order"] [type="submit"], [data-type="form_order"] [type="submit"] *
-function a() {
-	var ph = document.querySelector('input[name*="phone"]').value,
-		nm = document.querySelector('input[name*="name"]').value,
-		ad = document.querySelector('input[name*="address"]').value,
-		p = "";
-	9 === (ph = ph.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
-		nm &&
-		ad &&
-		(p = "+84" + ph);
-	return p;
-}

@@ -2,15 +2,15 @@
 // {{Form Element}}
 
 function a() {
-	var e = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
-		a = {{Form Element}}.querySelector('[name="email"]').value;
-	if (a.match(e)) return a;
-	return "";
+    var e = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
+        a = {{Form Element}}.querySelector('input[name*="email"]').value;
+    if (a.match(e)) return a;
+    return "";
 }
 
 function a() {
-	var e = /^(\d{3})[-]?(\d{3})[-]?(\d{4})$/,
-		a = {{Form Element}}.querySelector('[name="phone"]').value;
-	if (a.match(e)) return "+84" + a.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "");
-	return "";
+    var e = /^(\d{3})[-]?(\d{3})[-]?(\d{4})$/,
+        a = {{Form Element}}.querySelector('input[name*="phone"]').value;
+    if (a.match(e)) return "+84" + a.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "");
+    return "";
 }
