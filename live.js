@@ -83,7 +83,7 @@ function _ec() {
 		a = document.querySelector('input[name*="email"]'),
 		b = document.querySelector('input[name*="phone"]'),
 		c = document.querySelector('input[name*="name"]'),
-		d = document.querySelector('[name*="content"]');
+		d = document.querySelector('input[name*="Captcha"]');
 
 	a.value.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/) && (o.email = a.value);
 	9 === (b = b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&

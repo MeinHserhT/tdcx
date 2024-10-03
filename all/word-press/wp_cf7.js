@@ -15,7 +15,7 @@ document.addEventListener("wpcf7mailsent", function (e) {
 	var o = {},
 		d = e.detail.inputs,
 		a = d.find(function (n) {
-			return n.name.includes("email");
+			return n.name.includes("homthu");
 		});
 	a.value.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/) && (o.email = a.value);
 	Object.keys(o).length &&
