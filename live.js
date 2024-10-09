@@ -11,140 +11,145 @@
 // obj.email  ----	obj.phone
 document.querySelector(".btnSendComment").addEventListener("click", f);
 function f() {
-	window.dataLayer = window.dataLayer || [];
-	var o = {},
-		nm = document.querySelector('[name="hoten"]'),
-		c = document.querySelector('[name="noidung"]'),
-		a = document.querySelector('[name="email"]');
-	a.value.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/) && (o.email = a.value);
-	Object.keys(o).length &&
-		nm.value &&
-		c &&
-		window.dataLayer.push({
-			event: "form_baogia",
-			obj: o,
-		});
+    window.dataLayer = window.dataLayer || [];
+    var o = {},
+        nm = document.querySelector('[name="hoten"]'),
+        c = document.querySelector('[name="noidung"]'),
+        a = document.querySelector('[name="email"]');
+    a.value.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/) && (o.email = a.value);
+    Object.keys(o).length &&
+        nm.value &&
+        c &&
+        window.dataLayer.push({
+            event: "form_baogia",
+            obj: o,
+        });
 }
 
 function f2() {
-	window.dataLayer = window.dataLayer || [];
-	var o = {},
-		a = "",
-		b = "",
-		c = "";
-	document.querySelectorAll('[id="dongxe"]').forEach(function (e) {
-		if (e.value) a = e;
-	});
-	document.querySelectorAll('[id="xcywqj"]').forEach(function (e) {
-		if (e.value) b = e;
-	});
-	document.querySelectorAll('[id="name"]').forEach(function (e) {
-		if (e.value) c = e;
-	});
-	9 === (b = b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
-		(o.phone = "+84" + b);
-	Object.keys(o).length &&
-		a.value &&
-		c.value &&
-		window.dataLayer.push({
-			event: "form_lienhe",
-			obj: o,
-		});
+    window.dataLayer = window.dataLayer || [];
+    var o = {},
+        a = "",
+        b = "",
+        c = "";
+    document.querySelectorAll('[id="dongxe"]').forEach(function (e) {
+        if (e.value) a = e;
+    });
+    document.querySelectorAll('[id="xcywqj"]').forEach(function (e) {
+        if (e.value) b = e;
+    });
+    document.querySelectorAll('[id="name"]').forEach(function (e) {
+        if (e.value) c = e;
+    });
+    9 === (b = b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
+        (o.phone = "+84" + b);
+    Object.keys(o).length &&
+        a.value &&
+        c.value &&
+        window.dataLayer.push({
+            event: "form_lienhe",
+            obj: o,
+        });
 }
 f2();
 
 function _ec() {
-	window.dataLayer = window.dataLayer || [];
-	var o = {},
-		a = document.querySelector('input[id*="email"]'),
-		b = document.querySelector('input[id*="phone"]'),
-		c = document.querySelector('input[id*="name"]'),
-		d = document.querySelector('select[id*="showroom"]'),
-		e = document.querySelector('select[id*="car_category"]'),
-		f = document.querySelector('select[id*="popupRequest"]'),
-		g = document.querySelector('input[id*="popupContentInput"]');
+    window.dataLayer = window.dataLayer || [];
+    var o = {},
+        a = document.querySelector('input[id*="email"]'),
+        b = document.querySelector('input[id*="phone"]'),
+        c = document.querySelector('input[id*="name"]'),
+        d = document.querySelector('select[id*="showroom"]'),
+        e = document.querySelector('select[id*="car_category"]'),
+        f = document.querySelector('select[id*="popupRequest"]'),
+        g = document.querySelector('input[id*="popupContentInput"]');
 
-	a.value.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/) && (o.email = a.value);
-	9 === (b = b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
-		(o.phone = "+84" + b);
-	2 === Object.keys(o).length &&
-		c.value &&
-		d.value &&
-		e.value &&
-		(!["Khác", ""].includes(f.value) || ("Khác" === f.value && g.value)) &&
-		window.dataLayer.push({ event: "form_dangky", obj: e });
+    a.value.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/) && (o.email = a.value);
+    9 === (b = b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
+        (o.phone = "+84" + b);
+    2 === Object.keys(o).length &&
+        c.value &&
+        d.value &&
+        e.value &&
+        (!["Khác", ""].includes(f.value) || ("Khác" === f.value && g.value)) &&
+        window.dataLayer.push({ event: "form_dangky", obj: e });
 }
 _ec();
 
-
 function _ec() {
-	window.dataLayer = window.dataLayer || [];
-	var o = {},
-		a = document.querySelector('input[name*="email"]'),
-		b = document.querySelector('input[name*="phone"]'),
-		c = document.querySelector('input[name*="name"]'),
-		d = document.querySelector('input[name*="Captcha"]');
+    window.dataLayer = window.dataLayer || [];
+    var o = {},
+        a = document.querySelector('input[name*="email"]'),
+        b = document.querySelector('input[name*="phone"]'),
+        c = document.querySelector('input[name*="name"]'),
+        d = document.querySelector('input[name*="Captcha"]');
 
-	a.value.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/) && (o.email = a.value);
-	9 === (b = b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
-		(o.phone = "+84" + b);
-	2 === Object.keys(o).length &&
-		c.value &&
-		d.value &&
-		window.dataLayer.push({ event: "form_dangky", obj: o });
+    a.value.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/) && (o.email = a.value);
+    9 === (b = b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
+        (o.phone = "+84" + b);
+    2 === Object.keys(o).length &&
+        c.value &&
+        d.value &&
+        window.dataLayer.push({ event: "form_dangky", obj: o });
 }
 _ec();
 
 // -----------------------------------------------------------------------------
 document.querySelector(".btn-submit").addEventListener("click", function p() {
-	window.dataLayer = window.dataLayer || [];
-	var em = document.querySelector('input[id*="Email"]'),
-		ph = document.querySelector('input[id*="Phone"]'),
-		nm = document.querySelector('input[id*="Name"]'),
-		pass = document.querySelector('input[id="Password"]'),
-		c_pass = document.querySelector('input[id*="Confirm"]'),
-		ct = document.querySelector('[id*="Province"]'),
-		dt = document.querySelector('[id*="Dist"]'),
-		oj = {};
+    window.dataLayer = window.dataLayer || [];
+    var em = document.querySelector('input[id*="Email"]'),
+        ph = document.querySelector('input[id*="Phone"]'),
+        nm = document.querySelector('input[id*="Name"]'),
+        pass = document.querySelector('input[id="Password"]'),
+        c_pass = document.querySelector('input[id*="Confirm"]'),
+        ct = document.querySelector('[id*="Province"]'),
+        dt = document.querySelector('[id*="Dist"]'),
+        oj = {};
 
-	em.value.match(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)(\.\w{2,3})+$/) &&
-		(oj.email = em.value);
-	9 === (ph = ph.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
-		(oj.phone = "+84" + ph);
-	2 === Object.keys(oj).length &&
-		nm.value &&
-		ct.value !== "0" &&
-		dt.value !== "0" &&
-		pass.value == c_pass.value &&
-		window.dataLayer.push({ event: "form_ct", obj: oj });
+    em.value.match(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)(\.\w{2,3})+$/) &&
+        (oj.email = em.value);
+    9 === (ph = ph.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
+        (oj.phone = "+84" + ph);
+    2 === Object.keys(oj).length &&
+        nm.value &&
+        ct.value !== "0" &&
+        dt.value !== "0" &&
+        pass.value == c_pass.value &&
+        window.dataLayer.push({ event: "form_ct", obj: oj });
 });
-
 
 // -----------------------------------------------------------------------------
 // Purchase
 document.querySelector(".button.alt").addEventListener("click", p);
 function p() {
-	window.dataLayer = window.dataLayer || [];
-	var a = document.querySelector('input[id*="email"]'),
-		b = document.querySelector('input[id*="phone"]'),
-		c = document.querySelector('input[id*="first"]'),
-		d = document.querySelector('input[id*="last"]'),
-		e = document.querySelector('input[id*="address_1"]'),
-		h = document.querySelector('input[id*="city"]'),
-		o = {},
-		v = +document
-			.querySelector(".order-total .amount")
-			.innerText.replace(/[^\d]/g, "");
+    window.dataLayer = window.dataLayer || [];
+    var a = document.querySelector('input[id*="email"]'),
+        b = document.querySelector('input[id*="phone"]'),
+        c = document.querySelector('input[id*="first"]'),
+        d = document.querySelector('input[id*="last"]'),
+        e = document.querySelector('input[id*="address_1"]'),
+        h = document.querySelector('input[id*="city"]'),
+        o = {},
+        v = +document
+            .querySelector(".order-total .amount")
+            .innerText.replace(/[^\d]/g, "");
 
-	a.value.match(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)(\.\w{2,3})+$/) &&
-		(o.email = a.value);
-	9 === (b = b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
-		(o.phone = "+84" + b);
-	2 === Object.keys(o).length &&
-		c.value &&
-		d.value &&
-		e.value &&
-		h.value &&
-		v &&
-		window.dataLayer.push({ event: "muahang", total: v, obj: o });
-};
+    a.value.match(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)(\.\w{2,3})+$/) &&
+        (o.email = a.value);
+    9 === (b = b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
+        (o.phone = "+84" + b);
+    2 === Object.keys(o).length &&
+        c.value &&
+        d.value &&
+        e.value &&
+        h.value &&
+        v &&
+        window.dataLayer.push({ event: "muahang", total: v, obj: o });
+}
+
+function a() {
+    return +document
+        .querySelector(".w19-paydone__items__item:nth-last-child(3)")
+        .innerText.split("\n")[1]
+        .replace(/[^\d]/g, "");
+}
