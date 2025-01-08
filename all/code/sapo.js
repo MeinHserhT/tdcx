@@ -13,3 +13,28 @@ function b() {
 function c() {
 	return document.querySelector(".col:nth-child(1) p:nth-child(3)").innerText;
 }
+
+// add to cart
+function a() {
+	return +document
+		.querySelector(".product-price")
+		.innerText.replace(/[^\d]/g, "");
+}
+
+// dataLayer.push({
+//   event: "add_to_cart",
+//   eventModel: {
+//     currency: "VND",
+//     items: [
+//       {
+//         id: 38319293,
+//         name: "Sữa Tắm Hatomugi Dưỡng Ẩm Và Làm Sáng Da 800ml",
+//         brand: "Hatomugi",
+//         variant: "Default Title",
+//         price: "99000",
+//         quantity: 1
+//       }
+//     ]
+//   },
+//   gtm.uniqueEventId: 10
+// })

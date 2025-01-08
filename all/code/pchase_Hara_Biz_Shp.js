@@ -35,12 +35,14 @@ function _gtm_tracking_purchase() {
 }
 _gtm_tracking_purchase();
 
-// function a() {
-// return Haravan.checkout.total_price
-// }
-// function a() {
-// 	return Haravan.checkout.order_number;
-// }
+function a() {
+	return Haravan.checkout.total_price;
+}
+
+function b() {
+	return Haravan.checkout.order_number;
+}
+
 // function a() {
 // 	return Haravan.checkout.billing_address.phone.replace(
 // 		/^0|^(84)|^(\+84)[0]*/,

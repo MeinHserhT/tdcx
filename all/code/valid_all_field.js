@@ -27,3 +27,14 @@ function _p() {
 		window.dataLayer.push({ event: "muahangngay", total: v, obj: o });
 }
 _p();
+
+function _p() {
+	var a = document.querySelector('[name*="firstName"]').value,
+		b = document.querySelector('[name*="lastName"]').value,
+		c = document.querySelector('[name="phone"]').value,
+		d = document.querySelector('[name="email"]').value,
+		e = document.querySelector('[name="isPaymnetRequired"]').checked;
+	if (a && b && c && d && e) return "Y";
+	return "N";
+}
+_p();
