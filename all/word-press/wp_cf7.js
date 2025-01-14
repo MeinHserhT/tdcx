@@ -2,7 +2,7 @@
 document.addEventListener("wpcf7mailsent", function (e) {
 	window.dataLayer = window.dataLayer || [];
 	window.dataLayer.push({
-		event: "cf7",
+		event: "form_baogia",
 		formID: e.detail.contactFormId,
 	});
 });
@@ -33,7 +33,7 @@ document.addEventListener("wpcf7mailsent", function (e) {
 		});
 	a.value &&
 		window.dataLayer.push({
-			event: "form_lienhe",
+			event: "wpcf7Form",
 			email: a.value,
 		});
 });
@@ -60,11 +60,11 @@ document.addEventListener("wpcf7mailsent", function (e) {
 	window.dataLayer = window.dataLayer || [];
 	var d = e.detail.inputs,
 		b = d.find(function (n) {
-			return n.name.includes("phone");
+			return n.name.includes("tel");
 		});
 	b.value &&
 		window.dataLayer.push({
-			event: "cf7submission",
+			event: "wpcf7Form",
 			phone: "+84" + b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
 		});
 });
@@ -142,3 +142,5 @@ function f() {
 }
 f();
 // -----------------------------------------------------------------------------
+
+

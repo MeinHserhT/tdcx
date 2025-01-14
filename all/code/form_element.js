@@ -16,7 +16,7 @@ function a() {
 }
 
 function a() {
-    var a = {{Form Element}}.querySelector('input[name*="email"]').value;
+    var a = {{Form Element}}.querySelector('input[id*="email"]').value;
     return a ? a : "";
 }
 
