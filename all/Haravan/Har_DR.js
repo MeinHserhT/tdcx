@@ -41,3 +41,4 @@ if (is_item) {
 
   dynamic("purchase", dr_items);
 } else dataLayer.push({ event: "rmkt" });
+

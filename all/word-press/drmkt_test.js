@@ -1,31 +1,11 @@
 var dr_items = [],
   businessType = "retail",
-  is_item = window.location.href.includes("/san-pham"), // /product
-  // is_item = document.querySelector(".pro-info"),
-  is_cart = window.location.href.includes("/cart"), // /gio-hang
+  is_item = window.location.href.includes("/san-pham"), 
   is_CV = window.location.href.includes("/order-received");
 function dynamic(e, t) {
   dataLayer.push({ dr_event_type: e, dr_items: t, event: "drmkt" });
 }
-if (is_cart) {
-  // ------ UPDATE CART  ------
-  var e = JSON.parse(localStorage.getItem("item_storage")) || [];
-  jQuery('a[class*="checkout"]').on("click", function () {
-    var t = Array.from(document.querySelectorAll(".product-remove a")).map(
-      function (e) {
-        return +e.getAttribute("data-product_id");
-      }
-    );
-    localStorage.setItem(
-      "item_storage",
-      JSON.stringify(
-        e.filter(function (e) {
-          return t.includes(e.id);
-        })
-      )
-    );
-  });
-} else if (is_item) {
+if (is_item) {
   // ------ VIEW ITEM  ------
   var t = {
     id: +jQuery('[name*="add-to-cart"]').val(),

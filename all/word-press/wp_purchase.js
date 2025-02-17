@@ -107,11 +107,24 @@ var fname = document.querySelector("#billing_first_name_field").value,
       .innerText.replace(/[^\d.-]/g, "")
   );
 
-<script>
+{/* <script>
   localStorage.setItem("value", +document .querySelector("strong .amount")
   .innerText.replace(/[^\d]/g, ""))
-</script>;
+</script>; */}
 
 function a() {
   return +localStorage.getItem("value");
 }
+
+
+function a() {
+  var fname = document.querySelector("#billing_last_name").value,
+    add = document.querySelector("#billing_address_1").value,
+    quan = document.querySelector("#billing_city").value,
+    tp = document.querySelector("#billing_state").value,
+    xa = document.querySelector("#billing_address_2").value,
+    phone = document.querySelector("#billing_phone").value,
+    email = document.querySelector("#billing_email").value;
+      if (fname, add, tp, quan, xa, phone, email) return "y";
+      return "n"
+  }

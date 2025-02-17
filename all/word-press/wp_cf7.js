@@ -2,7 +2,7 @@
 document.addEventListener("wpcf7mailsent", function (e) {
 	window.dataLayer = window.dataLayer || [];
 	window.dataLayer.push({
-		event: "form_baogia",
+		event: "form_lienhe",
 		formID: e.detail.contactFormId,
 	});
 });
@@ -60,11 +60,12 @@ document.addEventListener("wpcf7mailsent", function (e) {
 	window.dataLayer = window.dataLayer || [];
 	var d = e.detail.inputs,
 		b = d.find(function (n) {
-			return n.name.includes("tel");
+			return n.name.includes("sdt") ||  n.name.includes("dienthoai");
 		});
 	b.value &&
 		window.dataLayer.push({
-			event: "wpcf7Form",
+			event: "form_baogia",
+			formID: e.detail.contactFormId,
 			phone: "+84" + b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
 		});
 });

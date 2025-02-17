@@ -10,9 +10,7 @@ if (is_item) {
   var ori = document.querySelector(
       "#tourInfo div:nth-child(1) div.ms-2 span"
     ).innerText,
-    dest = document.querySelector(
-      "#tourInfo div:nth-child(2) div.ms-2 span"
-    ).innerText;
+    dest = document.querySelector(".tours-info > div > .shadow-sm.p-3 > div.pt-3 > a").href.split("tourname=")[1];
 
   item = [
     {

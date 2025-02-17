@@ -1,18 +1,18 @@
 <script>
-	{{Click Element }}.addEventListener('click', function (event) {
-		var form_ele = event.target.closest('form')
-		var name = form_ele.querySelector('input[id="full_name_lien_he"]').value;
-		var phone = form_ele.querySelector('input[id="phone_lien_he"]').value.trim().replace(/0(\d+)/, '+84$1');
-		var title = document.querySelector('input[id="title"]').value;
-		var content = document.querySelector('textarea[id="content"]').value;
+	{{Click Element}}.addEventListener('click', function (event) {
+		var form_ele = event.target.closest('form');
+		var name = form_ele.querySelector('[name="fullname"]').value;
+		var phone = "+84" + form_ele.querySelector('[name="phone"]').value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "");
+		var service = form_ele.querySelector('[name="service"]').value !== "Dịch vụ";
+		var email = form_ele.querySelector('[name="email"]').value;
 
-		var check = (phone != '') && (name != '') && (title != '') && (content != '');
+		var check = phone && name && service && email;
 
 		if (check) {
 			window.dataLayer = window.dataLayer || [];
 			window.dataLayer.push({
 				'event': 'FORM_LIEN_HE',
-				'phone': phone,
+				'email': email,
 			})
 		}
 	})

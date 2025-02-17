@@ -1,74 +1,35 @@
-var Tawk_API = Tawk_API || {};
-if (Tawk_API.isVisitorEngaged()) {
-	window.dataLayer.push({ event: "chat" });
-}
-Tawk_API.onOfflineSubmit = function () {
-	window.dataLayer.push({ event: "chat" });
-};
-Tawk_API.onPrechatSubmit = function () {
-	window.dataLayer.push({ event: "chat" });
+var Tawk_API = Tawk_API || {},
+  Tawk_LoadStart = new Date();
+(function () {
+  var s1 = document.createElement("script"),
+    s0 = document.getElementsByTagName("script")[0];
+  s1.async = true;
+  s1.src = "https://embed.tawk.to/5cc27f52ee912b07bec4eabf/default";
+  s1.charset = "UTF-8";
+  s1.setAttribute("crossorigin", "*");
+  s0.parentNode.insertBefore(s1, s0);
+})();
+
+// Day su kien tawk.to từ API tawk.to thong qua GTM
+
+var dataLayerPush = function (event) {
+  dataLayer.push({
+    event: "tawk.to",
+    eventAction: event,
+  });
+  console.log({
+    event: "tawk.to",
+    eventAction: event,
+  });
 };
 
-//fires on opening tidio chat
-window.tidioChatApi.on("open", function (onTidioChatApiReady) {
-	window.dataLayer = window.dataLayer || [];
-	window.dataLayer.push({
-		event: "chat",
-		chatAction: "Opened Tidio Chat widget",
-	});
-});
-// fires on closing tidio chat
-window.tidioChatApi.on("close", function (onTidioChatApiReady) {
-	window.dataLayer = window.dataLayer || [];
-	window.dataLayer.push({
-		event: "chat",
-		chatAction: "Closed Tidio Chat widget",
-	});
-});
-// fires on first user message
-window.tidioChatApi.on("conversationStart", function (onTidioChatApiReady) {
-	window.dataLayer = window.dataLayer || [];
-	window.dataLayer.push({
-		event: "chat",
-		chatAction: "User Sent First Message",
-	});
-});
-//fires when an operator sends a mesaage
-window.tidioChatApi.on("messageFromOperator", function (onTidioChatApiReady) {
-	window.dataLayer = window.dataLayer || [];
-	window.dataLayer.push({
-		event: "chat",
-		chatAction: "Message Sent By Operator",
-	});
-});
-//fires when a visitor sends a mesaage
-window.tidioChatApi.on("messageFromVisitor", function (onTidioChatApiReady) {
-	window.dataLayer = window.dataLayer || [];
-	window.dataLayer.push({
-		event: "chat",
-		chatAction: "Message Sent By Visitor",
-	});
-});
-//fires when a visitor submits prefill form
-window.tidioChatApi.on("preFormFilled", function (onTidioChatApiReady) {
-	window.dataLayer = window.dataLayer || [];
-	window.dataLayer.push({
-		event: "chat",
-		chatAction: "Tidio Prefill Form Submitted",
-	});
-});
-//fires when Tido chat status change
-window.tidioChatApi.on("setStatus", function (onTidioChatApiReady) {
-	window.dataLayer = window.dataLayer || [];
-	window.dataLayer.push({
-		event: "chat",
-		chatAction: "Tidio Chat Status",
-	});
-});
+Tawk_API.onChatStarted = function () {
+  dataLayerPush("Chat Started");
+};
+Tawk_API.onPrechatSubmit = function (data) {
+  dataLayerPush("Prechat form submitted");
+};
+Tawk_API.onOfflineSubmit = function (data) {
+  dataLayerPush("Offline Chat submit");
+};
 
-// Caresoft
-document.addEventListener("cs_widgetTracking", function (e) {
-	window.dataLayer.push({
-		event: "csChat",
-	});
-});
