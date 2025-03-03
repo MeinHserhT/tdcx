@@ -17,10 +17,6 @@ var dataLayerPush = function (event) {
     event: "tawk.to",
     eventAction: event,
   });
-  console.log({
-    event: "tawk.to",
-    eventAction: event,
-  });
 };
 
 Tawk_API.onChatStarted = function () {

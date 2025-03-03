@@ -23,3 +23,35 @@ function getAlert() {
 		});
 	};
 })();
+// -----------------------------------------------------------------------------
+
+var onElmClick = function (elm_str, callBack) {
+  document.addEventListener("click", function (event) {
+    if (event.target.closest(elm_str)) {
+      callBack(event);
+    }
+  });
+};
+
+var _btn = null;
+onElmClick(
+  ".fusion-form-5631 [type=submit], .fusion-form-3270 [type=submit]",
+  function (e) {
+    _btn = e.target;
+    var email = "";
+    var _parent = _btn.closest("form");
+    if (_parent) {
+      var _input = null;
+      // Email
+      if ((_input = _parent.querySelector('[type="email"]'))) {
+        if (_input.value) {
+          email = _input.value;
+        }
+      }
+    }
+    dataLayer.push({
+      event: "formsubmission",
+      email: email,
+    });
+  }
+);

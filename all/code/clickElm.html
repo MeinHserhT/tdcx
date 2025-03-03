@@ -1,19 +1,21 @@
 <script>
-	{{Click Element}}.addEventListener('click', function (event) {
-		var form_ele = event.target.closest('form');
-		var name = form_ele.querySelector('[name="fullname"]').value;
-		var phone = "+84" + form_ele.querySelector('[name="phone"]').value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "");
-		var service = form_ele.querySelector('[name="service"]').value !== "Dịch vụ";
-		var email = form_ele.querySelector('[name="email"]').value;
+  var onElmClick = function (elm_str, callBack) {
+    document.addEventListener("click", function (event) {
+      if (event.target.closest(elm_str)) {
+        callBack(event);
+      }
+    });
+  };
 
-		var check = phone && name && service && email;
-
-		if (check) {
-			window.dataLayer = window.dataLayer || [];
-			window.dataLayer.push({
-				'event': 'FORM_LIEN_HE',
-				'email': email,
-			})
-		}
-	})
+  onElmClick("[type=submit], [type=submit] *", function (e) {
+    var _btn = e.target;
+    var _parent = _btn.closest("form");
+    if (_parent) {
+      var _input = _parent.querySelector('[type="email"]');
+      _input && _input.value && (email = _input.value);
+    }
+    dataLayer.push({
+      email: email,
+    });
+  });
 </script>

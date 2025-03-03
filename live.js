@@ -164,7 +164,10 @@ var o = {},
   b = document.querySelector('input[name*="phone"]'),
   c = document.querySelector('input[name*="name"]'),
   d = document.querySelector('input[name*="address"]'),
-  val = +jQuery(".popup_quickbuy_total_calc")[0].innerText.replace(/[^\d]/g,"");
+  val = +jQuery(".popup_quickbuy_total_calc")[0].innerText.replace(
+    /[^\d]/g,
+    ""
+  );
 o.phone = "+84" + b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "");
 Object.keys(o).length &&
   c.value &&
@@ -191,23 +194,6 @@ document.addEventListener("wpcf7mailsent", function (e) {
     });
 });
 
-function a() {
-  var phone_number = document.querySelector(
-    "#order_info > div.order_info > div.right > p:nth-child(3) > span:nth-child(3)"
-  ).innerText;
-  if (phone_number.includes("+84")) {
-    phone_number = "+" + phone_number.trim().match(/\d+/g).join("");
-  } else {
-    phone_number =
-      "+84" +
-      phone_number
-        .replace(/^(?!00[^0])0/, "")
-        .match(/\d+/g)
-        .join("");
-  }
-  return phone_number;
-}
-
 function b() {
   var phone = "";
   document.querySelectorAll("input[name*=phone]").forEach(function (e) {
@@ -217,39 +203,43 @@ function b() {
   return phone;
 }
 
-function a() {
-  return (
-    "+84" +
-    window.location.href
-      .match(/phone=[\d]*/g)[0]
-      .split("=")[1]
-      .replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
-  );
-}
+var onElmClick = function (e, t) {
+  document.addEventListener("click", function (n) {
+    n.target.matches(e) && t(n);
+  });
+};
+var _btn = null;
+onElmClick(".btn", (e) => {
+  setTimeout(function () {
+    var element = document.querySelector(".gh-alert-content .msg");
+    if (!element) {
+      // ko có alert lỗi
+      _btn = e.target;
 
-var onElmClick=function(e,t){document.addEventListener("click",(function(n){n.target.matches(e)&&t(n)}))};
-  var _btn = null;
-  onElmClick('.btn', (e) => {
-
-    setTimeout(function() {
-      var element = document.querySelector('.gh-alert-content .msg')
-      if (!element) { // ko có alert lỗi
-        _btn = e.target;
-
-        var _parent  = _btn.closest('.modal-dialog');
-        if(_parent) {
-          var _phone = '';
-          var _input = _parent.querySelectorAll('input[data-field="DienThoai"]').forEach(function(inp) {
-          	if (inp.value) {
-            	_phone = '+84' + inp.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "");
+      var _parent = _btn.closest(".modal-dialog");
+      if (_parent) {
+        var _phone = "";
+        var _input = _parent
+          .querySelectorAll('input[data-field="DienThoai"]')
+          .forEach(function (inp) {
+            if (inp.value) {
+              _phone =
+                "+84" + inp.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "");
             }
           });
-        }
-        dataLayer.push({
-          event: "successful",
-          phone: _phone,
-        })
       }
-    }, 500)
+      dataLayer.push({
+        event: "successful",
+        phone: _phone,
+      });
+    }
+  }, 500);
+});
 
-  })
+function a() {
+  return +document
+    .querySelector("tbody > tr.font-weight-bold > td:nth-child(2)")
+    .innerText.replace(/[^\d]/g, "");
+}
+function b() { return window.location.href.split('=').pop() }
+// /order-confirmation

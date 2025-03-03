@@ -42,7 +42,7 @@ function a() {
           element.style.fontWeight = 500;
 
           copy_icon.addEventListener("click", function () {
-            var copy_content = target_Object[3] + " " + label_event;
+            var copy_content = label_event;
             navigator.clipboard.writeText(copy_content);
             var modal_msg = copy_content + "<br><br>Copied";
             showToast(modal_msg);
@@ -102,7 +102,7 @@ function a() {
   }
 
   function showConvID(conversion_id) {
-    var css = `.spinner { animation: rotate 0.5s linear infinite; }
+    var css = `.spinner { animation: rotate 1s linear infinite; }
     @keyframes rotate {
       to { transform: rotate(360deg); }
     }`,

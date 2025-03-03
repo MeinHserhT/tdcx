@@ -1,0 +1,32 @@
+<script>
+  LadiChat.push([
+    "on",
+    "chat:open",
+    null,
+    function (args) {
+      dataLayer.push({
+        event: "ladichat_widget_opened",
+      });
+    },
+  ]);
+  LadiChat.push([
+    "on",
+    "message:first",
+    null,
+    function (args) {
+      dataLayer.push({
+        event: "ladichat_first_message",
+      });
+    },
+  ]);
+  LadiChat.push([
+    "on",
+    "chat:closed",
+    null,
+    function (args) {
+      dataLayer.push({
+        event: "ladichat_widget_closed",
+      });
+    },
+  ]);
+</script>
