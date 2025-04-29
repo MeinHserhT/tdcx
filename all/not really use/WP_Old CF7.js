@@ -1,44 +1,3 @@
-// Normal
-document.addEventListener("wpcf7mailsent", function (e) {
-  window.dataLayer.push({
-    event: "gui_form",
-    formID: e.detail.contactFormId,
-  });
-});
-
-// obj.email  ----	obj.phone
-// -----------------------------------------------------------------------------
-function a() {
-  document.addEventListener("wpcf7mailsent", function (e) {
-    var a = e.detail.inputs.find(function (e) {
-      return e.name.includes("email");
-    });
-    a.value &&
-      window.dataLayer.push({
-        event: "gui_form",
-        formID: e.detail.contactFormId,
-        email: a.value,
-      });
-  });
-}
-a();
-
-// -----------------------------------------------------------------------------
-function a() {
-  document.addEventListener("wpcf7mailsent", function (e) {
-    var b = e.detail.inputs.find(function (n) {
-      return n.name.includes("tel") || n.name.includes("dienthoai");
-    });
-    b.value &&
-      window.dataLayer.push({
-        event: "gui_form",
-        formID: e.detail.contactFormId,
-        phone: "+84" + b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
-      });
-  });
-}
-a();
-
 // -----------------------------------------------------------------------------
 // EC Phone + Email
 document.addEventListener("wpcf7mailsent", function (e) {
@@ -104,9 +63,9 @@ document.addEventListener("wpcf7mailsent", function (e) {
 function f() {
   window.dataLayer = window.dataLayer || [];
   var o = {},
-    n = document.querySelector('[name*="[fields][0]"]'),
-    a = document.querySelector('[name*="[fields][1]"]'),
-    b = document.querySelector('[name*="[fields][4]"]'),
+    n = document.querySelector('[name*="[fields][1]"]'),
+    a = document.querySelector('[name*="[fields][2]"]'),
+    b = document.querySelector('[name*="[fields][3]"]'),
     c = document.querySelector('[name*="[fields][2]"]');
   a.value.match(/^\w+([\.-]?\w+)([\.-]?\w+)@\w+([\.-]?\w+)(\.\w{2,3})+$/) &&
     (o.email = a.value);
@@ -121,17 +80,3 @@ function f() {
     });
 }
 f();
-
-document.addEventListener("wpcf7mailsent", function (e) {
-  var o = {},
-    d = e.detail.inputs,
-    a = d.find(function (n) {
-      return n.name.includes("email");
-    });
-  a.value.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/) && (o.email = a.value);
-  Object.keys(o).length &&
-    window.dataLayer.push({
-      event: "form_lienhe",
-      obj: o,
-    });
-});

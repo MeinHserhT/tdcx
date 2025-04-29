@@ -1,0 +1,41 @@
+// ---- Value -----
+function _v() {
+  return +document
+    .querySelector("tfoot tr:last-child span")
+    .innerText.replace(/[^\d]/g, "");
+}
+function _v() {
+  var ordTotal = +document
+    .querySelector("strong .amount")
+    .innerText.replace(/[^\d]/g, "");
+  return ordTotal;
+}
+// ---- Order ID -----
+function _id() {
+  var ordId = document
+    .querySelector(".woocommerce-order-overview__order.order")
+    .innerText.replace(/\D/g, "");
+  return ordId;
+}
+
+function _id() {
+  return document
+    .querySelector(".order")
+    .innerText.replace(/[Mã đơn hàng:]/g, "");
+}
+// ---- UPD -----
+function _p() {
+  return (
+    "+84" +
+    document
+      .querySelector(".woocommerce-customer-details--phone")
+      .innerText.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
+  );
+}
+
+function _e() {
+  return document.querySelector(".woocommerce-customer-details--email")
+    .innerText;
+}
+
+// order-received

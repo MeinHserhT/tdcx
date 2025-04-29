@@ -8,7 +8,8 @@
 // a[href*="wa.me"], a[href*="wa.me"] *
 
 // --------------------------------------------------------------------------
-// obj.email  ----	obj.phone
+// gtm.timerInterval
+// --------------------------------------------------------------------------
 
 function _ec() {
   window.dataLayer = window.dataLayer || [];
@@ -129,36 +130,6 @@ document
     });
   });
 
-function checkPhone() {
-  var c_name = "",
-    c_phone = "",
-    c_xe = "";
-  document.querySelectorAll('[name*="item_name"]').forEach(function (e) {
-    if (e.value) c_name = e.value;
-  });
-  document.querySelectorAll('[name*="item_phone"]').forEach(function (e) {
-    if (e.value) c_phone = e.value;
-  });
-  document.querySelectorAll('[name*="item_class"]').forEach(function (e) {
-    if (e.value) c_xe = e.value;
-  });
-  var checkAll = c_name && c_phone && c_xe;
-  if (checkAll) {
-    return "+84" + c_phone.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "");
-  }
-  return "";
-}
-
-function a() {
-  var e = 0;
-  return (
-    jQuery('[name="product_combo"]').each(function (c) {
-      if (this.checked) return (e = +this.value.match(/\d{4}/g, "")[0]), !1;
-    }),
-    e
-  );
-}
-
 window.dataLayer = window.dataLayer || [];
 var o = {},
   b = document.querySelector('input[name*="phone"]'),
@@ -174,26 +145,6 @@ Object.keys(o).length &&
   d.value &&
   window.dataLayer.push({ event: "muahang", obj: o, total: val });
 
-// .success
-function a() {
-  return document.querySelector("#buy_email").value;
-}
-
-document.addEventListener("wpcf7mailsent", function (e) {
-  window.dataLayer = window.dataLayer || [];
-  var p = "",
-    d = e.detail.inputs,
-    b = d.find(function (n) {
-      return n.name.includes("dienthoai");
-    });
-  p = "+84" + b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "");
-  p &&
-    window.dataLayer.push({
-      event: "form_lienhe",
-      phone: p,
-    });
-});
-
 function b() {
   var phone = "";
   document.querySelectorAll("input[name*=phone]").forEach(function (e) {
@@ -203,43 +154,15 @@ function b() {
   return phone;
 }
 
-var onElmClick = function (e, t) {
-  document.addEventListener("click", function (n) {
-    n.target.matches(e) && t(n);
-  });
-};
-var _btn = null;
-onElmClick(".btn", (e) => {
-  setTimeout(function () {
-    var element = document.querySelector(".gh-alert-content .msg");
-    if (!element) {
-      // ko có alert lỗi
-      _btn = e.target;
-
-      var _parent = _btn.closest(".modal-dialog");
-      if (_parent) {
-        var _phone = "";
-        var _input = _parent
-          .querySelectorAll('input[data-field="DienThoai"]')
-          .forEach(function (inp) {
-            if (inp.value) {
-              _phone =
-                "+84" + inp.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "");
-            }
-          });
-      }
-      dataLayer.push({
-        event: "successful",
-        phone: _phone,
-      });
-    }
-  }, 500);
-});
-
 function a() {
-  return +document
-    .querySelector("tbody > tr.font-weight-bold > td:nth-child(2)")
-    .innerText.replace(/[^\d]/g, "");
+  return document.querySelector(".box-cart-info > p > span").innerText;
 }
-function b() { return window.location.href.split('=').pop() }
-// /order-confirmation
+
+dataLayer.push({
+  phone:
+    "+84" +
+    document
+      .querySelector('[name="phoneNumber"]')
+      .value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
+  email: document.querySelector('[name="email"]').value,
+});

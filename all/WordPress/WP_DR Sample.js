@@ -34,15 +34,14 @@ if (is_cart) {
   dr_items.push(t);
   dynamic("view_item", dr_items);
   // ------ ADD TO CART -------
-  jQuery('button[class*="add_to_cart"], button[class*="add_to_cart"] *, .devvn_buy_now, .devvn_buy_now *').on(
-    "click",
-    function () {
-      var store = JSON.parse(localStorage.getItem("item_storage")) || [];
-      store.push(t);
-      localStorage.setItem("item_storage", JSON.stringify(store));
-      dynamic("add_to_cart", dr_items);
-    }
-  );
+  jQuery(
+    'button[class*="add_to_cart"], button[class*="add_to_cart"] *, .devvn_buy_now, .devvn_buy_now *'
+  ).on("click", function () {
+    var store = JSON.parse(localStorage.getItem("item_storage")) || [];
+    store.push(t);
+    localStorage.setItem("item_storage", JSON.stringify(store));
+    dynamic("add_to_cart", dr_items);
+  });
 } else if (is_CV) {
   // ------ PURCHASE -------
   var dr_items = JSON.parse(localStorage.getItem("item_storage"));

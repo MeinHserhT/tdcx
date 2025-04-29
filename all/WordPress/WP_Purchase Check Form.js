@@ -1,46 +1,3 @@
-// Custom JS
-function _a() {
-  return +document
-    .querySelector("tfoot tr:last-child span")
-    .innerText.replace(/[^\d]/g, "");
-}
-
-function _a() {
-  var ordTotal = +document
-    .querySelector("strong .amount")
-    .innerText.replace(/[^\d]/g, "");
-  return ordTotal;
-}
-
-function _b() {
-  var ordId = document
-    .querySelector(".woocommerce-order-overview__order.order")
-    .innerText.replace(/\D/g, "");
-  return ordId;
-}
-
-function _b() {
-  return document
-    .querySelector(".order")
-    .innerText.replace(/[Mã đơn hàng:]/g, "");
-}
-
-function _p() {
-  return (
-    "+84" +
-    document
-      .querySelector(".woocommerce-customer-details--phone")
-      .innerText.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
-  );
-}
-
-function _e() {
-  return document.querySelector(".woocommerce-customer-details--email")
-    .innerText;
-}
-
-// order-received
-
 // HTML Full form
 // obj.email  ----	obj.phone
 // .button.alt, .button.alt *
@@ -95,36 +52,33 @@ document.querySelector(".button.alt").addEventListener("click", function p() {
     window.dataLayer.push({ event: "muahang", total: v, obj: o });
 });
 
-var fname = document.querySelector("#billing_first_name_field").value,
-  lname = document.querySelector("#billing_last_name_field").value,
+var fn = document.querySelector("#billing_first_name").value,
+  ln = document.querySelector("#billing_last_name").value,
+  ct = document.querySelector("#billing_country").value,
   add = document.querySelector("#billing_address_1").value,
   city = document.querySelector("#billing_city").value,
-  phone = document.querySelector("#billing_phone").value,
-  email = document.querySelector("#billing_email").value,
+  ph = document.querySelector("#billing_phone").value,
+  em = document.querySelector("#billing_email").value,
+  term = document.querySelector("#terms").checked,
   value = parseFloat(
     document
       .querySelector("strong .woocommerce-Price-amount.amount")
       .innerText.replace(/[^\d.-]/g, "")
   );
 
-{/* <script>
-  localStorage.setItem("value", +document .querySelector("strong .amount")
-  .innerText.replace(/[^\d]/g, ""))
-</script>; */}
-
 function a() {
   return +localStorage.getItem("value");
 }
-
-
 function a() {
-  var fname = document.querySelector("#billing_last_name").value,
+  var fn = document.querySelector("#billing_first_name").value,
+    ln = document.querySelector("#billing_last_name").value,
+    ct = document.querySelector("#billing_country").value,
     add = document.querySelector("#billing_address_1").value,
-    quan = document.querySelector("#billing_city").value,
-    tp = document.querySelector("#billing_state").value,
-    xa = document.querySelector("#billing_address_2").value,
-    phone = document.querySelector("#billing_phone").value,
-    email = document.querySelector("#billing_email").value;
-      if (fname, add, tp, quan, xa, phone, email) return "y";
-      return "n"
-  }
+    city = document.querySelector("#billing_city").value,
+    ph = document.querySelector("#billing_phone").value,
+    em = document.querySelector("#billing_email").value,
+    term = document.querySelector("#terms").checked;
+
+    if (fn && ln && ct && add && city && ph && em && term) return "y";
+    return "n";
+}

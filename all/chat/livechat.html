@@ -1,11 +1,54 @@
 <script>
-	var LC_API = LC_API || {};
-	LC_API.on_chat_started = function () {
-		// track this chat in Google AdWords
-		var google_conversion_id, google_conversion_label, img;
-		google_conversion_id = 'YOUR_CONVERSION_ID';
-		google_conversion_label = 'YOUR_CONVERSION_LABEL';
-		img = new Image(1, 1);
-		img.src = 'https://www.googleadservices.com/pagead/conversion/' + google_conversion_id + '/?label=' + google_conversion_label + '&script=0';
-	};
+  var LC_API = LC_API || {};
+  LC_API.on_chat_started = function () {
+    // track this chat in Google AdWords
+    var google_conversion_id, google_conversion_label, img;
+    google_conversion_id = "YOUR_CONVERSION_ID";
+    google_conversion_label = "YOUR_CONVERSION_LABEL";
+    img = new Image(1, 1);
+    img.src =
+      "https://www.googleadservices.com/pagead/conversion/" +
+      google_conversion_id +
+      "/?label=" +
+      google_conversion_label +
+      "&script=0";
+  };
+</script>
+<script>
+  LiveChatWidget.on("visibility_changed", function (data) {
+    switch (data.visibility) {
+      case "maximized":
+        console.log("maximized");
+        break;
+      case "minimized":
+        console.log("minimized");
+        break;
+    }
+  });
+  LiveChatWidget.on("form_submitted", function (data) {
+    switch (data.visibility) {
+      case "prechat":
+        console.log("prechat");
+        break;
+
+      case "postchat":
+        console.log("postchat");
+        break;
+
+      case "ticket":
+        console.log("ticket");
+        break;
+
+      default:
+        break;
+    }
+  }); // when form is submitted, prechat, survey or ticket
+  LiveChatWidget.on("form_submitted", onFormSubmitted);
+  function onFormSubmitted(data) {
+    dataLayer.push({
+      event: "Chatweb",
+      email: LiveChatWidget.get("customer_data").email,
+      chatAction: "submitted" + " " + data.type + " form",
+    });
+  }
 </script>

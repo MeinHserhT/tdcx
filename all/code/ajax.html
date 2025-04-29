@@ -1,0 +1,29 @@
+<script>
+  (function () {
+    "use strict";
+    var $;
+    function init() {
+      if (typeof jQuery !== "undefined") {
+        $ = jQuery;
+        bindToAjax();
+      } else {
+        setTimeout(init, 500);
+      }
+    }
+
+    function bindToAjax() {
+      $(document).on("ajax:success", function (evt, data, status, xhr) {
+        dataLayer.push({
+          event: "formAjaxSuccess",
+          attributes: {
+            url: xhr.url || "",
+            statusCode: xhr.status || "",
+            statusText: xhr.statusText || "",
+            response: data || "",
+          },
+        });
+      });
+    }
+    init();
+  })();
+</script>

@@ -29,3 +29,19 @@ Tawk_API.onOfflineSubmit = function (data) {
   dataLayerPush("Offline Chat submit");
 };
 
+var Tawk_API = window.Tawk_API || {};
+window.dataLayer = window.dataLayer || [];
+Tawk_API.onChatStarted = function (data) {
+  if (Tawk_API.isVisitorEngaged()) {
+    window.dataLayer.push({ event: "tawkto", data: data });
+  }
+};
+Tawk_API.onOfflineSubmit = function (data) {
+  window.dataLayer.push({ event: "tawkto", data: data });
+};
+Tawk_API.onPrechatSubmit = function (data) {
+  window.dataLayer.push({
+    event: "tawkto",
+    data: data,
+  });
+};

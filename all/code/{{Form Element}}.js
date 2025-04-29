@@ -1,0 +1,37 @@
+// document
+// {{Form Element}}
+
+// function a() {
+//     var e = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
+//         a = {{Form Element}}.querySelector('input[name*="email"]').value;
+//     if (a.match(e)) return a;
+//     return "";
+// }
+
+// function a() {
+//     var e = /^(\d{3})[-]?(\d{3})[-]?(\d{4})$/,
+//         a = {{Form Element}}.querySelector('input[name*="Phone"]').value;
+//     if (a.match(e)) return "+84" + a.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "");
+//     return "";
+// }
+
+function a() {
+    var a = {{Form Element}}.querySelector('input[name*="email"]').value;
+    return a ? a : "";
+}
+
+function a() {
+	var a = {{Form Element}}.querySelector('input[name*=phone]').value;
+	return a ? "+84" + a.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "") : "";
+}
+
+
+function a() {
+    return {{Form Element}}.querySelector("[name=form_item47]").value.split(/[:+]/g)[1].replace(/[^\d]/g, "") * 1000;
+}
+
+
+function a() {
+	var a = {{Form Element}}.querySelector('input[name*=Mobile]').value;
+	return a ? "+84" + a.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "") : "";
+}
