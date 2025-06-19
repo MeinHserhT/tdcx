@@ -31,3 +31,20 @@ jQuery(document).on("submit_success", function (evt) {
     event: "form_dangky",
   });
 });
+
+document.addEventListener("wpcf7mailsent", function (e) {
+  var a = e.detail.inputs.find(function (e) {
+    return e.name.includes("email");
+  });
+  if (a.value) {
+    window.dataLayer.push({
+      event: "data",
+      email: a.value,
+    });
+
+    window.dataLayer.push({
+      event: "gui_form",
+      formID: e.detail.contactFormId,
+    });
+  }
+});

@@ -79,6 +79,48 @@ function a() {
     em = document.querySelector("#billing_email").value,
     term = document.querySelector("#terms").checked;
 
-    if (fn && ln && ct && add && city && ph && em && term) return "y";
-    return "n";
+  if (fn && ln && ct && add && city && ph && em && term) return "y";
+  return "n";
 }
+
+window.dataLayer = window.dataLayer || [];
+var o = {},
+  b = document.querySelector('input[name*="phone"]'),
+  c = document.querySelector('input[name*="name"]'),
+  d = document.querySelector('input[name*="address"]'),
+  val = +jQuery(".popup_quickbuy_total_calc")[0].innerText.replace(
+    /[^\d]/g,
+    ""
+  );
+o.phone = "+84" + b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "");
+Object.keys(o).length &&
+  c.value &&
+  d.value &&
+  window.dataLayer.push({ event: "muahang", obj: o, total: val });
+
+function p() {
+  window.dataLayer = window.dataLayer || [];
+  var a = document.querySelector('input[id*="email"]'),
+    b = document.querySelector('input[id*="phone"]'),
+    c = document.querySelector('input[id*="first"]'),
+    d = document.querySelector('input[id*="last"]'),
+    e = document.querySelector('input[id*="address_1"]'),
+    f = document.querySelector('input[id*="city"]'),
+    i = document.querySelector('select[id*="country"]'),
+    o = {},
+    v = +document
+      .querySelector(".order-total .amount")
+      .innerText.replace(/[^\d]/g, "");
+
+  o.email = a.value;
+  o.phone = "+84" + b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "");
+  2 === Object.keys(o).length &&
+    c.value &&
+    d.value &&
+    e.value &&
+    f.value &&
+    i.value &&
+    v &&
+    window.dataLayer.push({ event: "muahang", total: v, obj: o });
+}
+p();

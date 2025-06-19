@@ -38,4 +38,12 @@ function _e() {
     .innerText;
 }
 
+function e() {
+  return document.querySelector("[type=email]").value;
+}
+
+function p() {
+  return document.querySelector("[type=tel]").value;
+}
+
 // order-received

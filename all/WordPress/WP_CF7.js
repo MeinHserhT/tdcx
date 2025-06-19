@@ -1,7 +1,7 @@
 document.addEventListener("wpcf7mailsent", function (e) {
   window.dataLayer.push({
     event: "gui_form",
-    formID: e.detail.contactFormId,
+    formID: e.detail,
   });
 });
 
@@ -10,21 +10,22 @@ document.addEventListener("wpcf7mailsent", function (e) {
   var a = e.detail.inputs.find(function (e) {
     return e.name.includes("email");
   });
-  a.value &&
+  if (a.value) {
+    window.dataLayer.push({
+      event: "data",
+      email: a.value,
+    });
+
     window.dataLayer.push({
       event: "gui_form",
       formID: e.detail.contactFormId,
-      email: a.value,
     });
+  }
 });
 // -----------------------------------------------------------------------------
 document.addEventListener("wpcf7mailsent", function (e) {
   var b = e.detail.inputs.find(function (n) {
-    return (
-      n.name.includes("number") ||
-      n.name.includes("phone") ||
-      n.name.includes("tel")
-    );
+    return n.name.includes("so-dien-thoai");
   });
   b.value &&
     window.dataLayer.push({
