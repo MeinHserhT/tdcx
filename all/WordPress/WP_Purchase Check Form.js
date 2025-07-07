@@ -60,15 +60,13 @@ var fn = document.querySelector("#billing_first_name").value,
   ph = document.querySelector("#billing_phone").value,
   em = document.querySelector("#billing_email").value,
   term = document.querySelector("#terms").checked,
-  value = parseFloat(
-    document
-      .querySelector("strong .woocommerce-Price-amount.amount")
-      .innerText.replace(/[^\d.-]/g, "")
-  );
-
+  value = +document
+    .querySelector("strong .woocommerce-Price-amount.amount")
+    .innerText.replace(/[^\d.-]/g, "");
 function a() {
   return +localStorage.getItem("value");
 }
+
 function a() {
   var fn = document.querySelector("#billing_first_name").value,
     ln = document.querySelector("#billing_last_name").value,

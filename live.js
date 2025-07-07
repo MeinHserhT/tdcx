@@ -120,3 +120,9 @@ document.querySelectorAll("input[name=phone]").forEach(function (e) {
       phone: "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
     });
 });
+
+localStorage.setItem(
+  "total_purchased", +document
+    .querySelector("strong .woocommerce-Price-amount.amount")
+    .innerText.replace(/[^\d.-]/g, ""),
+);

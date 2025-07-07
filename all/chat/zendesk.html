@@ -1,0 +1,8 @@
+<script>
+  zE("webWidget:on", "userEvent", function (event) {
+    dataLayer.push({
+      event: "zendesk_form",
+      eventAction: event.action,
+    });
+  });
+</script>
