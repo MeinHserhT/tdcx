@@ -46,4 +46,14 @@ function p() {
   return document.querySelector("[type=tel]").value;
 }
 
+localStorage.setItem(
+  "total", +document
+    .querySelector("strong .woocommerce-Price-amount.amount")
+    .innerText.replace(/[^\d.-]/g, ""),
+);
+
+function a() {
+  return localStorage.getItem("total")
+}
+
 // order-received

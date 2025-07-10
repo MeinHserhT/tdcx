@@ -107,22 +107,18 @@ document.querySelectorAll("input[type=email]").forEach(function (e) {
   e.value && dataLayer.push({ email: e.value });
 });
 
-document.querySelectorAll("input[type=tel]").forEach(function (e) {
-  e.value &&
-    dataLayer.push({
-      phone: "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
-    });
-});
-
-document.querySelectorAll("input[name=phone]").forEach(function (e) {
-  e.value &&
-    dataLayer.push({
-      phone: "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
-    });
-});
+document
+  .querySelectorAll("input[type=tel], input[name=phone]")
+  .forEach(function (e) {
+    e.value &&
+      dataLayer.push({
+        phone: "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
+      });
+  });
 
 localStorage.setItem(
-  "total_purchased", +document
+  "total",
+  +document
     .querySelector("strong .woocommerce-Price-amount.amount")
-    .innerText.replace(/[^\d.-]/g, ""),
+    .innerText.replace(/[^\d.-]/g, "")
 );
