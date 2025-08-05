@@ -10,6 +10,7 @@
 
 // --------------------------------------------------------------------------
 // gtm.timerInterval
+// gtm.scrollThreshold
 // --------------------------------------------------------------------------
 
 function _ec() {
@@ -65,26 +66,38 @@ document.querySelectorAll(".arcu-button").forEach(function (e) {
   });
 });
 
+localStorage.setItem(
+  "total",
+  +document
+    .querySelector("strong .woocommerce-Price-amount.amount")
+    .innerText.replace(/[^\d.-]/g, "")
+);
+
+function a() {
+  return (
+    "+84" +
+    document
+      .querySelector("#txtDienThoaiBaoGiaPopup")
+      .value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
+  );
+}
+
+function a() {
+  return (
+    document
+      .querySelector("[name=form_item47]")
+      .value.split(/[:+]/g)[1]
+      .replace(/[^\d]/g, "") * 1000
+  );
+}
+
 document
-  .querySelectorAll('a[title*="nhận báo giá"], a[title*="đăng ký"]')
-  .forEach(function (ele) {
-    ele.addEventListener("click", function () {
-      setTimeout(function () {
-        var err = document.querySelector(".gh-alert-content .msg");
-        if (!err) {
-          document
-            .querySelectorAll('input[data-field="DienThoai"]')
-            .forEach(function (e) {
-              e.value &&
-                dataLayer.push({
-                  event: "success",
-                  phone:
-                    "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
-                });
-            });
-        }
-      }, 500);
-    });
+  .querySelectorAll('[placeholder="Số Điện Thoại"]')
+  .forEach(function (e) {
+    if (e.value)
+      dataLayer.push({
+        phone: "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
+      });
   });
 
 function a() {
@@ -96,29 +109,17 @@ function a() {
 }
 
 function a() {
-  var p;
+  var em;
   document.querySelectorAll("input[type=email]").forEach(function (e) {
-    e.value && (p = e.value);
+    e.value && (em = e.value);
+  });
+  return em;
+}
+
+function a() {
+  var p;
+  document.querySelectorAll("input[name=phone]").forEach(function (e) {
+    e.value && (p = "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""));
   });
   return p;
 }
-
-document.querySelectorAll("input[type=email]").forEach(function (e) {
-  e.value && dataLayer.push({ email: e.value });
-});
-
-document
-  .querySelectorAll("input[type=tel], input[name=phone]")
-  .forEach(function (e) {
-    e.value &&
-      dataLayer.push({
-        phone: "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
-      });
-  });
-
-localStorage.setItem(
-  "total",
-  +document
-    .querySelector("strong .woocommerce-Price-amount.amount")
-    .innerText.replace(/[^\d.-]/g, "")
-);

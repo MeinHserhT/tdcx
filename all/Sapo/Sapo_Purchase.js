@@ -14,6 +14,8 @@ function c() {
 	return document.querySelector(".col:nth-child(1) p:nth-child(3)").innerText;
 }
 
+// Bizweb.checkout.billing_address.phone
+
 // add to cart
 function a() {
 	return +document

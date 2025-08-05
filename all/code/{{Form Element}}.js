@@ -16,22 +16,15 @@
 // }
 
 function a() {
-    var a = {{Form Element}}.querySelector('input[name*="mail"]').value;
-    return a ? a : "";
+  var a = {{Form Element}}.querySelector('input[name*="mail"]').value;
+  return a ? a : "";
 }
 
 function a() {
-	var a = {{Form Element}}.querySelector('input[name*=phone]').value;
-	return a ? "+84" + a.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "") : "";
+  var a = {{Form Element}}.querySelector("input[name*=phone]").value;
+  return a ? "+84" + a.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "") : "";
 }
 
-
-function a() {
-    return {{Form Element}}.querySelector("[name=form_item47]").value.split(/[:+]/g)[1].replace(/[^\d]/g, "") * 1000;
-}
-
-
-function a() {
-	var a = {{Form Element}}.querySelector('input[name*=Mobile]').value;
-	return a ? "+84" + a.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "") : "";
-}
+var PDF = function a() {
+  return {{Form Element}}.querySelector("[id*=browse_button]") ? "Y" : "N";
+};

@@ -22,3 +22,25 @@ onElmClick(".btn", function (e) {
     }
   }, 500);
 });
+
+document
+  .querySelectorAll('a[title*="nhận báo giá"], a[title*="đăng ký"]')
+  .forEach(function (ele) {
+    ele.addEventListener("click", function () {
+      setTimeout(function () {
+        var err = document.querySelector(".gh-alert-content .msg");
+        if (!err) {
+          document
+            .querySelectorAll('input[data-field="DienThoai"]')
+            .forEach(function (e) {
+              e.value &&
+                dataLayer.push({
+                  event: "success",
+                  phone:
+                    "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
+                });
+            });
+        }
+      }, 500);
+    });
+  });

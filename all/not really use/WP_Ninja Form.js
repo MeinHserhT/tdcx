@@ -32,3 +32,15 @@
     }
   );
 })();
+
+
+//Ninja Form
+jQuery(document).ready(function() {
+  jQuery(document).on('nfFormSubmitResponse', function(event, response, id) {
+    window.emailNFEC = response.response.data.fields["6"].value;
+    dataLayer.push({
+        'event': 'ninjaFormSubmission',
+        'NFformID': response.id,    
+      });
+  });
+});
