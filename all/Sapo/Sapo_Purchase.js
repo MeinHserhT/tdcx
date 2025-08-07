@@ -1,3 +1,6 @@
+Bizweb.checkout.total_price
+
+
 function a() {
 	return +document
 		.querySelector(".payment-due__price")
@@ -15,6 +18,8 @@ function c() {
 }
 
 // Bizweb.checkout.billing_address.phone
+// Bizweb.checkout.total_price
+// Bizweb.checkout.order_id
 
 // add to cart
 function a() {

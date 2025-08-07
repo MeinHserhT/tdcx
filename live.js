@@ -8,6 +8,7 @@
 // a[href*="whatsapp.com"], a[href*="whatsapp.com"] *
 // a[href*="wa.me"], a[href*="wa.me"] *
 
+
 // --------------------------------------------------------------------------
 // gtm.timerInterval
 // gtm.scrollThreshold

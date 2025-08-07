@@ -1,4 +1,4 @@
-(function () {
+function test() {
   if (location.hostname !== "mirin.corp.google.com") {
     return false;
   }
@@ -366,46 +366,46 @@
     observer.observe(targetNode, config);
   }
 
-  // function _remindme() {
-  //   window.once_act = 1;
+  function _remindme() {
+    window.once_act = 1;
 
-  //   window._is_silent =
-  //     window._is_silent || "1" == localStorage.getItem("__issilent")
-  //       ? 1
-  //       : 0 || 0;
+    window._is_silent =
+      window._is_silent || "1" == localStorage.getItem("__issilent")
+        ? 1
+        : 0 || 0;
 
-  //   var url =
-  //     "https://bucket-o39pcy.s3.ap-southeast-1.amazonaws.com/cdtx.lyl.vn/assets/mp3/palomita_iphone.mp3";
-  //   var myAudio = new Audio(url);
+    var url =
+      "https://bucket-o39pcy.s3.ap-southeast-1.amazonaws.com/cdtx.lyl.vn/assets/mp3/palomita_iphone.mp3";
+    var myAudio = new Audio(url);
 
-  //   window._once_play = window._once_play || 0;
-  //   var ntime = 0;
-  //   myAudio.addEventListener(
-  //     "ended",
-  //     function () {
-  //       // console.log(ntime)
-  //       if (ntime > 0) {
-  //         return false;
-  //       }
-  //       ntime = ntime + 1;
+    window._once_play = window._once_play || 0;
+    var ntime = 0;
+    myAudio.addEventListener(
+      "ended",
+      function () {
+        // console.log(ntime)
+        if (ntime > 0) {
+          return false;
+        }
+        ntime = ntime + 1;
 
-  //       this.currentTime = 0;
-  //       this.play();
-  //     },
-  //     false
-  //   );
+        this.currentTime = 0;
+        this.play();
+      },
+      false
+    );
 
-  //   var _play_remind = function () {
-  //     if (window._once_play == 1) return false;
-  //     window._once_play = 1;
-  //     ntime = 0;
+    var _play_remind = function () {
+      if (window._once_play == 1) return false;
+      window._once_play = 1;
+      ntime = 0;
 
-  //     if (window._is_silent) return false;
-  //     myAudio.play();
-  //   };
+      if (window._is_silent) return false;
+      myAudio.play();
+    };
 
-    // test
-    //_play_remind();
+    test;
+    _play_remind();
 
     window.objThongKe = window.objThongKe || {};
     window.objThongKe[formatDateV2(new Date(), "Ymd")] =
@@ -606,4 +606,4 @@
   }
 
   _remindme();
-})();
+}

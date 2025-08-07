@@ -1,9 +1,9 @@
-document.addEventListener("wpcf7mailsent", function (e) {
+<script>document.addEventListener("wpcf7mailsent", function (e) {
   dataLayer.push({
     event: "gui_form",
     formID: e.detail,
   });
-});
+});</script>
 
 // -----------------------------------------------------------------------------
 document.addEventListener("wpcf7mailsent", function (e) {
