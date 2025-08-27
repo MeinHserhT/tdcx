@@ -17,7 +17,6 @@ function _id() {
     .innerText.replace(/\D/g, "");
   return ordId;
 }
-
 function _id() {
   return document
     .querySelector(".order")
@@ -32,28 +31,30 @@ function _p() {
       .innerText.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
   );
 }
-
 function _e() {
   return document.querySelector(".woocommerce-customer-details--email")
     .innerText;
 }
-
 function e() {
   return document.querySelector("[type=email]").value;
 }
-
 function p() {
-  return document.querySelector("[type=tel]").value;
+  return (
+    "+84" +
+    document
+      .querySelector("[type=tel]")
+      .value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
+  );
 }
-
 localStorage.setItem(
-  "total", +document
+  "total",
+  +document
     .querySelector("strong .woocommerce-Price-amount.amount")
-    .innerText.replace(/[^\d.-]/g, ""),
+    .innerText.replace(/[^\d.-]/g, "")
 );
 
 function a() {
-  return localStorage.getItem("total")
+  return localStorage.getItem("total");
 }
 
 // order-received

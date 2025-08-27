@@ -8,7 +8,6 @@
 // a[href*="whatsapp.com"], a[href*="whatsapp.com"] *
 // a[href*="wa.me"], a[href*="wa.me"] *
 
-
 // --------------------------------------------------------------------------
 // gtm.timerInterval
 // gtm.scrollThreshold
@@ -70,9 +69,11 @@ document.querySelectorAll(".arcu-button").forEach(function (e) {
 localStorage.setItem(
   "total",
   +document
-    .querySelector("strong .woocommerce-Price-amount.amount")
+    .querySelector(".payment-due-price")
     .innerText.replace(/[^\d.-]/g, "")
 );
+
+function a() {return +localStorage.getItem("total")}
 
 function a() {
   return (
@@ -80,15 +81,6 @@ function a() {
     document
       .querySelector("#txtDienThoaiBaoGiaPopup")
       .value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
-  );
-}
-
-function a() {
-  return (
-    document
-      .querySelector("[name=form_item47]")
-      .value.split(/[:+]/g)[1]
-      .replace(/[^\d]/g, "") * 1000
   );
 }
 
@@ -124,3 +116,5 @@ function a() {
   });
   return p;
 }
+
+

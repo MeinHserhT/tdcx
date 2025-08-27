@@ -1,4 +1,4 @@
-Bizweb.checkout.total_price
+
 
 
 function a() {
@@ -27,6 +27,7 @@ function a() {
 		.querySelector(".product-price")
 		.innerText.replace(/[^\d]/g, "");
 }
+
 
 // dataLayer.push({
 //   event: "add_to_cart",

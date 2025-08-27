@@ -16,15 +16,24 @@
 // }
 
 function a() {
-  var a = {{Form Element}}.querySelector('input[name*="mail"]').value;
+  var a = document.querySelector("input[type=email]").value;
   return a ? a : "";
 }
 
-function a() {
-  var a = {{Form Element}}.querySelector("input[name*=phone]").value;
-  return a ? "+84" + a.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "") : "";
-}
+// function a() {
+//   var a =
+//     {{Form Element}}.querySelector('input[name*="mail"]').value ||
+//     {{Form Element}}.querySelector("input[type=email]").value;
+//   return a ? a : "";
+// }
 
-var PDF = function a() {
-  return {{Form Element}}.querySelector("[id*=browse_button]") ? "Y" : "N";
-};
+// function a() {
+//   var a =
+//     {{Form Element}}.querySelector("input[name*=phone]").value ||
+//     {{Form Element}}.querySelector("input[type=tel]").value;
+//   return a ? "+84" + a.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "") : "";
+// }
+
+// var PDF = function a() {
+//   return {{Form Element}}.querySelector("[id*=browse_button]") ? "Y" : "N";
+// };

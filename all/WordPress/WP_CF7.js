@@ -1,9 +1,9 @@
-<script>document.addEventListener("wpcf7mailsent", function (e) {
+document.addEventListener("wpcf7mailsent", function (e) {
   dataLayer.push({
     event: "gui_form",
     formID: e.detail,
   });
-});</script>
+});
 
 // -----------------------------------------------------------------------------
 document.addEventListener("wpcf7mailsent", function (e) {
@@ -37,7 +37,7 @@ document.addEventListener("wpcf7mailsent", function (e) {
 // -----------------------------------------------------------------------------
 document.addEventListener("wpcf7mailsent", function (e) {
   var b = e.detail.inputs.find(function (n) {
-    return n.name.includes("tel");
+    return n.name.includes("your-number");
   });
   b.value &&
     dataLayer.push({

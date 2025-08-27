@@ -59,10 +59,12 @@ var fn = document.querySelector("#billing_first_name").value,
   city = document.querySelector("#billing_city").value,
   ph = document.querySelector("#billing_phone").value,
   em = document.querySelector("#billing_email").value,
-  term = document.querySelector("#terms").checked,
-  value = +document
-    .querySelector("strong .woocommerce-Price-amount.amount")
-    .innerText.replace(/[^\d.-]/g, "");
+  term = document.querySelector('[name="agree"]').checked,
+  a = 0;
+document.querySelectorAll('[name="payment"]').forEach(function (e) {
+  if (e.checked) a = 1;
+});
+
 function a() {
   return +localStorage.getItem("value");
 }
@@ -122,3 +124,13 @@ function p() {
     window.dataLayer.push({ event: "muahang", total: v, obj: o });
 }
 p();
+
+function a() {
+  var term = document.querySelector('[name="agree"]').checked,
+    a = 0;
+  document.querySelectorAll('[name="payment"]').forEach(function (e) {
+    if (e.checked) a = 1;
+  });
+  if (term && a) return 1;
+  return 0;
+}

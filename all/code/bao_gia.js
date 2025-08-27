@@ -2,7 +2,7 @@ var onElmClick = function (e, f) {
     document.addEventListener("click", function (n) {
       n.target.matches(e) && f(n);
     });
-  },
+},
   btn = null;
 onElmClick(".btn", function (e) {
   setTimeout(function () {
@@ -23,6 +23,7 @@ onElmClick(".btn", function (e) {
   }, 500);
 });
 
+<script>
 document
   .querySelectorAll('a[title*="nhận báo giá"], a[title*="đăng ký"]')
   .forEach(function (ele) {
@@ -35,7 +36,7 @@ document
             .forEach(function (e) {
               e.value &&
                 dataLayer.push({
-                  event: "success",
+                  event: "gui_form",
                   phone:
                     "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
                 });
@@ -43,4 +44,4 @@ document
         }
       }, 500);
     });
-  });
+  });</script>
