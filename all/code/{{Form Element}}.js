@@ -27,12 +27,12 @@ function a() {
 //   return a ? a : "";
 // }
 
-// function a() {
-//   var a =
-//     {{Form Element}}.querySelector("input[name*=phone]").value ||
-//     {{Form Element}}.querySelector("input[type=tel]").value;
-//   return a ? "+84" + a.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "") : "";
-// }
+function a() {
+  var a =
+    {{Form Element}}.querySelector("input[name*=phone]").value ||
+    {{Form Element}}.querySelector("input[type=tel]").value;
+  return a ? "+84" + a.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "") : "";
+}
 
 // var PDF = function a() {
 //   return {{Form Element}}.querySelector("[id*=browse_button]") ? "Y" : "N";

@@ -122,7 +122,7 @@ const createAgentRowHtml = (agent) => {
     <div class="tr ${getStatusClass(agent)}">
       <div class="td left">
         <img src="${agent.imgSrc}" alt="Avatar for ${agent.agentLdap}" />
-        <p>${agent.agentLdap}</p>
+        <p>${agent.agentLdap} ${agent.agentLdap === "qule" ? "🌸🌸👑" : ""}</p>
       </div>
       <div class="td right">
         <div>
