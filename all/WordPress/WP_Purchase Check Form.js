@@ -134,3 +134,13 @@ function a() {
   if (term && a) return 1;
   return 0;
 }
+
+
+function a() {
+  var a = document.querySelector(".customer-name.valid"),
+    b = document.querySelector(".customer-phone.valid"),
+    c = document.querySelector(".customer-address.valid");
+
+  if (a && b && c) return true;
+  return "n";
+}

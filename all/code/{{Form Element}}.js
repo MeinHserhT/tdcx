@@ -28,9 +28,7 @@ function a() {
 // }
 
 function a() {
-  var a =
-    {{Form Element}}.querySelector("input[name*=phone]").value ||
-    {{Form Element}}.querySelector("input[type=tel]").value;
+  var a = {{Form Element}}.querySelector("input[type=tel]").value;
   return a ? "+84" + a.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "") : "";
 }
 
