@@ -1,7 +1,6 @@
 const CONFIG = {
   AGENT_TABLE_SELECTOR: ".agent-table-container",
   UI_CONTAINER_ID: "agent_ui",
-  PROFILE_IMG_SELECTOR: "img[alt='profile photo']",
   PRIORITY: { available: 1, default: 2, busy: 3 },
   ICONS: {
     coffeebreak: {
@@ -26,6 +25,7 @@ const CONFIG = {
     },
   },
 };
+let observer;
 const myLdap = document
   .querySelector("[alt='profile photo']")
   .src.match(/\/([^\/]+)\?/)[1];
@@ -64,8 +64,11 @@ const tableToJson = (table) =>
   });
 const styleSheet = () => {
   var css = `
-    #agent_ui { position: fixed; height: 100%; width: 100%; top: 0; left: 0; background-color: rgba(0,0,0,0.1); backdrop-filter: blur(4px); z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto; }
-    .ui-table { display: grid; grid-template-columns: repeat(2, 1fr); width: 100%; max-width: 400px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+    #agent_ui { position: fixed; height: 100%; width: 100%; top: 0; left: 0; background-color: rgba(0,0,0,0.1); backdrop-filter: blur(4px); z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; font-family: Noto Serif; }
+    .ui-content-wrapper { position: relative; }
+    .close-btn { position: absolute; top: 0; right: 0; transform: translate(40%, -40%); width: 32px; height: 32px; background: #ffffff; border: none; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.25); font-size: 24px; color: #555; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; font-weight: 300; transition: transform 0.2s ease, background-color 0.2s ease; padding-bottom: 2px; z-index: 10; }
+    .close-btn:hover { background-color: #f2f2f2; transform: translate(40%, -40%) scale(1.1); }
+    .ui-table { display: grid; grid-template-columns: repeat(2, 1fr); width: 100%; max-width: 550px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
     .ui-table .tr { display: contents; }
     .ui-table .td { padding: 8px 12px; display: flex; align-items: center; transition: background-color 0.4s ease, transform 0.2s ease; }
     .ui-table .left { justify-content: flex-start; font-size: 16px; font-weight: 500; }
@@ -96,7 +99,6 @@ const styleSheet = () => {
 const getStatusClass = (agent) => {
   if (agent.auxCode === "Active" && agent.phoneCapacity === "busy")
     agent.auxCode = "Break";
-
   return "stt-" + agent.auxCode.toLowerCase().replace(/\s+/g, "-");
 };
 const iconHtml = (auxCode) => {
@@ -110,7 +112,6 @@ const createAgentRowHtml = (agent) => {
       ? agent.lastChange
       : agent.timeSpent;
   agent.previousStat = agent.phoneCapacity;
-
   return `
     <div class="tr ${getStatusClass(agent)}">
       <div class="td left">
@@ -126,28 +127,40 @@ const createAgentRowHtml = (agent) => {
       </div>
     </div>`;
 };
+const closeUi = () => {
+  const uiContainer = document.getElementById(CONFIG.UI_CONTAINER_ID);
+  if (uiContainer) uiContainer.style.display = "none";
+
+  // This will now work because 'observer' is in the global scope
+  if (observer) observer.disconnect();
+};
 const uiRender = () => {
   const agentTable = document.querySelector(CONFIG.AGENT_TABLE_SELECTOR);
   if (!agentTable) return;
 
   const agents = tableToJson(agentTable);
-
   agents.sort((a, b) => {
     const { PRIORITY } = CONFIG;
     const aPriority = PRIORITY[a.phoneCapacity] || PRIORITY.default;
     const bPriority = PRIORITY[b.phoneCapacity] || PRIORITY.default;
-
     return (
-      (b.agentLdap === myLdap) - (a.agentLdap === myLdap) || // Current user first
-      aPriority - bPriority || // Then by phone capacity
+      (b.agentLdap === myLdap) - (a.agentLdap === myLdap) ||
+      aPriority - bPriority ||
       b.lastChangeInSec - a.lastChangeInSec
-    ); // Finally by most recent change
+    );
   });
 
   const rowsHtml = agents.map(createAgentRowHtml).join("");
-  const tableHtml = _trustScript(`<div class="ui-table">${rowsHtml}</div>`);
+  const closeButtonHtml = `<button id="close-btn" class="close-btn" title="Close">&times;</button>`;
+  const tableHtml = `<div class="ui-table">${rowsHtml}</div>`;
 
-  // Find or create the UI container and update its content
+  const finalHtml = _trustScript(`
+    <div class="ui-content-wrapper">
+        ${closeButtonHtml}
+        ${tableHtml}
+    </div>
+  `);
+
   const container =
     document.getElementById(CONFIG.UI_CONTAINER_ID) ??
     document.body.appendChild(
@@ -156,11 +169,16 @@ const uiRender = () => {
       })
     );
 
-  container.innerHTML = tableHtml;
+  container.style.display = "flex";
+  container.innerHTML = finalHtml;
+
+  const closeButton = document.getElementById("close-btn");
+  if (closeButton) closeButton.addEventListener("click", closeUi);
 };
+
 const main = () => {
   styleSheet();
-  const observer = new MutationObserver(uiRender);
+  observer = new MutationObserver(uiRender);
   const targetNode = document.querySelector(CONFIG.AGENT_TABLE_SELECTOR);
   if (targetNode) {
     observer.observe(targetNode, {
@@ -169,7 +187,6 @@ const main = () => {
       subtree: true,
       characterData: true,
     });
-
     uiRender();
   } else {
     console.error("Target element not found.");
