@@ -118,3 +118,15 @@ function a() {
 }
 
 
+function a() {
+  var a = document.querySelector("#ten").value,
+    b = document.querySelector("#dienthoai").value,
+    c = document.querySelector("#email").value,
+    d = document.querySelector("#diachi").value,
+    e = document.querySelector("#city").value,
+    f = document.querySelector("#district").value,
+    g = document.querySelector("#wards").value;
+
+  if (a && b && c && d && e && f && g) return "y";
+  return "n";
+}

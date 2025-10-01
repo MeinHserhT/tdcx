@@ -1,14 +1,21 @@
 const CONFIG = {
   AGENT_TABLE_SELECTOR: ".agent-table-container",
   UI_CONTAINER_ID: "agent_ui",
-  PROFILE_IMG_SELECTOR: "img[alt='profile photo']",
-  PRIORITY: { available: 1, default: 2, busy: 3 },
+  PRIOR: {
+    active: 1,
+    phone: 2,
+    "lunch-break": 3,
+    email: 4,
+    "coffee-break": 5,
+    break: 6,
+    default: 99,
+  },
   ICONS: {
-    coffeebreak: {
+    "coffee-break": {
       src: "https://cdn-icons-png.flaticon.com/512/2935/2935413.png",
       animation: "wiggle",
     },
-    lunchbreak: {
+    "lunch-break": {
       src: "https://cdn-icons-png.flaticon.com/512/4252/4252424.png",
       animation: "pulse",
     },
@@ -24,8 +31,10 @@ const CONFIG = {
       src: "https://cdn-icons-png.flaticon.com/512/2115/2115487.png",
       animation: "wiggle",
     },
+    close: "https://cdn-icons-png.flaticon.com/512/9403/9403346.png",
   },
 };
+let observer;
 const myLdap = document
   .querySelector("[alt='profile photo']")
   .src.match(/\/([^\/]+)\?/)[1];
@@ -57,15 +66,17 @@ const tableToJson = (table) =>
             phoneCapacity: phoneCap,
             lastChange: cells[8].innerText.trim(),
             lastChangeInSec: strToSec(cells[8].innerText),
-            previousStat: phoneCap + cells[3].innerText,
           }
         : {}),
     };
   });
 const styleSheet = () => {
   var css = `
-    #agent_ui { position: fixed; height: 100%; width: 100%; top: 0; left: 0; background-color: rgba(0,0,0,0.1); z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto; }
-    .ui-table { display: grid; grid-template-columns: repeat(2, 1fr); width: 100%; max-width: 400px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+    #agent_ui { position: fixed; height: 100%; width: 100%; top: 0; right: 0; background-color: rgba(0,0,0,0.1); z-index: 999; display: flex; justify-content: flex-end; align-items: center; padding: 20px; font-family: Noto Serif; pointer-events: none; }
+    .ui-content-wrapper { position: relative; pointer-events: auto; }
+    .close-btn { position: absolute; top: 0; right: 0; transform: translate(40%, -40%); border: none; cursor: pointer; z-index: 10; background: rgba(0, 0, 0, 0)}
+    .close-btn:hover { transform: translate(40%, -40%) scale(1.4); }
+    .ui-table { display: grid; grid-template-columns: repeat(2, 1fr); width: 100%; max-width: 550px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
     .ui-table .tr { display: contents; }
     .ui-table .td { padding: 8px 12px; display: flex; align-items: center; transition: background-color 0.4s ease, transform 0.2s ease; }
     .ui-table .left { justify-content: flex-start; font-size: 16px; font-weight: 500; }
@@ -76,9 +87,11 @@ const styleSheet = () => {
     .ui-table .tr.stt-email .td { background-color: #ace0fe; color: #1d8fdcff; }
     .ui-table .tr.stt-coffee-break .td { background-color: #D2A993; color: #685347; }
     .ui-table .tr.stt-lunch-break .td { background-color: #FFEA99; color: #E58732; }
-    .ui-table .tr:hover .td { transform: scale(1.02); }
+    .ui-table .tr:hover .td { transform: scale(1.1); }
     .ui-table .td p { padding: 0 6px; margin: 1px 0; }
+    .ui-table .td span { opacity: 0.5 }
     img { border-radius: 12px; width: 36px; height: 36px; padding: 4px; }
+    .close-btn img { width: 20px; height: 20px; }
     [animation="pulse"] { animation: pulse 2s infinite ease-in-out; }
     @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
     [animation="wiggle"] { animation: wiggle 0.9s infinite; }
@@ -96,58 +109,75 @@ const styleSheet = () => {
 const getStatusClass = (agent) => {
   if (agent.auxCode === "Active" && agent.phoneCapacity === "busy")
     agent.auxCode = "Break";
-
-  return "stt-" + agent.auxCode.toLowerCase().replace(/\s+/g, "-");
+  return agent.auxCode.toLowerCase().replace(/\s+/g, "-");
 };
-const iconHtml = (auxCode) => {
-  const mapCode = auxCode.toLowerCase().replace(/\s/g, "");
-  const icon = CONFIG.ICONS[mapCode];
+const iconHtml = (agent) => {
+  const icon = CONFIG.ICONS[agent.statusKey];
   return icon ? `<img src="${icon.src}" animation="${icon.animation}"/>` : "";
 };
 const createAgentRowHtml = (agent) => {
-  const timeToDisplay =
-    agent.phoneCapacity !== agent.previousStat
-      ? agent.lastChange
-      : agent.timeSpent;
-  agent.previousStat = agent.phoneCapacity;
-
+  const [displayTime, resvTime] = [agent.lastChange, agent.timeSpent];
+  const iconFl = myLdap === agent.agentLdap ? "🌸" : "";
   return `
-    <div class="tr ${getStatusClass(agent)}">
+    <div class="tr ${"stt-" + getStatusClass(agent)}">
       <div class="td left">
         <img src="${agent.imgSrc}" alt="Avatar for ${agent.agentLdap}" />
-        <p>${agent.agentLdap}</p>
+        <p>${iconFl} ${agent.agentLdap} ${iconFl}</p>
       </div>
       <div class="td right">
         <div>
-          <p>${timeToDisplay}</p>
+          <p>${displayTime} <span>(${resvTime})</span></p>
           <p>${agent.auxCode}</p>
         </div>
-        ${iconHtml(agent.auxCode)}
+        ${iconHtml(agent)}
       </div>
     </div>`;
+};
+const closeUi = () => {
+  const uiContainer = document.getElementById(CONFIG.UI_CONTAINER_ID);
+  if (uiContainer) uiContainer.style.display = "none";
+
+  if (observer) observer.disconnect();
 };
 const uiRender = () => {
   const agentTable = document.querySelector(CONFIG.AGENT_TABLE_SELECTOR);
   if (!agentTable) return;
 
   const agents = tableToJson(agentTable);
-
-  agents.sort((a, b) => {
-    const { PRIORITY } = CONFIG;
-    const aPriority = PRIORITY[a.phoneCapacity] || PRIORITY.default;
-    const bPriority = PRIORITY[b.phoneCapacity] || PRIORITY.default;
-
+  const proAgents = agents.map((agent) => ({
+    ...agent,
+    statusKey: getStatusClass(agent),
+  }));
+  proAgents.sort((a, b) => {
+    const { PRIOR } = CONFIG;
+    const aPriority = PRIOR[a.statusKey] || PRIOR.default;
+    const bPriority = PRIOR[b.statusKey] || PRIOR.default;
     return (
-      (b.agentLdap === myLdap) - (a.agentLdap === myLdap) || // Current user first
-      aPriority - bPriority || // Then by phone capacity
+      (b.agentLdap === myLdap) - (a.agentLdap === myLdap) ||
+      aPriority - bPriority ||
       b.lastChangeInSec - a.lastChangeInSec
-    ); // Finally by most recent change
+    );
   });
+  const rowsHtml = proAgents.map(createAgentRowHtml).join("");
+  const closeButtonHtml = `<button class="close-btn" title="Close"><img src="${CONFIG.ICONS.close}"/></button>`;
+  const tableHtml = `<div class="ui-table">${rowsHtml}</div>`;
 
-  const rowsHtml = agents.map(createAgentRowHtml).join("");
-  const tableHtml = _trustScript(`<div class="ui-table">${rowsHtml}</div>`);
+  const finalHtml = _trustScript(`
+    <div class="ui-content-wrapper">
+      ${closeButtonHtml}
+      ${tableHtml}
+    </div>
+  `);
 
-  // Find or create the UI container and update its content
+  const container = document.getElementById(CONFIG.UI_CONTAINER_ID);
+  if (container) {
+    container.style.display = "flex";
+    container.innerHTML = finalHtml;
+  }
+};
+
+const main = () => {
+  styleSheet();
   const container =
     document.getElementById(CONFIG.UI_CONTAINER_ID) ??
     document.body.appendChild(
@@ -156,11 +186,13 @@ const uiRender = () => {
       })
     );
 
-  container.innerHTML = tableHtml;
-};
-const main = () => {
-  styleSheet();
-  const observer = new MutationObserver(uiRender);
+  container.addEventListener("click", (e) => {
+    if (e.target.closest(".close-btn")) {
+      closeUi();
+    }
+  });
+
+  observer = new MutationObserver(uiRender);
   const targetNode = document.querySelector(CONFIG.AGENT_TABLE_SELECTOR);
   if (targetNode) {
     observer.observe(targetNode, {
@@ -169,10 +201,10 @@ const main = () => {
       subtree: true,
       characterData: true,
     });
-
     uiRender();
   } else {
     console.error("Target element not found.");
   }
 };
+
 main();

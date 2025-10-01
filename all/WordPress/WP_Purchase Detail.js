@@ -13,7 +13,7 @@ function _v() {
 // ---- Order ID -----
 function _id() {
   var ordId = document
-    .querySelector(".woocommerce-order-overview__order.order")
+    .querySelector(".order")
     .innerText.replace(/\D/g, "");
   return ordId;
 }

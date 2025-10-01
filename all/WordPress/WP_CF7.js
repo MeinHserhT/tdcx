@@ -37,7 +37,7 @@ document.addEventListener("wpcf7mailsent", function (e) {
 // -----------------------------------------------------------------------------
 document.addEventListener("wpcf7mailsent", function (e) {
   var b = e.detail.inputs.find(function (n) {
-    return n.name.includes("your-number");
+    return n.name.includes("phone");
   });
   b.value &&
     dataLayer.push({
@@ -53,6 +53,22 @@ dataLayer.push({
     document
       .querySelector("[type='tel']")
       .replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
+});
+
+document.addEventListener("wpcf7mailsent", function (e) {
+  var a = e.detail.inputs.find(function (e) {
+    return e.name.includes("email");
+  });
+  var b = e.detail.inputs.find(function (n) {
+    return n.name.includes("phone");
+  });
+  (a.value || b.value) &&
+    dataLayer.push({
+      event: "gui_form",
+      formID: e.detail.contactFormId,
+      email: a.value,
+      phone: "+84" + b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
+    });
 });
 
 document.addEventListener("wpcf7mailsent", function (e) {
