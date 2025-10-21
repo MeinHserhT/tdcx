@@ -82,3 +82,19 @@ document.addEventListener("wpcf7mailsent", function (e) {
       email: a.value,
     });
 });
+
+document.addEventListener("wpcf7mailsent", function (e) {
+  var a = e.detail.inputs.find(function (e) {
+    return e.name.includes("email");
+  });
+  var b = e.detail.inputs.find(function (n) {
+    return n.name.includes("phone");
+  });
+  (a.value || b.value) &&
+    dataLayer.push({
+      event: "gui_form",
+      formID: e.detail.contactFormId,
+      cf7Email: a.value,
+      cf7Phone: "+84" + b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
+    });
+});

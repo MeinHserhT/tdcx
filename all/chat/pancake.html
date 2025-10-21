@@ -1,0 +1,54 @@
+<script>
+  (function () {
+    function fireOpen(source) {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: "pancake_chat_open",
+        source: source || "detect",
+      });
+    }
+
+    // 1) Bắt click vào các phần tử có dấu hiệu là bubble Pancake trên trang cha
+    document.addEventListener(
+      "click",
+      function (e) {
+        var sel = [
+          ".pancake",
+          ".pc-launcher",
+          ".pc_widget",
+          ".pc-bubble",
+          '[class*="pancake"]',
+          '[id*="pancake"]',
+        ];
+        for (var i = 0; i < sel.length; i++) {
+          var el = e.target.closest(sel[i]);
+          if (el) {
+            fireOpen("click");
+            break;
+          }
+        }
+      },
+      true
+    );
+
+    // 2) Fallback: khi iframe Pancake xuất hiện/mở (cross-domain không click được)
+    var seen = false;
+    var mo = new MutationObserver(function () {
+      var ifr = document.querySelector('iframe[src*="pancake.vn"]');
+      if (ifr && ifr.offsetParent !== null && !seen) {
+        seen = true;
+        fireOpen("iframe");
+        // reset sau 3s để đếm lần mở khác (nếu cần)
+        setTimeout(function () {
+          seen = false;
+        }, 3000);
+      }
+    });
+    mo.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["style", "class"],
+    });
+  })();
+</script>

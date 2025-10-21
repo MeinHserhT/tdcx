@@ -2,7 +2,7 @@ var onElmClick = function (e, f) {
     document.addEventListener("click", function (n) {
       n.target.matches(e) && f(n);
     });
-},
+  },
   btn = null;
 onElmClick(".btn", function (e) {
   setTimeout(function () {
@@ -23,7 +23,6 @@ onElmClick(".btn", function (e) {
   }, 500);
 });
 
-<script>
 document
   .querySelectorAll('a[title*="nhận báo giá"], a[title*="đăng ký"]')
   .forEach(function (ele) {
@@ -44,4 +43,22 @@ document
         }
       }, 500);
     });
-  });</script>
+  });
+
+document.querySelectorAll(".arcu-button").forEach(function (e) {
+  e.addEventListener("click", function () {
+    setTimeout(function () {
+      var element = document.querySelector(".arcu-form-success.active");
+      if (element) {
+        // Có element
+        var elm = document.querySelector("input[name=email]");
+        if (elm.value) {
+          dataLayer.push({
+            event: "success",
+            email: elm.value,
+          });
+        }
+      }
+    }, 500);
+  });
+});

@@ -13,67 +13,30 @@
 // gtm.scrollThreshold
 // --------------------------------------------------------------------------
 
-function _ec() {
-  window.dataLayer = window.dataLayer || [];
-  var o = {},
-    a = document.querySelector('input[name*="email"]'),
-    b = document.querySelector('input[name*="phone"]'),
-    c = document.querySelector('input[name*="name"]'),
-    d = document.querySelector('input[name*="Captcha"]');
-
-  a.value.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/) && (o.email = a.value);
-  9 === (b = b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")).length &&
-    (o.phone = "+84" + b);
-  2 === Object.keys(o).length &&
-    c.value &&
-    d.value &&
-    window.dataLayer.push({ event: "form_dangky", obj: o });
-}
-_ec();
-
-function _ec() {
-  window.dataLayer = window.dataLayer || [];
-  var o = {},
-    a = document.querySelector("[id*=LoaiXeBaoGia]"),
-    b = document.querySelector("input[id*=HoTen]"),
-    c = document.querySelector("input[id*=DienThoai]");
-
-  o.phone = "+84" + c.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "");
-  Object.keys(o).length &&
-    a.value !== -1 &&
-    b.value &&
-    window.dataLayer.push({ event: "form_baogia", obj: o });
-}
-_ec();
-// #btnModel
-
 // jQuery("input[name*=phone]").validity.patternMismatch
-document.querySelectorAll(".arcu-button").forEach(function (e) {
-  e.addEventListener("click", function () {
-    setTimeout(function () {
-      var element = document.querySelector(".arcu-form-success.active");
-      if (element) {
-        // Có element
-        var elm = document.querySelector("input[name=email]");
-        if (elm.value) {
-          dataLayer.push({
-            event: "success",
-            email: elm.value,
-          });
-        }
-      }
-    }, 500);
-  });
-});
-
 localStorage.setItem(
   "total",
-  +document
-    .querySelector(".payment-due-price")
-    .innerText.replace(/[^\d.-]/g, "")
+  +document.querySelector(".Sum2 > span").innerText.replace(/[^\d]/g, "")
 );
 
-function a() {return +localStorage.getItem("total")}
+function a() {
+  return +localStorage.getItem("total");
+}
+
+function a() {
+  var a = 0;
+  document.querySelectorAll(".item_or > td:nth-child(5)").forEach(function (e) {
+    a += +e.innerText.replace(/[^\d]/g, "");
+  });
+  return a;
+}
+
+function a() {
+  var a = +document
+    .querySelector(".load-price-total")
+    .innerText.replace(/[^\d]/g, "");
+  return a;
+}
 
 function a() {
   return (
@@ -84,14 +47,21 @@ function a() {
   );
 }
 
-document
-  .querySelectorAll('[placeholder="Số Điện Thoại"]')
-  .forEach(function (e) {
-    if (e.value)
-      dataLayer.push({
-        phone: "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
-      });
-  });
+function a() {
+  return (
+    "+84" +
+    document
+      .querySelector("#wpforms-5309-field_12")
+      .value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
+  );
+}
+
+document.querySelectorAll('[placeholder*="điện thoại"]').forEach(function (e) {
+  if (e.value)
+    dataLayer.push({
+      phone: "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
+    });
+});
 
 function a() {
   var p;
@@ -108,25 +78,12 @@ function a() {
   });
   return em;
 }
-
 function a() {
-  var p;
-  document.querySelectorAll("input[name=phone]").forEach(function (e) {
-    e.value && (p = "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""));
-  });
-  return p;
-}
-
-
-function a() {
-  var a = document.querySelector("#ten").value,
-    b = document.querySelector("#dienthoai").value,
-    c = document.querySelector("#email").value,
-    d = document.querySelector("#diachi").value,
-    e = document.querySelector("#city").value,
-    f = document.querySelector("#district").value,
-    g = document.querySelector("#wards").value;
-
-  if (a && b && c && d && e && f && g) return "y";
+  var a = document.querySelector('input=[name="ten"]').value;
+  var b = document.querySelector('input=[type="tel"]').value;
+  var c = document.querySelector('input=[name="diachi"]').value;
+  var d = document.querySelector("#city").value;
+  var e = document.querySelector("#wards").value;
+  if (a && b && c && d && e) return "y";
   return "n";
 }
