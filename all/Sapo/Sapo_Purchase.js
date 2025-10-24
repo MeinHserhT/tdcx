@@ -1,6 +1,3 @@
-
-
-
 function a() {
 	return +document
 		.querySelector(".payment-due__price")

@@ -1,64 +1,36 @@
-var onElmClick = function (e, f) {
-    document.addEventListener("click", function (n) {
-      n.target.matches(e) && f(n);
+document.querySelectorAll(".arcu-button").forEach(function (e) {
+    e.addEventListener("click", function () {
+        setTimeout(function () {
+            var element = document.querySelector(".arcu-form-success.active");
+            if (element) {
+                // Có element
+                var elm = document.querySelector("input[name=email]");
+                if (elm.value) {
+                    dataLayer.push({
+                        event: "success",
+                        email: elm.value,
+                    });
+                }
+            }
+        }, 500);
     });
-  },
-  btn = null;
-onElmClick(".btn", function (e) {
-  setTimeout(function () {
-    var element = document.querySelector(".gh-alert-content .msg");
-    if (!element) {
-      btn = e.target;
-
-      var parent = btn.closest(".modal-body") || btn.closest(".container");
-      if (parent) {
-        var ph = parent.querySelector("[id*=txtDienThoai]").value;
-        ph &&
-          dataLayer.push({
-            event: "gui_form",
-            phone: "+84" + ph.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
-          });
-      }
-    }
-  }, 500);
 });
 
-document
-  .querySelectorAll('a[title*="nhận báo giá"], a[title*="đăng ký"]')
-  .forEach(function (ele) {
-    ele.addEventListener("click", function () {
-      setTimeout(function () {
-        var err = document.querySelector(".gh-alert-content .msg");
-        if (!err) {
-          document
-            .querySelectorAll('input[data-field="DienThoai"]')
-            .forEach(function (e) {
-              e.value &&
+document.addEventListener("click", function (e) {
+    (l = e.target.closest('a[title*="báo giá"],a[title*="lái thử"]')),
+        (f = l && l.closest("[class*=-body]"));
+    f &&
+        ((p = f.querySelector('input[data-field="DienThoai"]')),
+        setTimeout(function () {
+            r = document.querySelector(".gh-alert-content .msg");
+            !r &&
+                p &&
+                p.value &&
                 dataLayer.push({
-                  event: "gui_form",
-                  phone:
-                    "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
+                    event: "formmm",
+                    phone:
+                        "+84" +
+                        p.value.replace(/\D/g, "").replace(/^(84|0)/, ""),
                 });
-            });
-        }
-      }, 500);
-    });
-  });
-
-document.querySelectorAll(".arcu-button").forEach(function (e) {
-  e.addEventListener("click", function () {
-    setTimeout(function () {
-      var element = document.querySelector(".arcu-form-success.active");
-      if (element) {
-        // Có element
-        var elm = document.querySelector("input[name=email]");
-        if (elm.value) {
-          dataLayer.push({
-            event: "success",
-            email: elm.value,
-          });
-        }
-      }
-    }, 500);
-  });
+        }, 200));
 });

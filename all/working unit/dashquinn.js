@@ -72,7 +72,7 @@ const tableToJson = (table) =>
   });
 const styleSheet = () => {
   var css = `
-    #agent_ui { position: fixed; height: 100%; width: 100%; top: 0; right: 0; background-color: rgba(0,0,0,0.1); z-index: 999; display: flex; justify-content: flex-end; align-items: center; padding: 20px; font-family: Noto Serif; pointer-events: none; }
+    #agent_ui { position: fixed; height: 100%; width: 100%; top: 0; left: 0; background-color: rgba(0,0,0,0.1); z-index: 999; display: flex; justify-content: flex-end; align-items: center; padding: 20px; font-family: Noto Serif; pointer-events: none; }
     .ui-content-wrapper { position: relative; pointer-events: auto; }
     .close-btn { position: absolute; top: 0; right: 0; transform: translate(40%, -40%); border: none; cursor: pointer; z-index: 10; background: rgba(0, 0, 0, 0)}
     .close-btn:hover { transform: translate(40%, -40%) scale(1.4); }
