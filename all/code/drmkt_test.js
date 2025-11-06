@@ -1,20 +1,20 @@
 var dr_items = [],
   businessType = "retail",
-  is_item = document.querySelector(".product-preview-box"),
-  is_CV = window.location.href.includes("/order/");
+  is_item = document.querySelector(".product-single__wrap"),
+  is_CV = window.location.href.includes("order");
 function dynamic(e, t) {
   dataLayer.push({ dr_event_type: e, dr_items: t, event: "drmkt" });
 }
 if (is_item) {
   // ------ VIEW ITEM  ------
   var t = {
-    id: document.querySelector(".sku").innerText.split(": ")[1],
+    id: document.querySelector(".btn-add__cart").getAttribute("data-id"),
     google_business_vertical: businessType,
   };
   dr_items.push(t);
   dynamic("view_item", dr_items);
   // ------ ADD TO CART -------
-  jQuery("#addQuickCart, #addQuickCart *").on(
+  jQuery(".btn-add__cart, .btn-add__cart *").on(
     "click",
     function () {
       var store = JSON.parse(localStorage.getItem("item_storage")) || [];

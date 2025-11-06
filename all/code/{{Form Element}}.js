@@ -20,12 +20,10 @@ function a() {
   return a ? a : "";
 }
 
-// function a() {
-//   var a =
-//     {{Form Element}}.querySelector('input[name*="mail"]').value ||
-//     {{Form Element}}.querySelector("input[type=email]").value;
-//   return a ? a : "";
-// }
+function a() {
+  var a = {{Form Element}}.querySelector("input[type=email]").value;
+  return a ? a : "";
+}
 
 function a() {
   var a = {{Form Element}}.querySelector("input[type=tel]").value;

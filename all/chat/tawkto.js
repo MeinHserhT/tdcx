@@ -8,17 +8,13 @@ var Tawk_API = Tawk_API || {},
   s1.charset = "UTF-8";
   s1.setAttribute("crossorigin", "*");
   s0.parentNode.insertBefore(s1, s0);
-})();
-
-// Day su kien tawk.to từ API tawk.to thong qua GTM
-
+})()
 var dataLayerPush = function (event) {
   dataLayer.push({
-    event: "tawk.to",
+    event: "tawkto",
     eventAction: event,
   });
 };
-
 Tawk_API.onChatStarted = function () {
   dataLayerPush("Chat Started");
 };
@@ -30,7 +26,6 @@ Tawk_API.onOfflineSubmit = function (data) {
 };
 
 var Tawk_API = window.Tawk_API || {};
-window.dataLayer = window.dataLayer || [];
 Tawk_API.onChatStarted = function (data) {
   if (Tawk_API.isVisitorEngaged()) {
     window.dataLayer.push({ event: "tawkto", data: data });

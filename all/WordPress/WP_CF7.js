@@ -52,10 +52,10 @@ dataLayer.push({
 });
 
 document.addEventListener("wpcf7mailsent", function (e) {
-    const a = e.detail.inputs.find(function (i) {
+    var a = e.detail.inputs.find(function (i) {
         return i.name.includes("email");
     })?.value;
-    const b = e.detail.inputs.find(function (i) {
+    var b = e.detail.inputs.find(function (i) {
         return i.name.includes("phone");
     })?.value;
 
@@ -67,3 +67,4 @@ document.addEventListener("wpcf7mailsent", function (e) {
             phone: b ? "+84" + b.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "") : "",
         });
 });
+

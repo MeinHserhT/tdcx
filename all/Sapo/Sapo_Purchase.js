@@ -14,6 +14,7 @@ function c() {
 	return document.querySelector(".col:nth-child(1) p:nth-child(3)").innerText;
 }
 
+// checkout/thankyou
 // Bizweb.checkout.billing_address.phone
 // Bizweb.checkout.total_price
 // Bizweb.checkout.order_id
