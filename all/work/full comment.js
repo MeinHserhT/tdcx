@@ -1,113 +1,44 @@
-/**
- * ===================================================================================
- * SCRIPT 1: cases.connect
- * This script runs on 'cases.connect'. It adds UI elements (buttons) to the page
- * for two main purposes:
- * 1. A "Follow-up" button that shows a badge with the count of follow-up items.
- * 2. An "Auto-Clicker" button (ON/OFF) that periodically clicks an on-call button
- * and then a remove button, likely to keep a session active or clear a queue.
- * It also plays a notification sound when a specific dialog appears.
- * ===================================================================================
- */
+// This script checks the URL of the current page.
+// If it includes "cases.connect", it runs the first block of code.
+
 if (window.location.href.includes("cases.connect")) {
     (function () {
-        // Run-once guard: If the script has already run (window.scrRun is set), exit.
+        "use strict"; // Enforces stricter parsing and error handling in JavaScript.
+
+        // --- SCRIPT GUARD ---
+        // This is a guard to ensure the script only runs once per page load.
+        // If 'window.scrRun' is already set, it stops further execution.
         if (window.scrRun) return;
-        window.scrRun = 1; // Set the guard to prevent re-running.
+        window.scrRun = 1; // Mark the script as having run.
 
-        /**
-         * Observes the DOM for elements matching a selector, including future elements.
-         * When an element is found, the callback is executed.
-         * @param {string} selector - The CSS selector to watch for.
-         * @param {function(Element)} callback - The function to call with the found element.
-         * @returns {MutationObserver} The configured MutationObserver instance.
-         */
-        function observeElement(selector, callback) {
-            const observer = new MutationObserver((mutations) => {
-                for (const mutation of mutations) {
-                    for (const node of mutation.addedNodes) {
-                        if (node.nodeType !== 1) continue; // Ensure it's an element
-                        // Check if the added node itself matches
-                        if (node.matches(selector)) {
-                            callback(node);
-                        }
-                        // Check if any children of the added node match
-                        node.querySelectorAll(selector).forEach(callback);
-                    }
-                }
-            });
+        // --- CONFIGURATION ---
+        // Stores all magic strings (like selectors) and numbers in one place for easy updates.
+        const CONFIG = {
+            SOUND_URL:
+                "https://cdn.pixabay.com/audio/2025/07/18/audio_da35bc65d2.mp3",
+            AUTO_CLICK_INTERVAL: 18000, // 18 seconds
+            AUTO_REMOVE_DELAY: 6000, // 6 seconds
+            SELECTORS: {
+                AUTO_CLICK_BTN: "#cdtx__uioncall--btn",
+                AUTO_REMOVE_BTN: ".cdtx__uioncall_control-remove",
+                HOME_BUTTON: '[debug-id="dock-item-home"]',
+                FOLLOWUP_ITEM: ".li-popup_lstcasefl",
+                FOLLOWUP_BADGE: "#follow-up-badge",
+                APPOINTMENT_TIME_BTN: '[data-infocase="appointment_time"]',
+                FOLLOWUP_TIME_BTN: '[data-infocase="follow_up_time"]',
+                DATEPICKER_TODAY: ".datepicker-grid .today",
+                FOLLOWUP_INPUT: "#follow-up-days-input",
+                PHONE_DIALOG: "[debug-id=phoneTakeDialog]",
+                SET_FOLLOWUP_BTN: "[data-type=follow_up_time]",
+                FINISH_BTN: '[data-thischoice="Finish"]',
+                UI_PANEL: "#script-btn-panel",
+            },
+        };
 
-            // Start observing the entire body for new child nodes
-            observer.observe(document.body, { childList: true, subtree: true });
-
-            // Also run the callback for any elements that *already* exist
-            document.querySelectorAll(selector).forEach(callback);
-            return observer;
-        }
-
-        /**
-         * Helper function to safely click an element by its selector.
-         * Uses optional chaining (?) to prevent errors if the element isn't found.
-         * @param {string} selector - The CSS selector of the element to click.
-         */
-        function clickElement(selector) {
-            document.querySelector(selector)?.click();
-        }
-
-        /**
-         * Performs the two-click sequence to open the follow-up list.
-         * 1. Clicks the main 'home' dock item.
-         * 2. Waits 500ms, then clicks the follow-up list item in the popup.
-         */
-        function clickFollowupChain() {
-            clickElement('[debug-id="dock-item-home"]');
-            setTimeout(() => {
-                clickElement(".li-popup_lstcasefl");
-            }, 500);
-        }
-
-        /**
-         * Updates the count on the follow-up badge.
-         * It finds the follow-up list item, reads its 'data-attr' (the count),
-         * and updates the badge's text content and visibility.
-         */
-        function updateFollowupCount() {
-            const badge = document.getElementById("follow-up-badge");
-            const popupItem = document.querySelector(".li-popup_lstcasefl");
-
-            if (popupItem && badge) {
-                const count = popupItem.dataset.attr;
-                badge.textContent = count;
-                badge.style.display = "block"; // Show the badge
-            }
-        }
-
-        /**
-         * Handles the notification for a new dialog.
-         * Plays a sound and brings the browser tab into focus.
-         */
-        async function handleDialogNotification() {
-            const soundUrl =
-                "https://cdn.pixabay.com/audio/2025/07/18/audio_da35bc65d2.mp3";
-            const notificationSound = new Audio(soundUrl);
-            try {
-                await notificationSound.play();
-            } catch (err) {
-                console.warn(
-                    "Audio playback failed. User may need to interact with the page first.",
-                    err
-                );
-            }
-            window.focus(); // Bring the window to the front
-        }
-
-        // 1. MODIFIED BASE_BUTTON_STYLE (updated transition)
-        /**
-         * A constant object holding the shared CSS styles for the script's buttons.
-         * Includes transitions for a smooth click effect.
-         */
-        const BASE_BUTTON_STYLE = {
-            zIndex: "1",
+        // --- STYLES ---
+        // A reusable style object for the custom buttons.
+        const BTN_STYLE = {
+            zIndex: "10",
             padding: "12px 16px",
             color: "white",
             border: "none",
@@ -117,237 +48,424 @@ if (window.location.href.includes("cases.connect")) {
             boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
             transition:
                 "background-color 0.3s ease, transform 0.1s ease, box-shadow 0.1s ease",
+            fontSize: "14px",
         };
 
+        // --- UTILITY: watchNode ---
         /**
-         * Creates the "Follow-up" button and appends it to the container.
-         * This button includes an icon and a badge (span) that will hold the count.
-         * @param {HTMLElement} container - The parent element to append the button to.
+         * Watches for new nodes being added to the DOM and calls a callback
+         * when a node matching the selector is found.
+         * @param {string} selector - The CSS selector to watch for.
+         * @param {function(Node)} cb - The callback function to execute with the found node.
          */
-        function createFollowupButton(container) {
-            const button = document.createElement("button");
-            button.id = "follow-up-btn";
-            button.title = "Click Follow-up Item"; // Updated tooltip
-            button.style.position = "relative"; // For positioning the badge
-
-            // Apply base styles and button-specific styles
-            Object.assign(button.style, BASE_BUTTON_STYLE, {
-                padding: "10px 12px",
-                backgroundColor: "#A2BFFE",
-                fontSize: "16px",
-                lineHeight: "0", // To center the icon
+        function watchNode(selector, cb) {
+            // MutationObserver is a modern API to watch for DOM changes.
+            const observer = new MutationObserver((mutations) => {
+                for (const m of mutations) { // Loop through all mutations
+                    for (const n of m.addedNodes) { // Loop through all nodes that were added
+                        if (n.nodeType !== 1) continue; // Ignore non-element nodes
+                        if (n.matches(selector)) {
+                            cb(n); // Call callback if the node itself matches
+                        } else {
+                            // Or check if any children of the node match
+                            n.querySelectorAll(selector).forEach(cb);
+                        }
+                    }
+                }
             });
+            // Start observing the entire body for child additions.
+            observer.observe(document.body, { childList: true, subtree: true });
+            return observer;
+        }
 
-            // Set the button's content (icon and badge)
-            button.innerHTML = `
-                <img src="https://cdn-icons-png.flaticon.com/512/1069/1069138.png" style="width: 20px; height: 20px; vertical-align: middle;">
-                <span id="follow-up-badge" style="
-                    display: none; 
-                    position: absolute; 
-                    top: -5px; 
-                    right: -5px; 
-                    background: red; 
-                    color: white; 
-                    font-size: 10px; 
-                    font-weight: bold; 
-                    border-radius: 50%; 
-                    padding: 2px 5px; 
-                    line-height: 1;
-                "></span>
-            `;
+        // --- UTILITY: waitOn ---
+        /**
+         * Waits for an element to exist and be visible in the DOM.
+         * Returns a Promise that resolves with the element.
+         * @param {string} selector - The CSS selector to wait for.
+         * @param {object} [options] - Optional settings { interval, timeout }.
+         */
+        function waitOn(selector, { interval = 500, timeout = 3000 } = {}) {
+            return new Promise((resolve, reject) => {
+                const start = Date.now();
+                const timer = setInterval(() => {
+                    const el = document.querySelector(selector);
+                    // Check if element exists AND is visible (offsetParent is not null)
+                    if (el && el.offsetParent !== null) {
+                        clearInterval(timer);
+                        resolve(el);
+                        return;
+                    }
+                    // Reject if the timeout is exceeded
+                    if (Date.now() - start > timeout) {
+                        clearInterval(timer);
+                        reject(new Error(`Timeout for ${selector}`));
+                    }
+                }, interval);
+            });
+        }
 
-            // Add the click listener
-            button.addEventListener("click", clickFollowupChain);
-            container.appendChild(button);
+        // --- UTILITY: clickWait ---
+        /**
+         * A helper function that combines 'waitOn' with a 'click'.
+         * Can also click a sibling element 'steps' away.
+         * @param {string} selector - The CSS selector to wait for and click.
+         * @param {number} [steps=0] - Number of siblings to step over before clicking.
+         * @param {object} [opts={}] - Options to pass to 'waitOn'.
+         */
+        async function clickWait(selector, steps = 0, opts = {}) {
+            // Wait for the element to appear
+            const el = await waitOn(selector, opts);
+            let target = el;
+            // If 'steps' is provided, navigate to the nth sibling
+            if (steps > 0) {
+                for (let i = 0; i < steps; i++) {
+                    if (target) {
+                        target = target.nextElementSibling;
+                    } else {
+                        throw new Error(`No sibling at ${i} for ${selector}`);
+                    }
+                }
+            }
+            // Click the target element
+            if (target) {
+                target.click();
+                return target;
+            } else {
+                throw new Error(`No target for ${selector}`);
+            }
+        }
+
+        // --- UTILITY: click ---
+        /**
+         * A simple, safe click utility that won't error if the element doesn't exist.
+         * @param {string} selector - The CSS selector to click.
+         */
+        function click(selector) {
+            document.querySelector(selector)?.click(); // Uses optional chaining
+        }
+
+        // --- FEATURE: Auto Click ---
+        // An object to manage the state of the auto-clicker.
+        const autoClick = {
+            id: null, // Stores the setInterval ID
+            on: false, // State
+            btn: null, // Reference to the DOM button
+            start() {
+                if (this.id) return; // Already running
+                this.on = true;
+                this.id = setInterval(() => {
+                    // Click the main button
+                    click(CONFIG.SELECTORS.AUTO_CLICK_BTN);
+                    // After a delay, click the remove button
+                    setTimeout(
+                        () => click(CONFIG.SELECTORS.AUTO_REMOVE_BTN),
+                        CONFIG.AUTO_REMOVE_DELAY
+                    );
+                }, CONFIG.AUTO_CLICK_INTERVAL);
+                this.updateBtn(); // Update button text/color
+            },
+            stop() {
+                if (!this.id) return; // Already stopped
+                clearInterval(this.id);
+                this.id = null;
+                this.on = false;
+                this.updateBtn(); // Update button text/color
+            },
+            toggle() {
+                this.on ? this.stop() : this.start();
+            },
+            updateBtn() {
+                if (!this.btn) return;
+                this.btn.textContent = this.on ? "ON" : "OFF";
+                this.btn.style.backgroundColor = this.on
+                    ? "#77DD77" // Green
+                    : "#FF746C"; // Red
+            },
+            createBtn(parent) {
+                this.btn = document.createElement("button");
+                this.btn.id = "auto-btn";
+                Object.assign(this.btn.style, BTN_STYLE); // Apply common styles
+                this.btn.addEventListener("click", () => this.toggle());
+                parent.appendChild(this.btn);
+                this.updateBtn(); // Set initial state
+            },
+        };
+
+        // --- FEATURE: Follow-Up Button ---
+        /**
+         * Event handler for the custom Follow-Up button.
+         * Clicks home, then clicks the follow-up item.
+         */
+        async function onFLClick() {
+            try {
+                click(CONFIG.SELECTORS.HOME_BUTTON);
+                await clickWait(CONFIG.SELECTORS.FOLLOWUP_ITEM, 0);
+            } catch (e) {
+                console.error(e);
+            }
         }
 
         /**
-         * An object that encapsulates all logic for the auto-clicker feature.
-         * It manages its own state (isOn), interval, and UI button.
+         * Updates the custom follow-up badge count.
+         * Reads the count from a 'data-attr' on the original element.
          */
-        const autoClicker = {
-            intervalId: null, // Stores the ID from setInterval
-            isOn: false, // Tracks the on/off state
-            button: null, // Holds a reference to its DOM button
-            CLICK_INTERVAL: 18000, // 18 seconds
-            REMOVE_DELAY: 3000, // 3 seconds
-
-            /**
-             * Starts the auto-clicking interval.
-             * Clicks the on-call button, then clicks the remove button after a delay.
-             */
-            start() {
-                if (this.intervalId) return; // Already running
-                this.isOn = true;
-                this.intervalId = setInterval(() => {
-                    clickElement("#cdtx__uioncall--btn");
-                    setTimeout(() => {
-                        clickElement(".cdtx__uioncall_control-remove");
-                    }, this.REMOVE_DELAY);
-                }, this.CLICK_INTERVAL);
-
-                // Update button UI
-                if (this.button) {
-                    this.button.textContent = "ON";
-                    this.button.style.backgroundColor = "#77DD77"; // Green
-                }
-            },
-
-            /**
-             * Stops the auto-clicking interval.
-             */
-            stop() {
-                if (!this.intervalId) return; // Already stopped
-                clearInterval(this.intervalId);
-                this.intervalId = null;
-                this.isOn = false;
-
-                // Update button UI
-                if (this.button) {
-                    this.button.textContent = "OFF";
-                    this.button.style.backgroundColor = "#FF746C"; // Red
-                }
-            },
-
-            /**
-             * Toggles the auto-clicker state (on/off).
-             */
-            toggle() {
-                this.isOn ? this.stop() : this.start();
-            },
-
-            /**
-             * Creates the ON/OFF toggle button for the auto-clicker.
-             * @param {HTMLElement} container - The parent element to append the button to.
-             */
-            createButton(container) {
-                this.button = document.createElement("button");
-                this.button.id = "auto-btn";
-
-                // Apply base styles and button-specific styles
-                Object.assign(this.button.style, BASE_BUTTON_STYLE, {
-                    backgroundColor: "#FF746C", // Default to OFF (Red)
-                    fontSize: "14px",
-                });
-
-                this.button.textContent = "OFF";
-                // Bind the 'toggle' function to 'this' (the autoClicker object)
-                this.button.addEventListener("click", this.toggle.bind(this));
-                container.appendChild(this.button);
-            },
-        };
+        function updateFLBadge() {
+            const badge = document.getElementById(
+                CONFIG.SELECTORS.FOLLOWUP_BADGE.substring(1)
+            );
+            const item = document.querySelector(CONFIG.SELECTORS.FOLLOWUP_ITEM);
+            if (item && badge) {
+                const count = item.dataset.attr; // Get count from data attribute
+                badge.textContent = count;
+                badge.style.display = count ? "block" : "none"; // Show/hide badge
+            }
+        }
 
         /**
-         * Creates the main floating container in the bottom-left corner
-         * that will hold all the script's buttons.
-         * @returns {HTMLElement} The created container element.
+         * Creates and appends the Follow-Up button to the panel.
+         * @param {Node} parent - The panel element to attach to.
          */
-        function createButtonContainer() {
-            const container = document.createElement("div");
-            container.id = "script-button-container";
-            Object.assign(container.style, {
+        function addFLBtn(parent) {
+            const btn = document.createElement("button");
+            btn.id = "follow-up-btn";
+            btn.title = "Click Follow-up Item";
+            btn.style.position = "relative"; // For positioning the badge
+            Object.assign(btn.style, BTN_STYLE, {
+                padding: "10px 12px",
+                backgroundColor: "#A2BFFE",
+                lineHeight: "0",
+            });
+            // Set inner HTML for the icon and the badge
+            btn.innerHTML = `
+            <img src="https://cdn-icons-png.flaticon.com/512/1069/1069138.png" style="width: 20px; height: 20px; vertical-align: middle;">
+            <span id="${CONFIG.SELECTORS.FOLLOWUP_BADGE.substring(1)}" style="
+                display: none; position: absolute; top: -5px; right: -5px;
+                background: red; color: white; font-size: 10px; font-weight: bold;
+                border-radius: 50%; padding: 2px 5px; line-height: 1;
+            "></span>
+        `;
+            btn.addEventListener("click", onFLClick);
+            parent.appendChild(btn);
+
+            // Wait for the original follow-up item to exist
+            waitOn(CONFIG.SELECTORS.FOLLOWUP_ITEM)
+                .then((el) => {
+                    // Once it exists, observe it for changes to its 'data-attr'
+                    const observer = new MutationObserver(updateFLBadge);
+                    observer.observe(el, {
+                        attributes: true,
+                        attributeFilter: ["data-attr"],
+                    });
+                    updateFLBadge(); // Run once to get initial count
+                })
+                .catch((e) => console.error(e));
+        }
+
+        // --- FEATURE: Appointment Button ---
+        /**
+         * Event handler for the "FL Up" button.
+         * Automates setting an appointment and a follow-up.
+         */
+        async function onApptClick() {
+            try {
+                const apptBtn = document.querySelector(
+                    CONFIG.SELECTORS.APPOINTMENT_TIME_BTN
+                );
+
+                // 1. If appointment time is not set, set it to "Today".
+                if (apptBtn && !apptBtn.dataset.valchoice) {
+                    click(CONFIG.SELECTORS.APPOINTMENT_TIME_BTN);
+                    await clickWait(CONFIG.SELECTORS.DATEPICKER_TODAY, 0);
+                }
+
+                // 2. Get follow-up days from our custom input
+                const input = document.getElementById(
+                    CONFIG.SELECTORS.FOLLOWUP_INPUT.substring(1)
+                );
+                let steps = +input.value; // Convert to number
+
+                // 3. Open the follow-up time dialog
+                click(CONFIG.SELECTORS.FOLLOWUP_TIME_BTN);
+
+                // 4. Click the correct date:
+                //    - If steps=0, click "Finish"
+                //    - If steps>0, find "Today" and click 'steps' siblings away
+                await clickWait(
+                    !steps
+                        ? CONFIG.SELECTORS.FINISH_BTN
+                        : CONFIG.SELECTORS.DATEPICKER_TODAY,
+                    steps
+                );
+
+                // 5. Click the final "Set Follow-up" button
+                await clickWait(CONFIG.SELECTORS.SET_FOLLOWUP_BTN, 0);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        /**
+         * Creates and appends the Appointment button group to the panel.
+         * @param {Node} parent - The panel element to attach to.
+         */
+        function addApptBtn(parent) {
+            const div = document.createElement("div");
+            div.id = "today-btn-group";
+            const span = document.createElement("span");
+            span.id = "today-btn-label";
+            span.textContent = "FL Up:";
+            span.title = "Set appointment to Today + Follow-up";
+            span.addEventListener("click", onApptClick);
+
+            const input = document.createElement("input");
+            input.id = CONFIG.SELECTORS.FOLLOWUP_INPUT.substring(1);
+            input.type = "text";
+            input.value = "2"; // Default to 2 days
+            input.title = "Days to follow-up";
+
+            // Only allow a single digit
+            input.addEventListener("input", (e) => {
+                e.target.value = e.target.value
+                    .replace(/\D/g, "") // Remove non-digits
+                    .substring(0, 1); // Max 1 char
+            });
+
+            // Select text on focus for easy changing
+            input.addEventListener("focus", (e) => e.target.select());
+
+            div.appendChild(span);
+            div.appendChild(input);
+            parent.appendChild(div);
+        }
+
+        // --- FEATURE: Dialog Notification ---
+        /**
+         * Callback function when the phone dialog appears.
+         * Plays a sound and focuses the window.
+         */
+        async function onDialog() {
+            const sound = new Audio(CONFIG.SOUND_URL);
+            try {
+                await sound.play();
+                window.focus(); // Bring tab to front
+            } catch (err) {
+                // User may need to interact with the page first
+                console.error("Audio play failed. User interaction needed.", err);
+            }
+        }
+
+        // --- SETUP ---
+        /**
+         * Creates the main floating panel to hold the buttons.
+         * @returns {Node} The created panel element.
+         */
+        function addPanel() {
+            const div = document.createElement("div");
+            div.id = CONFIG.SELECTORS.UI_PANEL.substring(1);
+            Object.assign(div.style, {
                 position: "fixed",
                 bottom: "16px",
                 left: "16px",
-                zIndex: "999",
                 display: "flex",
                 gap: "8px",
                 alignItems: "center",
+                zIndex: "9999",
             });
-            document.body.appendChild(container);
-            return container;
+            document.body.appendChild(div);
+            return div;
         }
 
-        // 2. ADDED injectCasesConnectStyles function
         /**
-         * Injects a <style> tag into the document <head> to provide
-         * CSS :hover and :active (click) effects for the buttons.
-         * These pseudo-classes cannot be set via 'element.style'.
+         * Injects all custom CSS rules into the document <head>.
          */
-        function injectCasesConnectStyles() {
-            const styleId = "cases-connect-styles";
-            if (document.getElementById(styleId)) return; // Prevent double-injection
-
-            const css = `
-                /* Target all buttons inside your container */
-                [id='script-button-container'] button:hover {
-                    opacity: 0.9; /* A simple hover effect */
-                }
-        
-                [id='script-button-container'] button:active {
-                    transform: scale(0.96); /* The "click" effect */
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Smaller shadow on click */
-                }
-            `;
-
-            const style = document.createElement("style");
-            style.id = styleId;
-            style.textContent = css;
-            document.head.appendChild(style);
+        function addCSS() {
+            const id = "cases-connect-enhanced-styles";
+            if (document.getElementById(id)) return; // Don't add styles twice
+            const rules = `
+            #${CONFIG.SELECTORS.UI_PANEL.substring(1)} button:hover { 
+                opacity: 0.9; transform: translateY(-1px); 
+            }
+            #${CONFIG.SELECTORS.UI_PANEL.substring(1)} button:active { 
+                transform: scale(0.96); box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
+            }
+            #today-btn-group { 
+                position: relative; display: inline-block; 
+            }
+            #today-btn-label {
+                display: inline-block; padding: 12px 48px 12px 16px; 
+                color: white; background-color: #55B4B0; border-radius: 4px;
+                font-weight: bold; font-size: 14px; cursor: pointer;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                transition: background-color 0.3s ease; user-select: none;
+            }
+            #today-btn-label:hover { background-color: #4a9d9a; }
+            #${CONFIG.SELECTORS.FOLLOWUP_INPUT.substring(1)} {
+                position: absolute; top: 50%; transform: translateY(-50%);
+                right: 8px; width: 32px; height: 28px;
+                padding: 0; border: none; border-radius: 3px; 
+                background: rgba(255, 255, 255, 0.9); color: #333;
+                font-weight: bold; font-size: 14px; text-align: center;
+                box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); 
+                transition: box-shadow 0.2s ease; -moz-appearance: textfield;
+            }
+            #${CONFIG.SELECTORS.FOLLOWUP_INPUT.substring(
+                1
+            )}::-webkit-outer-spin-button,
+            #${CONFIG.SELECTORS.FOLLOWUP_INPUT.substring(
+                1
+            )}::-webkit-inner-spin-button {
+                -webkit-appearance: none; margin: 0;
+            }
+            #${CONFIG.SELECTORS.FOLLOWUP_INPUT.substring(1)}:focus {
+                outline: none;
+                box-shadow: inset 0 1px 3px rgba(0,0,0,0.2), 0 0 0 3px rgba(255, 255, 255, 0.7);
+            }
+        `;
+            const el = document.createElement("style");
+            el.id = id;
+            el.textContent = rules;
+            document.head.appendChild(el);
         }
 
-        // 3. MODIFIED init() function
         /**
-         * The entry point for the 'cases.connect' script.
-         * It sets up the dialog observer, creates the button UI,
-         * injects the CSS, and updates the follow-up count.
+         * Main initialization function.
          */
         function init() {
-            const dialogSelector = "[debug-id=phoneTakeDialog]";
-            // Start observing for the phone dialog to play a sound
-            observeElement(dialogSelector, handleDialogNotification);
-
-            // Create the UI
-            const buttonContainer = createButtonContainer();
-            injectCasesConnectStyles(); // <-- ADDED THIS CALL
-            autoClicker.createButton(buttonContainer);
-            createFollowupButton(buttonContainer);
-
-            // Do an initial check for the follow-up count
-            updateFollowupCount();
+            // Start watching for the phone dialog
+            watchNode(CONFIG.SELECTORS.PHONE_DIALOG, onDialog);
+            // Add custom styles
+            addCSS();
+            // Create the UI panel
+            const panel = addPanel();
+            // Add all the feature buttons to the panel
+            autoClick.createBtn(panel);
+            addFLBtn(panel);
+            addApptBtn(panel);
         }
 
         // Run the script
         init();
     })();
-} else if (window.location.href.includes("casemon2.corp")) {
-    /**
-     * ===================================================================================
-     * SCRIPT 2: casemon2.corp
-     * This script runs on 'casemon2.corp'. It creates a floating "Agent Dashboard"
-     * UI on the right side of the screen. This dashboard reads data from an existing
-     * agent table on the page, processes it, and displays a sorted, summarized,
-     * and styled view.
-     * * Key Features:
-     * - Creates a new UI overlay.
-     * - Watches the original agent table for changes using MutationObserver.
-     * - Parses the table data.
-     * - Processes data (e.g., identifies "Break" status).
-     * - Sorts agents: Puts the current user first, then sorts by status priority
-     * and time in status.
-     * - Displays the sorted list with icons, animations, and status colors.
-     * - Includes a "Close" button to hide the dashboard.
-     * ===================================================================================
-     */
+}
+// If the URL includes "casemon2.corp", run this script instead.
+else if (window.location.href.includes("casemon2.corp")) {
     (function () {
-        // Run-once guard
+        // --- SCRIPT GUARD ---
         if (window.dashRun) return;
         window.dashRun = 1;
 
-        // Base URL for flaticon icons
-        const LINK = "https://cdn-icons-png.flaticon.com/512";
-
-        /**
-         * Manages the entire Agent Dashboard UI and logic.
-         */
-        class AgentDashboard {
-            // Private configuration for the dashboard
-            #CONFIG = {
-                AGENT_TABLE_SELECTOR: ".agent-table-container", // Original table
-                UI_CONTAINER_ID: "agent_ui", // ID for the new UI
-                STYLE_ID: "agent-dash-styles", // ID for the injected <style> tag
-                PRIOR: {
-                    // Sort priority for agent statuses (lower is higher)
+        // --- Main Dashboard Class ---
+        class AgentDash {
+            // --- Private Class Fields ---
+            // Configuration for selectors, IDs, and priorities.
+            #cfg = {
+                tblSel: ".agent-table-container", // The original table
+                uiId: "agent_ui", // ID for our new UI
+                styleId: "agent-dash-styles",
+                link: "https://cdn-icons-png.flaticon.com/512", // Base URL for icons
+                // Priority map: lower number = higher priority
+                prior: {
                     active: 1,
                     phone: 2,
                     "lunch-break": 3,
@@ -356,330 +474,294 @@ if (window.location.href.includes("cases.connect")) {
                     break: 6,
                     default: 99,
                 },
-                ICONS: {
-                    // Icon URLs and animations for each status
+                // Icon definitions
+                icons: {
                     "coffee-break": {
-                        src: LINK + "/2935/2935413.png",
+                        src: "/2935/2935413.png",
                         animation: "wiggle",
                     },
                     "lunch-break": {
-                        src: LINK + "/4252/4252424.png",
+                        src: "/4252/4252424.png",
                         animation: "pulse",
                     },
                     phone: {
-                        src: LINK + "/1959/1959283.png",
+                        src: "/1959/1959283.png",
                         animation: "wiggle",
                     },
                     email: {
-                        src: LINK + "/15781/15781499.png",
+                        src: "/15781/15781499.png",
                         animation: "slide",
                     },
                     break: {
-                        src: LINK + "/2115/2115487.png",
+                        src: "/2115/2115487.png",
                         animation: "wiggle",
                     },
-                    close: LINK + "/9403/9403346.png", // Close button icon
+                    close: "/9403/9403346.png", // Close button icon
                 },
             };
 
-            // Private instance variables
-            #observer = null; // The MutationObserver
-            #myLdap = null; // The current user's username
-            #uiContainer = null; // The floating UI element
-            #agentTable = null; // The original agent table
-            #policy = null; // Trusted Types policy for safe HTML injection
+            #obs = null; // To store the MutationObserver
+            #ldap = null; // To store the current user's LDAP
+            #ui = null; // To store the new UI element
+            #tbl = null; // To store the original table element
+            #policy = null; // To store the TrustedTypes policy
 
-            /**
-             * Initializes the dashboard.
-             */
             constructor() {
-                this.#myLdap = this.#getMyLdap();
-                this.#agentTable = document.querySelector(
-                    this.#CONFIG.AGENT_TABLE_SELECTOR
-                );
-                // Create a Trusted Types policy to safely set innerHTML
+                // Get current user's LDAP from profile photo
+                this.#ldap = this.#getLdap();
+                // Find the original table
+                this.#tbl = document.querySelector(this.#cfg.tblSel);
+                if (!this.#tbl) return; // Stop if table not found
+
+                // Create a TrustedTypes policy for safely inserting HTML
                 this.#policy = window.trustedTypes.createPolicy(
                     "agent-dash-policy",
-                    {
-                        createHTML: (s) => s, // Simple policy (dev-controlled)
+                    { createHTML: (s) => s }
+                );
+
+                // Build full icon URLs
+                Object.keys(this.#cfg.icons).forEach((k) => {
+                    const icon = this.#cfg.icons[k];
+                    if (typeof icon === "string") {
+                        this.#cfg.icons[k] = this.#cfg.link + icon;
+                    } else {
+                        icon.src = this.#cfg.link + icon.src;
                     }
-                );
-                this.#injectStyles();
-                this.#createUiContainer();
-                this.#initObserver();
-                console.log(
-                    "%cAgent Dashboard Initialized",
-                    "color: blue; font-weight: bold;"
-                );
+                });
+
+                // Initialize the script
+                this.#styles(); // Add CSS
+                this.#initUi(); // Create UI container
+                this.#initObs(); // Start observing the original table
             }
 
+            // --- Private Methods ---
+
             /**
-             * Gets the current user's LDAP/username from their profile photo URL.
-             * @returns {string | undefined} The user's LDAP string.
+             * Gets the user's LDAP (username) by parsing the profile photo URL.
+             * @returns {string|undefined} The user's LDAP.
              */
-            #getMyLdap() {
+            #getLdap() {
                 return document
                     .querySelector("[alt='profile photo']")
-                    ?.src?.match(/\/([^\/]+)\?/)?.[1];
+                    ?.src?.match(/\/([^\/]+)\?/)?.[1]; // Regex to find LDAP in URL
             }
 
             /**
-             * Creates the main floating UI container or finds it if it already exists.
-             * Attaches a click listener to the container to handle the close button.
+             * Creates the main UI container element.
              */
-            #createUiContainer() {
-                let container = document.getElementById(
-                    this.#CONFIG.UI_CONTAINER_ID
-                );
-                if (!container) {
-                    container = document.createElement("div");
-                    container.id = this.#CONFIG.UI_CONTAINER_ID;
-                    document.body.appendChild(container);
+            #initUi() {
+                let ui = document.getElementById(this.#cfg.uiId);
+                if (!ui) {
+                    ui = document.createElement("div");
+                    ui.id = this.#cfg.uiId;
+                    document.body.appendChild(ui);
                 }
-                this.#uiContainer = container;
+                this.#ui = ui;
 
-                // Event delegation: listen on the container for clicks on the close button
-                this.#uiContainer.addEventListener("click", (e) => {
+                // Add a single click listener to the container for the close button (event delegation)
+                this.#ui.addEventListener("click", (e) => {
                     if (e.target.closest(".close-btn")) {
-                        this.#closeUi();
+                        this.#close();
                     }
                 });
             }
 
             /**
-             * Initializes the MutationObserver to watch the original agent table.
-             * Any change to the table will trigger a re-render of the dashboard.
+             * Initializes the MutationObserver to watch the original table for changes.
              */
-            #initObserver() {
-                // Bind 'this' to #render so it has the correct context
-                this.#observer = new MutationObserver(this.#render.bind(this));
-                this.#observer.observe(this.#agentTable, {
-                    attributes: true,
-                    childList: true,
-                    subtree: true,
-                    characterData: true,
+            #initObs() {
+                // Call this.#render whenever the table changes
+                this.#obs = new MutationObserver(this.#render.bind(this));
+                this.#obs.observe(this.#tbl, {
+                    attributes: true, // Watch for attribute changes (e.g., style)
+                    childList: true, // Watch for nodes being added/removed
+                    subtree: true, // Watch all descendants
+                    characterData: true, // Watch for text changes
                 });
-                this.#render(); // Initial render
+                this.#render(); // Run one initial render
             }
 
             /**
-             * Closes and cleans up the dashboard UI.
-             * Hides the UI, disconnects the observer, and resets the run-guard.
+             * Stops the script and hides the UI.
              */
-            #closeUi() {
-                if (this.#uiContainer) this.#uiContainer.style.display = "none";
-                if (this.#observer) this.#observer.disconnect();
-                window.dashRun = 0; // Allow the script to be re-run
+            #close() {
+                if (this.#ui) this.#ui.style.display = "none";
+                if (this.#obs) this.#obs.disconnect(); // Stop observing
+                window.dashRun = 0; // Allow script to run again if re-injected
             }
 
             /**
-             * Shows the dashboard UI.
+             * Shows the UI.
              */
-            #showUi() {
-                if (this.#uiContainer) this.#uiContainer.style.display = "flex";
+            #show() {
+                if (this.#ui) this.#ui.style.display = "flex";
             }
 
             /**
-             * Parses the original agent table DOM and extracts data for each agent.
-             * @returns {Array<Object>} An array of agent data objects.
+             * Scrapes the data from the original HTML table into an array of objects.
+             * @returns {Array<object>} An array of agent data objects.
              */
-            #parseAgentTable() {
-                const rows = this.#agentTable.querySelectorAll("tbody tr");
+            #parse() {
+                const rows = this.#tbl.querySelectorAll("tbody tr");
 
                 return Array.from(rows, (row) => {
                     const cells = row.querySelectorAll("td");
-                    if (cells.length < 9) return null; // Invalid row
+                    if (cells.length < 9) return null; // Skip invalid rows
 
-                    // Extract phone capacity (e.g., "Busy")
+                    // Extract and clean the "phoneCap" text
                     const phoneCap = (
-                        cells[5].innerText.match(/([a-zA-Z\s]+)/g)?.[0] ?? ""
+                        cells[5].innerText.match(/[a-zA-Z\s]+/)?.[0] ?? ""
                     )
                         .trim()
                         .toLowerCase()
                         .replace(/\s+/g, "-");
 
+                    // Return a clean object
                     return {
-                        imgSrc: row.querySelector("img").src,
-                        agentLdap: cells[1].innerText,
-                        auxCode: cells[3].innerText, // e.g., "Active"
-                        timeSpent: cells[4].innerText, // e.g., "(0m 5s)"
-                        phoneCapacity: phoneCap, // e.g., "busy"
-                        lastChange: cells[8].innerText.trim(), // e.g., "0m 5s"
-                        lastChangeInSec: this.#strToSec(cells[8].innerText), // e.g., 5
+                        img: row.querySelector("img").src,
+                        ldap: cells[1].innerText,
+                        aux: cells[3].innerText,
+                        time: cells[4].innerText,
+                        phoneCap: phoneCap,
+                        lastChg: cells[8].innerText.trim(),
+                        lastSec: this.#toSec(cells[8].innerText), // Convert time to seconds for sorting
                     };
                 }).filter(Boolean); // Filter out any null (invalid) rows
             }
 
             /**
-             * Processes raw agent data to determine the "real" status.
-             * e.g., "Active" + "busy" phone = "Break" status.
-             * @param {Object} agent - A raw agent data object from #parseAgentTable.
-             * @returns {Object} The processed agent data object with new properties.
+             * Processes a single agent object, adding standardized status keys and business logic.
+             * @param {object} agent - The raw agent object from #parse().
+             * @returns {object} The processed agent object.
              */
-            #processAgentData(agent) {
-                let processedAuxCode = agent.auxCode;
-                let statusKey;
+            #proc(agent) {
+                let statusKey = agent.aux.toLowerCase().replace(/\s+/g, "-");
+                let aux = agent.aux;
 
-                // Special case: "Active" aux code but "busy" phone capacity means "Break".
-                if (
-                    agent.auxCode === "Active" &&
-                    agent.phoneCapacity === "busy"
-                ) {
-                    processedAuxCode = "Break";
+                // --- Business Logic ---
+                // If agent is "Active" but phone is "busy", treat them as "Break"
+                if (agent.aux === "Active" && agent.phoneCap === "busy") {
+                    aux = "Break";
                     statusKey = "break";
-                } else {
-                    // Standard case: "lunch-break", "coffee-break", etc.
-                    statusKey = agent.auxCode
-                        .toLowerCase()
-                        .replace(/\s+/g, "-");
                 }
 
                 return {
                     ...agent,
-                    processedAuxCode, // The "display" name for the status
-                    statusKey, // The internal key for styling/icons
-                    cssClass: `stt-${statusKey}`, // CSS class for styling
+                    aux,
+                    statusKey,
+                    css: `stt-${statusKey}`, // CSS class for styling
                 };
             }
 
             /**
-             * Sorts the list of processed agents.
-             * Sort logic:
-             * 1. The current user ("myLdap") always comes first.
-             * 2. All other agents are sorted by status priority (from #CONFIG.PRIOR).
-             * 3. Agents with the same status are sorted by time (longest time first).
-             * @param {Array<Object>} agents - An array of processed agent objects.
-             * @returns {Array<Object>} The sorted array.
+             * Sorts the array of processed agents based on priority.
+             * @param {Array<object>} agents - The array of processed agents.
+             * @returns {Array<object>} The sorted array.
              */
-            #sortAgents(agents) {
-                const { PRIOR } = this.#CONFIG;
+            #sort(agents) {
+                const { prior } = this.#cfg;
 
                 return agents.sort((a, b) => {
-                    const aPriority = PRIOR[a.statusKey] ?? PRIOR.default;
-                    const bPriority = PRIOR[b.statusKey] ?? PRIOR.default;
+                    // Get the priority number for each agent
+                    const aPri = prior[a.statusKey] ?? prior.default;
+                    const bPri = prior[b.statusKey] ?? prior.default;
 
+                    // Sorting logic:
+                    // 1. Current user (this.#ldap) always comes first.
+                    // 2. Sort by status priority (lower number is higher).
+                    // 3. Sub-sort by time in status (longest time first).
                     return (
-                        // (true - false) = 1, (false - true) = -1, (true - true) = 0
-                        // This pushes the user to the top.
-                        (b.agentLdap === this.#myLdap) -
-                            (a.agentLdap === this.#myLdap) ||
-                        // Sort by status priority
-                        aPriority - bPriority ||
-                        // Sort by time in status (descending)
-                        b.lastChangeInSec - a.lastChangeInSec
+                        (b.ldap === this.#ldap) - (a.ldap === this.#ldap) || // Current user first
+                        aPri - bPri || // Then by priority
+                        b.lastSec - a.lastSec // Then by time
                     );
                 });
             }
 
             /**
-             * The main render function. Called by the observer and constructor.
-             * It orchestrates the parsing, processing, sorting, and HTML generation.
+             * The main render function. Called by the observer.
+             * Orchestrates parsing, processing, sorting, and HTML generation.
              */
             #render() {
-                const rawAgents = this.#parseAgentTable();
-                const processedAgents = rawAgents.map(
-                    this.#processAgentData.bind(this)
-                );
-                const sortedAgents = this.#sortAgents(processedAgents);
+                const agents = this.#parse();
+                const processed = agents.map(this.#proc.bind(this));
+                const sorted = this.#sort(processed);
 
-                const rowsHtml = sortedAgents
-                    .map(this.#createAgentRowHtml) // Call for each agent
-                    .join("");
-                const closeButtonHtml = this.#createCloseButtonHtml();
+                // Generate HTML for all rows
+                const rows = sorted.map(this.#rowHtml).join("");
+                const closeBtn = this.#closeHtml();
 
                 const finalHtml = `
                   <div class="ui-content-wrapper">
-                    ${closeButtonHtml}
-                    <div class="ui-table">${rowsHtml}</div>
+                    ${closeBtn}
+                    <div class="ui-table">${rows}</div>
                   </div>`;
 
-                // Use the Trusted Types policy to set the HTML
-                this.#uiContainer.innerHTML =
-                    this.#policy.createHTML(finalHtml);
-                this.#showUi(); // Ensure the UI is visible
+                // Safely inject the HTML using the TrustedTypes policy
+                this.#ui.innerHTML = this.#policy.createHTML(finalHtml);
+                this.#show(); // Ensure the UI is visible
             }
 
-            /**
-             * Creates the HTML string for a single agent row in the dashboard.
-             * @param {Object} agent - A processed agent object.
-             * @returns {string} The HTML string for that agent's row.
-             */
-            #createAgentRowHtml = (agent) => {
-                const [displayTime, stateTime] = [
-                    agent.lastChange, // "1m 5s"
-                    agent.timeSpent, // "(1m 5s)"
-                ];
-                const icon = this.#getIconHtml(agent.statusKey);
-                const altText = `Avatar for ${agent.agentLdap}`;
+            // --- HTML Template Functions ---
 
-                // Uses CSS Grid 'display: contents' on the .tr
+            #rowHtml = (agent) => {
+                const icon = this.#iconHtml(agent.statusKey);
+                const alt = `Avatar for ${agent.ldap}`;
+
                 return `
-                <div class="tr ${agent.cssClass}">
+                <div class="tr ${agent.css}">
                   <div class="td left">
-                    <img src="${agent.imgSrc}" alt="${altText}" />
-                    <p>${agent.agentLdap}</p>
+                    <img src="${agent.img}" alt="${alt}" />
+                    <p>${agent.ldap}</p>
                   </div>
                   <div class="td right">
                     <div>
-                      <p>${displayTime} <span>(${stateTime})</span></p>
-                      <p>${agent.processedAuxCode}</p> 
+                      <p>${agent.lastChg} <span>(${agent.time})</span></p>
+                      <p>${agent.aux}</p> 
                     </div>
                     ${icon}
                   </div>
                 </div>`;
             };
 
-            /**
-             * Helper to get the icon HTML for a given status.
-             * @param {string} statusKey - The agent's internal status key.
-             * @returns {string} An <img> HTML string, or an empty string if no icon.
-             */
-            #getIconHtml(statusKey) {
-                const icon = this.#CONFIG.ICONS[statusKey];
+            #iconHtml(key) {
+                const icon = this.#cfg.icons[key];
                 return icon
-                    ? `<img src="${icon.src}" animation="${icon.animation}" alt="${statusKey} icon"/>`
-                    : "";
+                    ? `<img src="${icon.src}" animation="${icon.animation}" alt="${key} icon"/>`
+                    : ""; // Return empty string if no icon
             }
 
-            /**
-             * Creates the HTML string for the close button.
-             * @returns {string} The <button> HTML string.
-             */
-            #createCloseButtonHtml() {
+            #closeHtml() {
                 return `<button class="close-btn" title="Close">
-                        <img src="${this.#CONFIG.ICONS.close}" alt="Close"/>
+                        <img src="${this.#cfg.icons.close}" alt="Close"/>
                       </button>`;
             }
 
-            /**
-             * Utility function to convert a time string (e.g., "1h 5m 10s")
-             * into a total number of seconds for sorting.
-             * @param {string} timeStr - The time string.
-             * @returns {number} The total seconds.
-             */
-            #strToSec(timeStr) {
-                const parts = timeStr.match(/(\d+)(h|m|s)/g) ?? [];
-                const factors = {
-                    h: 3600,
-                    m: 60,
-                    s: 1,
-                };
+            // --- Utility Functions ---
 
-                return parts.reduce((totalSeconds, part) => {
-                    const value = parseInt(part, 10);
-                    const unit = part.slice(-1); // 'h', 'm', or 's'
-                    return totalSeconds + value * (factors[unit] ?? 0);
+            /**
+             * Converts a time string (e.g., "1h 5m 10s") into total seconds.
+             * @param {string} timeStr - The time string.
+             * @returns {number} Total seconds.
+             */
+            #toSec(timeStr) {
+                const parts = timeStr.match(/(\d+)(h|m|s)/g) ?? [];
+                const factors = { h: 3600, m: 60, s: 1 };
+
+                return parts.reduce((total, part) => {
+                    const val = parseInt(part, 10);
+                    const unit = part.slice(-1);
+                    return total + val * (factors[unit] ?? 0);
                 }, 0);
             }
 
             /**
-             * Injects the CSS for the dashboard UI into the document <head>.
-             * This includes all styles for the container, rows, colors, and animations.
+             * Injects all custom CSS rules for the dashboard.
              */
-            #injectStyles() {
+            #styles() {
                 const css = `
-                /* ... (A large block of CSS for styling the dashboard) ... */
-                #${this.#CONFIG.UI_CONTAINER_ID} { 
+                #${this.#cfg.uiId} { 
                   position: fixed; height: 100%; width: 100%; top: 0; right: 0; 
                   background-color: rgba(0,0,0,0.1); z-index: 999; 
                   display: flex; justify-content: flex-end; align-items: center; 
@@ -687,12 +769,7 @@ if (window.location.href.includes("cases.connect")) {
                   font-family: 'Noto Serif', serif; pointer-events: none; 
                   box-sizing: border-box;
                 }
-                .ui-content-wrapper { 
-                  position: relative; 
-                  pointer-events: auto; 
-                  width: 100%;
-                  max-width: 400px;
-                }
+                .ui-content-wrapper { position: relative; pointer-events: auto; width: 100%; max-width: 400px; }
                 .close-btn { 
                   position: absolute; top: 0; right: 0;
                   transform: translate(40%, -40%); border: none; cursor: pointer;
@@ -701,201 +778,167 @@ if (window.location.href.includes("cases.connect")) {
                 .close-btn:hover { transform: translate(40%, -40%) scale(1.4); }
                 .ui-table { 
                   display: grid; grid-template-columns: repeat(2, 1fr); 
-                  width: 100%;
-                  border-radius: 12px; 
+                  width: 100%; border-radius: 12px; 
                   overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); 
                 }
-                .ui-table .tr { display: contents; }
+                .ui-table .tr { display: contents; } /* Use CSS Grid as table */
                 .ui-table .td { 
                   padding: 8px 12px; display: flex; align-items: center; 
                   transition: background-color 0.4s ease, transform 0.2s ease; 
                 }
-                .ui-table .left { 
-                  justify-content: flex-start; 
-                  font-weight: 500; 
-                  font-size: clamp(12px, 4vw, 16px); 
-                }
-                .ui-table .right { 
-                  justify-content: flex-end; 
-                  text-align: right; 
-                  font-size: clamp(10px, 3.5vw, 14px); 
-                }
+                .ui-table .left { justify-content: flex-start; font-weight: 500; font-size: clamp(12px, 4vw, 16px); }
+                .ui-table .right { justify-content: flex-end; text-align: right; font-size: clamp(10px, 3.5vw, 14px); }
+                /* Status-specific styles */
                 .ui-table .td { background-color: #F8F9FA; color: #495057; }
-                /* Status-specific colors */
                 .ui-table .tr.stt-active .td { background-color: #E6F4EA; color: #1E8449; }
                 .ui-table .tr.stt-phone .td { background-color: #FEC7C0; color: #C0392B; }
                 .ui-table .tr.stt-email .td { background-color: #ace0fe; color: #1d8fdcff; }
                 .ui-table .tr.stt-coffee-break .td { background-color: #D2A993; color: #685347; }
                 .ui-table .tr.stt-lunch-break .td { background-color: #FFEA99; color: #E58732; }
-                .ui-table .tr.stt-break .td { background-color: #e9ecef; color: #495057; } /* Added style for 'break' */
-                
+                .ui-table .tr.stt-break .td { background-color: #e9ecef; color: #495057; }
+                /* Hover/Animation styles */
                 .ui-table .tr:hover .td { transform: scale(1.05); z-index: 5; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
                 .ui-table .td p { padding: 0 6px; margin: 1px 0; }
                 .ui-table .td span { opacity: 0.6; font-size: 0.9em; }
                 img { border-radius: 12px; width: 36px; height: 36px; padding: 4px; object-fit: cover; }
                 .close-btn img { width: 20px; height: 20px; }
-                
-                /* Animations */
                 [animation="pulse"] { animation: pulse 2s infinite ease-in-out; }
                 @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
                 [animation="wiggle"] { animation: wiggle 0.9s infinite; }
                 @keyframes wiggle { 0%, 100% { transform: rotate(0deg); } 15%, 45%, 75% { transform: rotate(8deg); } 30%, 60% { transform: rotate(-8deg); } }
                 [animation="slide"] { animation: slide-lr 1.2s infinite alternate ease-in-out; }
                 @keyframes slide-lr { from { transform: translateX(0); } to { transform: translateX(8px); } }
-                
-                /* Responsive media queries */
-                @media (max-width: 350px) {
-                    .ui-table .right img[alt*="icon"] {
-                        display: none;
-                    }
-                }
-                @media (max-width: 280px) {
-                    .ui-table .left img[alt*="Avatar"] {
-                        display: none;
-                    }
-                }
-                @media (max-width: 240px) {
-                    .ui-table .right span {
-                        display: none;
-                    }
-                }
+                /* Responsive styles */
+                @media (max-width: 350px) { .ui-table .right img[alt*="icon"] { display: none; } }
+                @media (max-width: 280px) { .ui-table .left img[alt*="Avatar"] { display: none; } }
+                @media (max-width: 240px) { .ui-table .right span { display: none; } }
               `;
 
                 const styleEl =
-                    document.getElementById(this.#CONFIG.STYLE_ID) ||
+                    document.getElementById(this.#cfg.styleId) ||
                     document.createElement("style");
-                styleEl.id = this.#CONFIG.STYLE_ID;
-                styleEl.innerHTML = this.#policy.createHTML(css); // Use policy
+                styleEl.id = this.#cfg.styleId;
+                // Safely inject CSS
+                styleEl.innerHTML = this.#policy.createHTML(css);
                 document.head.appendChild(styleEl);
             }
         }
 
-        // Start the dashboard script
-        new AgentDashboard();
+        // Create a new instance of the class to run the script.
+        new AgentDash();
     })();
-} else if (window.location.href.includes("adwords.corp")) {
-    /**
-     * ===================================================================================
-     * SCRIPT 3: adwords.corp
-     * This script runs on 'adwords.corp'. It's a helper for viewing conversion data.
-     * * Key Features:
-     * - Polls for a global 'conversions_data' object to become available.
-     * - Extracts the AdWords ID (AW-ID) and displays it in a floating UI element
-     * in the bottom-left corner. This UI is clickable to copy the ID.
-     * - Parses a large JSON object containing all conversion data.
-     * - Iterates over the conversion table visible on the page.
-     * - For each conversion, it finds the matching data (e.g., GA4 vs. Ads) and
-     * replaces the conversion name with its more useful "label".
-     * - It styles the cell (yellow for GA4, green for Ads) and makes it
-     * clickable to copy the label.
-     * - It automatically expands all conversion categories and hides any
-     * categories that are empty after filtering.
-     * ===================================================================================
-     */
+}
+// If the URL includes "adwords.corp", run this script instead.
+else if (window.location.href.includes("adwords.corp")) {
     (function () {
+        // --- STYLES ---
+        // Style objects for GA4 and Ads conversion labels.
+        const GA4_STYLE = {
+            backgroundColor: "rgb(255, 229, 180)", // Yellow
+            borderRadius: "10px",
+            fontWeight: "500",
+        };
+        const ADS_STYLE = {
+            backgroundColor: "rgb(160, 251, 157)", // Green
+            borderRadius: "10px",
+            fontWeight: "500",
+        };
+
+        // --- CONFIGURATION ---
+        const MAX_ATTEMPTS = 3; // Max times to poll for data
+        let attempts = 0; // Current attempt counter
+
+        // --- UTILITY: addCopy ---
         /**
-         * A reusable utility to make a DOM element copy text to the clipboard on click.
-         * Shows temporary feedback (e.g., "Copied!") on the element itself.
-         * @param {Object} options - Configuration object.
-         * @param {HTMLElement} options.element - The element to make clickable.
-         * @param {string} options.textToCopy - The text to copy.
-         * @param {string} [options.title] - Tooltip text.
-         * @param {string} [options.successText] - Text to show on success (e.g., "Copied!").
-         * @param {string} [options.successBg] - Background color on success.
-         * @param {string} [options.successColor] - Text color on success.
-         * @param {number} [options.timeout] - How long to show the success state (ms).
+         * Adds a "click to copy" feature to a DOM element.
+         * @param {object} options - Configuration for the copy action.
          */
-        function addClickToCopy({
-            element,
-            textToCopy,
+        function addCopy({
+            el, // The element to make clickable
+            text, // The text to copy
             title = "Click to copy",
-            successText,
-            successBg = "#007bff",
-            successColor = "white",
-            timeout = 800,
+            okText, // Text to show on success (e.g., "Copied!")
+            okBg = "#007bff",
+            okColor = "white",
+            timeout = 800, // How long to show the success state
         }) {
-            element.style.cursor = "pointer";
-            element.style.userSelect = "none";
-            element.title = title;
+            Object.assign(el.style, { cursor: "pointer", userSelect: "none" });
+            el.title = title;
 
-            // Run-once guard for this element
-            if (element.dataset.copyListenerAdded) return;
-            element.dataset.copyListenerAdded = true;
+            // Guard to prevent adding multiple listeners
+            if (el.dataset.copyListener) return;
+            el.dataset.copyListener = true;
 
-            element.addEventListener("click", (e) => {
-                e.preventDefault();
-                e.stopPropagation();
+            el.addEventListener("click", (e) => {
+                e.preventDefault(); // Stop default click behavior
+                e.stopPropagation(); // Stop click from bubbling up
 
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    // Store original state
-                    const originalBg = element.style.backgroundColor;
-                    const originalColor = element.style.color;
-                    const originalText = element.textContent;
+                // Use the modern clipboard API
+                navigator.clipboard.writeText(text).then(() => {
+                    // Save original state
+                    const { backgroundColor: origBg, color: origColor } =
+                        el.style;
+                    const origText = el.textContent;
 
-                    // Apply success state
-                    element.style.backgroundColor = successBg;
-                    element.style.color = successColor;
-                    if (successText) {
-                        element.textContent = successText;
-                    }
+                    // Show success state
+                    Object.assign(el.style, {
+                        backgroundColor: okBg,
+                        color: okColor,
+                    });
+                    if (okText) el.textContent = okText;
 
-                    // Revert after timeout
+                    // Revert to original state after timeout
                     setTimeout(() => {
-                        element.style.backgroundColor = originalBg;
-                        element.style.color = originalColor;
-                        if (successText) {
-                            element.textContent = originalText;
-                        }
+                        Object.assign(el.style, {
+                            backgroundColor: origBg,
+                            color: origColor,
+                        });
+                        if (okText) el.textContent = origText;
                     }, timeout);
                 });
             });
         }
 
+        // --- UTILITY: extractDetails ---
         /**
-         * Extracts the conversion type (Ads/GA4) and its label from the
-         * complex, index-based conversion data object.
-         * @param {Array} conversionData - The data array for a single conversion.
-         * @returns {Object} An object with { type_cv, label_event }.
+         * Extracts the conversion type and label from the complex global data array.
+         * @param {Array} data - A single conversion's data array.
+         * @returns {object} { type, label }
          */
-        function extractConversionDetails(conversionData) {
-            var type = null,
+        function extractDetails(data) {
+            let type = null,
                 label = null;
+            const typeId = data[11]; // This index identifies the conversion type
 
-            // '1' seems to be 'Ads Conversion'
-            if (1 == conversionData[11]) {
+            if (typeId === 1) {
+                // '1' is Google Ads Conversion
                 type = "Ads Conversion: ";
-                label = conversionData[64]?.[2]?.[4]
-                    ?.split("'")?.[7]
-                    ?.split("/")?.[1];
-            }
-
-            // '32' seems to be 'GA4'
-            if (32 == conversionData[11]) {
+                // Navigate the deeply nested array to find the label
+                label = data[64]?.[2]?.[4]?.split("'")?.[7]?.split("/")?.[1];
+            } else if (typeId === 32) {
+                // '32' is GA4 Conversion
                 type = "GA4: ";
-                label = conversionData[64]?.[1]?.[4]?.split("'")?.[3];
+                label = data[64]?.[1]?.[4]?.split("'")?.[3];
             }
-            return {
-                type_cv: type,
-                label_event: label,
-            };
+            return { type, label };
         }
 
+        // --- FEATURE: showAwId ---
         /**
-         * Creates (or finds) and updates the floating UI element that
-         * displays the AW-ID in the bottom-left corner.
-         * @param {string} id - The AdWords ID (AW-ID) to display.
+         * Creates a small floating box to display the Adwords ID (AW-ID).
+         * @param {string} id - The AW-ID to display.
          */
-        function displayAwIdElement(id) {
-            let idEl = document.getElementById("gpt-aw-id-display");
-            if (!idEl) {
+        function showAwId(id) {
+            let el = document.getElementById("gpt-aw-id-display");
+            if (!el) {
                 // Create the element if it doesn't exist
-                idEl = document.createElement("div");
-                idEl.id = "gpt-aw-id-display";
-                Object.assign(idEl.style, {
+                el = document.createElement("div");
+                el.id = "gpt-aw-id-display";
+                Object.assign(el.style, {
                     position: "fixed",
                     bottom: "16px",
                     left: "16px",
-                    zIndex: "9999",
+                    zIndex: "999",
                     padding: "8px 12px",
                     backgroundColor: "rgba(0, 0, 0, 0.75)",
                     color: "white",
@@ -907,112 +950,94 @@ if (window.location.href.includes("cases.connect")) {
                     boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
                     transition: "background-color 0.3s ease",
                 });
-                document.body.appendChild(idEl);
+                document.body.appendChild(el);
             }
 
-            // Update text
-            idEl.textContent = `AW-ID: ${id}`;
+            el.textContent = `AW-ID: ${id}`;
 
-            // Make it clickable to copy the ID
-            addClickToCopy({
-                element: idEl,
-                textToCopy: id,
+            // Make the box clickable to copy the ID
+            addCopy({
+                el: el,
+                text: id,
                 title: "Click to copy ID",
-                successText: "Copied!",
+                okText: "Copied!",
                 timeout: 800,
             });
         }
 
-        // Style objects for GA4 (yellow) and Ads (green) conversions
-        const ga4Style = {
-            backgroundColor: "rgb(255, 229, 180)", // Yellowish
-            borderRadius: "10px",
-            fontWeight: "500",
-        };
-        const adsStyle = {
-            backgroundColor: "rgb(160, 251, 157)", // Greenish
-            borderRadius: "10px",
-            fontWeight: "500",
-        };
-
+        // --- MAIN FUNCTION ---
         /**
-         * The main function for the 'adwords.corp' script.
-         * Runs after the 'conversions_data' is confirmed to exist.
+         * Main function to modify the conversions page.
          */
-        function runAdwordsScript() {
-            // Extract AW-ID from the data object
-            const awID =
-                conversions_data.SHARED_ALL_ENABLED_CONVERSIONS.match(
-                    /AW-(\d*)/
-                )[1];
+        function run() {
+            // 1. Get the raw conversion data from the global window object
+            const dataStr =
+                window.conversions_data.SHARED_ALL_ENABLED_CONVERSIONS;
+            // Extract the AW-ID from the string
+            const awID = dataStr.match(/AW-(\d*)/)[1];
 
-            // Click all "expand" buttons to show all conversions
-            document.querySelectorAll(".expand-more").forEach((button) => {
-                button.click();
-            });
+            // 2. Click all "expand" buttons to load all rows into the DOM
+            document
+                .querySelectorAll(".expand-more")
+                .forEach((btn) => btn.click());
 
-            // Parse the main conversion data JSON
-            const allConversionData = JSON.parse(
-                conversions_data.SHARED_ALL_ENABLED_CONVERSIONS
-            )[1];
+            // 3. Parse the main JSON string
+            const allData = JSON.parse(dataStr)[1];
 
-            // Wait 1 second for tables to expand
+            // 4. Wait for the DOM to update after clicks
             setTimeout(() => {
-                // Loop over every conversion name cell in the table
+                // 5. Process each conversion row in the table
                 document
                     .querySelectorAll(".conversion-name-cell .internal")
-                    .forEach((cellElement) => {
-                        let conversionName = cellElement.innerText;
-                        var conversionType = "",
-                            conversionLabel = "no label",
-                            matchedData = null;
+                    .forEach((cell) => {
+                        const name = cell.innerText;
+                        let type = null,
+                            label = "no label";
 
-                        // Find the parent row
-                        var tableRow = cellElement.closest(
-                            ".particle-table-row"
-                        );
-                        if (tableRow) {
-                            // Filter out non-web conversions
-                            let sourceElement = tableRow.querySelector(
+                        // --- Filter Rows ---
+                        const row = cell.closest(".particle-table-row");
+                        if (row) {
+                            // Find the "Source" column for this row
+                            const srcEl = row.querySelector(
                                 '[essfield="aggregated_conversion_source"]'
                             );
-                            if (!sourceElement?.innerText.match(/.*web.*/gi)) {
-                                tableRow.remove(); // Remove non-web rows
+                            // If source is not "Web", remove the entire row
+                            if (!srcEl?.innerText.match(/.*web.*/gi)) {
+                                row.remove();
+                                return; // Stop processing this row
                             }
                         }
 
-                        // Find the matching data for this conversion
-                        for (let i = 0; i < allConversionData.length; i++) {
-                            if (allConversionData[i][1] == conversionName) {
-                                matchedData = allConversionData[i];
-                                ({
-                                    type_cv: conversionType,
-                                    label_event: conversionLabel,
-                                } = extractConversionDetails(matchedData));
-                                break;
+                        // --- Find Data ---
+                        // Find the matching data from the global object
+                        const match = allData.find((d) => d[1] === name);
+                        if (match) {
+                            ({ type, label } = extractDetails(match));
+                        }
+
+                        // --- Modify DOM ---
+                        if (type) {
+                            // Replace cell text with the extracted label
+                            cell.innerHTML = `${label}`;
+                            // Apply the correct style
+                            const style =
+                                type === "GA4: " ? GA4_STYLE : ADS_STYLE;
+                            Object.assign(cell.style, style);
+
+                            // Make the new label copyable
+                            if (label) {
+                                addCopy({
+                                    el: cell,
+                                    text: label,
+                                    title: "Click to copy label",
+                                    timeout: 500,
+                                });
                             }
-                        }
-
-                        // If we found a match, update the cell
-                        if (conversionType) {
-                            cellElement.innerHTML = `${conversionLabel}`;
-                            const styleToApply =
-                                "GA4: " == conversionType ? ga4Style : adsStyle;
-                            Object.assign(cellElement.style, styleToApply);
-                        }
-
-                        // Make the cell clickable to copy the label
-                        if (conversionType && conversionLabel) {
-                            addClickToCopy({
-                                element: cellElement,
-                                textToCopy: conversionLabel,
-                                title: "Click to copy label",
-                                timeout: 500,
-                            });
                         }
                     });
 
-                // Clean up: Hide any category cards that are now empty
+                // --- Clean Up UI ---
+                // Hide any category containers that are now empty
                 document
                     .querySelectorAll(
                         "category-conversions-container-view, conversion-goal-card"
@@ -1025,47 +1050,44 @@ if (window.location.href.includes("cases.connect")) {
                             container.style.display = "none";
                         }
                     });
-            }, 1000);
+            }, 1000); // 1-second delay
 
-            // Finally, display the AW-ID
-            displayAwIdElement(awID);
+            // 6. Display the AW-ID
+            showAwId(awID);
         }
 
-        let attempts = 0;
-        const maxAttempts = 3;
-
+        // --- POLLING ---
         /**
-         * Polls for the global 'conversions_data' object.
-         * This script relies on data loaded asynchronously by the page,
-         * so it waits until that data is available before running.
+         * Polls for the global 'conversions_data' object before running.
          */
-        function pollForData() {
+        function poll() {
             if (
-                typeof conversions_data !== "undefined" &&
-                conversions_data.SHARED_ALL_ENABLED_CONVERSIONS
+                typeof window.conversions_data !== "undefined" &&
+                window.conversions_data.SHARED_ALL_ENABLED_CONVERSIONS
             ) {
                 // Data is ready, run the script
-                runAdwordsScript();
-            } else if (attempts < maxAttempts) {
-                // Data not ready, try again shortly
+                run();
+            } else if (attempts < MAX_ATTEMPTS) {
+                // Data not ready, try again
                 attempts++;
-                setTimeout(pollForData, 500);
+                setTimeout(poll, 500);
             } else {
-                // Gave up after max attempts
+                // Max attempts reached, stop
                 console.warn(
-                    "Adwords script: Could not find `conversions_data` object. Aborting."
+                    "Adwords script: Could not find `conversions_data`. Aborting."
                 );
             }
         }
 
-        // Start the poller
+        // --- SCRIPT START ---
+        // Start polling when the DOM is ready.
         if (
             document.readyState === "complete" ||
             document.readyState === "interactive"
         ) {
-            pollForData();
+            poll();
         } else {
-            window.addEventListener("DOMContentLoaded", pollForData);
+            window.addEventListener("DOMContentLoaded", poll);
         }
     })();
 }
