@@ -37,7 +37,7 @@ function a() {
 
 function a() {
     var a = +document
-        .querySelector(".load-price-total")
+        .querySelector(".amount bdi")
         .innerText.replace(/[^\d]/g, "");
     return a;
 }
