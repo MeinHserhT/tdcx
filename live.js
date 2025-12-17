@@ -1,13 +1,14 @@
 // a[href*="tel:"], a[href*="tel:"] *
 // a[href*="zalo.me"], a[href*="zalo.me"] *
-// a[href*="mailto:"], a[href*="mailto:"] *
 // a[href*="m.me"], a[href*="m.me"] *
+// a[href*="wa.me"], a[href*="wa.me"] *
+// a[href*="line.me"], a[href*="line.me"] *
+// a[href*="mailto:"], a[href*="mailto:"] *
 // a[href*="facebook"], a[href*="facebook"] *
 // a[href*="messenger"], a[href*="messenger"] *
 // a[href*="maps"], a[href*="maps"] *
 // a[href*="whatsapp.com"], a[href*="whatsapp.com"] *
-// a[href*="wa.me"], a[href*="wa.me"] *
-// a[href*="line.me"], a[href*="line.me"] *
+
 
 // b/456666535
 // --------------------------------------------------------------------------
@@ -78,7 +79,7 @@ document.querySelectorAll('[placeholder*="điện thoại"]').forEach(function (
 
 function a() {
     var p;
-    document.querySelectorAll("input[type=tel]").forEach(function (e) {
+    document.querySelectorAll("input[name=phone]").forEach(function (e) {
         e.value &&
             (p = "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""));
     });
