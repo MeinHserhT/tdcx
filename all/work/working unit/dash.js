@@ -1,5 +1,5 @@
 if (window.location.href.includes("casemon2.corp")) {
-    (function () {
+    (() => {
         if (window.dashRun) return;
         window.dashRun = 1;
 
@@ -27,18 +27,9 @@ if (window.location.href.includes("casemon2.corp")) {
                         src: "/4252/4252424.png",
                         animation: "pulse",
                     },
-                    phone: {
-                        src: "/1959/1959283.png",
-                        animation: "wiggle",
-                    },
-                    email: {
-                        src: "/15781/15781499.png",
-                        animation: "slide",
-                    },
-                    break: {
-                        src: "/2115/2115487.png",
-                        animation: "wiggle",
-                    },
+                    phone: { src: "/1959/1959283.png", animation: "wiggle" },
+                    email: { src: "/15781/15781499.png", animation: "slide" },
+                    break: { src: "/2115/2115487.png", animation: "wiggle" },
                     close: "/9403/9403346.png",
                 },
             };
@@ -59,14 +50,13 @@ if (window.location.href.includes("casemon2.corp")) {
                     { createHTML: (s) => s }
                 );
 
-                Object.keys(this.#cfg.icons).forEach((k) => {
-                    const icon = this.#cfg.icons[k];
+                for (const [key, icon] of Object.entries(this.#cfg.icons)) {
                     if (typeof icon === "string") {
-                        this.#cfg.icons[k] = this.#cfg.link + icon;
+                        this.#cfg.icons[key] = this.#cfg.link + icon;
                     } else {
                         icon.src = this.#cfg.link + icon.src;
                     }
-                });
+                }
 
                 this.#styles();
                 this.#initUi();
@@ -87,11 +77,8 @@ if (window.location.href.includes("casemon2.corp")) {
                     document.body.appendChild(ui);
                 }
                 this.#ui = ui;
-
                 this.#ui.addEventListener("click", (e) => {
-                    if (e.target.closest(".close-btn")) {
-                        this.#close();
-                    }
+                    if (e.target.closest(".close-btn")) this.#close();
                 });
             }
 
@@ -151,12 +138,7 @@ if (window.location.href.includes("casemon2.corp")) {
                     statusKey = "break";
                 }
 
-                return {
-                    ...agent,
-                    aux,
-                    statusKey,
-                    css: `stt-${statusKey}`,
-                };
+                return { ...agent, aux, statusKey, css: `stt-${statusKey}` };
             }
 
             #sort(agents) {
@@ -182,13 +164,13 @@ if (window.location.href.includes("casemon2.corp")) {
                 const rows = sorted.map(this.#rowHtml).join("");
                 const closeBtn = this.#closeHtml();
 
-                const finalHtml = `
+                const html = `
                   <div class="ui-content-wrapper">
                     ${closeBtn}
                     <div class="ui-table">${rows}</div>
                   </div>`;
 
-                this.#ui.innerHTML = this.#policy.createHTML(finalHtml);
+                this.#ui.innerHTML = this.#policy.createHTML(html);
                 this.#show();
             }
 
@@ -246,7 +228,7 @@ if (window.location.href.includes("casemon2.corp")) {
                   font-family: 'Noto Serif', serif; pointer-events: none; 
                   box-sizing: border-box;
                 }
-                .ui-content-wrapper { position: relative; pointer-events: auto; width: 100%; max-width: 400px; }
+                .ui-content-wrapper { position: relative; pointer-events: auto; width: 100%; max-width: 0px; }
                 .close-btn { 
                   position: absolute; top: 0; right: 0;
                   transform: translate(40%, -40%); border: none; cursor: pointer;

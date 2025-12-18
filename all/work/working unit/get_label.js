@@ -1,19 +1,21 @@
 if (window.location.href.includes("adwords.corp")) {
-    (function () {
-        const GA4_STYLE = {
+    (() => {
+        "use strict";
+
+        const ga4Style = {
             backgroundColor: "rgb(255, 229, 180)",
             borderRadius: "10px",
             fontWeight: "500",
         };
-        const ADS_STYLE = {
+        const adsStyle = {
             backgroundColor: "rgb(160, 251, 157)",
             borderRadius: "10px",
             fontWeight: "500",
         };
-        const MAX_ATTEMPTS = 3;
-        let attempts = 0;
+        const maxTries = 3;
+        let tries = 0;
 
-        function addCopy({
+        function initCopy({
             el,
             text,
             title = "Click to copy",
@@ -22,11 +24,11 @@ if (window.location.href.includes("adwords.corp")) {
             okColor = "white",
             timeout = 800,
         }) {
-            Object.assign(el.style, { cursor: "pointer", userSelect: "none" });
-            el.title = title;
-
             if (el.dataset.copyListener) return;
             el.dataset.copyListener = true;
+
+            Object.assign(el.style, { cursor: "pointer", userSelect: "none" });
+            el.title = title;
 
             el.addEventListener("click", (e) => {
                 e.preventDefault();
@@ -54,19 +56,21 @@ if (window.location.href.includes("adwords.corp")) {
             });
         }
 
-        function extractDetails(data) {
+        function getDetails(data) {
             let type = null,
                 label = null;
             const typeId = data[11];
 
             if (typeId === 1) {
                 type = "Ads Conversion: ";
-                label = data[64]?.[2]?.[4]?.split("'")?.[7]?.split("/")?.[1];
+                const labelStr = data[64]?.[2]?.[4];
+                label = labelStr?.split("'")?.[7]?.split("/")?.[1];
             } else if (typeId === 32) {
                 type = "GA4: ";
-                label = data[64]?.[1]?.[4]?.split("'")?.[3];
+                const labelStr = data[64]?.[1]?.[4];
+                label = labelStr?.split("'")?.[3];
             }
-            return { type, label };
+            return { type, label: label || "no label" };
         }
 
         function showAwId(id) {
@@ -94,8 +98,7 @@ if (window.location.href.includes("adwords.corp")) {
             }
 
             el.textContent = `AW-ID: ${id}`;
-
-            addCopy({
+            initCopy({
                 el: el,
                 text: id,
                 title: "Click to copy ID",
@@ -104,71 +107,75 @@ if (window.location.href.includes("adwords.corp")) {
             });
         }
 
+        function processRows(dataMap) {
+            document
+                .querySelectorAll(".conversion-name-cell .internal")
+                .forEach((cell) => {
+                    const row = cell.closest(".particle-table-row");
+                    if (row) {
+                        const srcEl = row.querySelector(
+                            '[essfield="aggregated_conversion_source"]'
+                        );
+                        if (!srcEl?.innerText.match(/.*web.*/gi)) {
+                            row.remove();
+                            return;
+                        }
+                    }
+
+                    const name = cell.innerText;
+                    const match = dataMap.get(name);
+
+                    if (match) {
+                        const { type, label } = getDetails(match);
+
+                        if (type && label !== "no label") {
+                            cell.innerHTML = `${label}`;
+                            const style =
+                                type === "GA4: " ? ga4Style : adsStyle;
+                            Object.assign(cell.style, style);
+
+                            initCopy({
+                                el: cell,
+                                text: label,
+                                title: "Click to copy label",
+                                timeout: 500,
+                            });
+                        }
+                    }
+                });
+
+            document
+                .querySelectorAll(
+                    "category-conversions-container-view, conversion-goal-card"
+                )
+                .forEach((container) => {
+                    if (
+                        !container.querySelectorAll(".particle-table-row")
+                            .length
+                    ) {
+                        container.style.display = "none";
+                    }
+                });
+        }
+
         function run() {
             const dataStr =
                 window.conversions_data.SHARED_ALL_ENABLED_CONVERSIONS;
-            const awID = dataStr.match(/AW-(\d*)/)[1];
+            const awID = dataStr.match(/AW-(\d*)/)?.[1];
+
+            if (!awID) {
+                console.warn("Adwords script: Could not find AW-ID.");
+                return;
+            }
 
             document
                 .querySelectorAll(".expand-more")
                 .forEach((btn) => btn.click());
 
             const allData = JSON.parse(dataStr)[1];
+            const dataMap = new Map(allData.map((d) => [d[1], d]));
 
-            setTimeout(() => {
-                document
-                    .querySelectorAll(".conversion-name-cell .internal")
-                    .forEach((cell) => {
-                        const name = cell.innerText;
-                        let type = null,
-                            label = "no label";
-
-                        const row = cell.closest(".particle-table-row");
-                        if (row) {
-                            const srcEl = row.querySelector(
-                                '[essfield="aggregated_conversion_source"]'
-                            );
-                            if (!srcEl?.innerText.match(/.*web.*/gi)) {
-                                row.remove();
-                                return;
-                            }
-                        }
-
-                        const match = allData.find((d) => d[1] === name);
-                        if (match) {
-                            ({ type, label } = extractDetails(match));
-                        }
-
-                        if (type) {
-                            cell.innerHTML = `${label}`;
-                            const style =
-                                type === "GA4: " ? GA4_STYLE : ADS_STYLE;
-                            Object.assign(cell.style, style);
-
-                            if (label) {
-                                addCopy({
-                                    el: cell,
-                                    text: label,
-                                    title: "Click to copy label",
-                                    timeout: 500,
-                                });
-                            }
-                        }
-                    });
-
-                document
-                    .querySelectorAll(
-                        "category-conversions-container-view, conversion-goal-card"
-                    )
-                    .forEach((container) => {
-                        if (
-                            !container.querySelectorAll(".particle-table-row")
-                                .length
-                        ) {
-                            container.style.display = "none";
-                        }
-                    });
-            }, 1000);
+            setTimeout(() => processRows(dataMap), 1000);
 
             showAwId(awID);
         }
@@ -179,8 +186,8 @@ if (window.location.href.includes("adwords.corp")) {
                 window.conversions_data.SHARED_ALL_ENABLED_CONVERSIONS
             ) {
                 run();
-            } else if (attempts < MAX_ATTEMPTS) {
-                attempts++;
+            } else if (tries < maxTries) {
+                tries++;
                 setTimeout(poll, 500);
             } else {
                 console.warn(

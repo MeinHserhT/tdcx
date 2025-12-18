@@ -1,7 +1,5 @@
 if (window.location.href.includes("cases.connect")) {
     (() => {
-        "use strict";
-
         if (window.scrRun) return;
         window.scrRun = 1;
 
@@ -14,14 +12,14 @@ if (window.location.href.includes("cases.connect")) {
                 AUTO_CLICK_BTN: "#cdtx__uioncall--btn",
                 AUTO_REMOVE_BTN: ".cdtx__uioncall_control-remove",
                 HOME_BUTTON: '[debug-id="dock-item-home"]',
-                FOLLOWUP_ITEM: ".li-popup_lstcasefl",
-                FOLLOWUP_BADGE: "#follow-up-badge",
-                APPOINTMENT_TIME_BTN: '[data-infocase="appointment_time"]',
-                FOLLOWUP_TIME_BTN: '[data-infocase="follow_up_time"]',
-                DATEPICKER_TODAY: ".datepicker-grid .today",
-                FOLLOWUP_INPUT: "#follow-up-days-input",
+                FLUP_ITEM: ".li-popup_lstcasefl",
+                FLUP_BADGE: "#follow-up-badge",
+                APT__BTN: '[data-infocase="appointment_time"]',
+                FLUP__BTN: '[data-infocase="follow_up_time"]',
+                TODAY_BTN: ".datepicker-grid .today",
+                FLUP_INPUT: "#follow-up-days-input",
                 PHONE_DIALOG: "[debug-id=phoneTakeDialog]",
-                SET_FOLLOWUP_BTN: "[data-type=follow_up_time]",
+                SET_FLUP_BTN: "[data-type=follow_up_time]",
                 FINISH_BTN: '[data-thischoice="Finish"]',
                 UI_PANEL: "#script-btn-panel",
             },
@@ -98,12 +96,12 @@ if (window.location.href.includes("cases.connect")) {
             return observer;
         }
 
-        function getDayDifference(date1, date2) {
+        function dayDiff(date1, date2) {
             const ONE_DAY_MS = 1000 * 60 * 60 * 24;
             return Math.round((date2 - date1) / ONE_DAY_MS);
         }
 
-        function addBusinessDays(startDate, days) {
+        function addWorkDays(startDate, days) {
             const date = new Date(startDate.getTime());
             let daysAdded = 0;
             while (daysAdded < days) {
@@ -162,7 +160,7 @@ if (window.location.href.includes("cases.connect")) {
         async function handleFLClick() {
             try {
                 click(CFG.SEL.HOME_BUTTON);
-                await waitClick(CFG.SEL.FOLLOWUP_ITEM, 0);
+                await waitClick(CFG.SEL.FLUP_ITEM, 0);
             } catch (e) {
                 console.error(e);
             }
@@ -170,9 +168,9 @@ if (window.location.href.includes("cases.connect")) {
 
         function updateFLBadge() {
             const badge = document.getElementById(
-                CFG.SEL.FOLLOWUP_BADGE.substring(1)
+                CFG.SEL.FLUP_BADGE.substring(1)
             );
-            const item = document.querySelector(CFG.SEL.FOLLOWUP_ITEM);
+            const item = document.querySelector(CFG.SEL.FLUP_ITEM);
             if (item && badge) {
                 const count = item.dataset.attr;
                 badge.textContent = count;
@@ -192,7 +190,7 @@ if (window.location.href.includes("cases.connect")) {
             });
             btn.innerHTML = `
             <img src="https://cdn-icons-png.flaticon.com/512/1069/1069138.png" style="width: 20px; height: 20px; vertical-align: middle;">
-            <span id="${CFG.SEL.FOLLOWUP_BADGE.substring(1)}" style="
+            <span id="${CFG.SEL.FLUP_BADGE.substring(1)}" style="
                 display: none; position: absolute; top: -5px; right: -5px;
                 background: red; color: white; font-size: 10px; font-weight: bold;
                 border-radius: 50%; padding: 2px 5px; line-height: 1;
@@ -201,7 +199,7 @@ if (window.location.href.includes("cases.connect")) {
             btn.addEventListener("click", handleFLClick);
             parent.appendChild(btn);
 
-            waitEl(CFG.SEL.FOLLOWUP_ITEM)
+            waitEl(CFG.SEL.FLUP_ITEM)
                 .then((el) => {
                     const observer = new MutationObserver(updateFLBadge);
                     observer.observe(el, {
@@ -215,16 +213,14 @@ if (window.location.href.includes("cases.connect")) {
 
         async function handleApptClick() {
             try {
-                const apptBtn = document.querySelector(
-                    CFG.SEL.APPOINTMENT_TIME_BTN
-                );
+                const apptBtn = document.querySelector(CFG.SEL.APT__BTN);
                 if (apptBtn && !apptBtn.dataset.valchoice) {
-                    click(CFG.SEL.APPOINTMENT_TIME_BTN);
-                    await waitClick(CFG.SEL.DATEPICKER_TODAY);
+                    click(CFG.SEL.APT__BTN);
+                    await waitClick(CFG.SEL.TODAY_BTN);
                 }
 
                 const input = document.getElementById(
-                    CFG.SEL.FOLLOWUP_INPUT.substring(1)
+                    CFG.SEL.FLUP_INPUT.substring(1)
                 );
                 const followUpDays = +input.value;
 
@@ -232,13 +228,13 @@ if (window.location.href.includes("cases.connect")) {
                     await waitClick(CFG.SEL.FINISH_BTN);
                 } else {
                     const today = new Date();
-                    const targetDate = addBusinessDays(today, followUpDays);
-                    const calendarDays = getDayDifference(today, targetDate);
+                    const targetDate = addWorkDays(today, followUpDays);
+                    const calendarDays = dayDiff(today, targetDate);
 
-                    click(CFG.SEL.FOLLOWUP_TIME_BTN);
-                    await waitClick(CFG.SEL.DATEPICKER_TODAY, calendarDays);
+                    click(CFG.SEL.FLUP__BTN);
+                    await waitClick(CFG.SEL.TODAY_BTN, calendarDays);
                 }
-                await waitClick(CFG.SEL.SET_FOLLOWUP_BTN);
+                await waitClick(CFG.SEL.SET_FLUP_BTN);
             } catch (e) {
                 console.error(e);
             }
@@ -253,7 +249,7 @@ if (window.location.href.includes("cases.connect")) {
             span.title = "Set appointment to Today + Follow-up";
             span.addEventListener("click", handleApptClick);
             const input = document.createElement("input");
-            input.id = CFG.SEL.FOLLOWUP_INPUT.substring(1);
+            input.id = CFG.SEL.FLUP_INPUT.substring(1);
             input.type = "text";
             input.value = "2";
             input.title = "Days to follow-up";
@@ -317,7 +313,7 @@ if (window.location.href.includes("cases.connect")) {
                 transition: background-color 0.3s ease; user-select: none;
             }
             #today-btn-label:hover { background-color: #4a9d9a; }
-            #${CFG.SEL.FOLLOWUP_INPUT.substring(1)} {
+            #${CFG.SEL.FLUP_INPUT.substring(1)} {
                 position: absolute; top: 50%; transform: translateY(-50%);
                 right: 8px; width: 32px; height: 28px;
                 padding: 0; border: none; border-radius: 3px; 
@@ -326,7 +322,7 @@ if (window.location.href.includes("cases.connect")) {
                 box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); 
                 transition: box-shadow 0.2s ease; -moz-appearance: textfield;
             }
-            #${CFG.SEL.FOLLOWUP_INPUT.substring(1)}:focus {
+            #${CFG.SEL.FLUP_INPUT.substring(1)}:focus {
                 outline: none;
                 box-shadow: inset 0 1px 3px rgba(0,0,0,0.2), 0 0 0 3px rgba(255, 255, 255, 0.7);
             }
