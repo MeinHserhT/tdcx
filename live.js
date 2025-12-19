@@ -37,8 +37,7 @@ function a() {
 }
 
 function a() {
-    var a = +document
-        .querySelector(".amount bdi")
+    var a = +document.querySelector("#sicompCartDetailApp tr:last-child td.text-nowrap.text-right h5 b")
         .innerText.replace(/[^\d]/g, "");
     return a;
 }
@@ -79,7 +78,7 @@ document.querySelectorAll('[placeholder*="điện thoại"]').forEach(function (
 
 function a() {
     var p;
-    document.querySelectorAll("input[name=phone]").forEach(function (e) {
+    document.querySelectorAll("input[id=phone]").forEach(function (e) {
         e.value &&
             (p = "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""));
     });

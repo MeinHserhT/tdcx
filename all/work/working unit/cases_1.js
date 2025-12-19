@@ -1,3 +1,29 @@
+
+// if (window.scrRun) return;
+//         window.scrRun = 1;
+
+const CFG = {
+    SOUND_URL:
+        "https://cdn.pixabay.com/audio/2025/07/18/audio_da35bc65d2.mp3",
+    AUTO_CLICK_INTERVAL: 18000,
+    AUTO_REMOVE_DELAY: 6000,
+    SEL: {
+        AUTO_CLICK_BTN: "#cdtx__uioncall--btn",
+        AUTO_REMOVE_BTN: ".cdtx__uioncall_control-remove",
+        HOME_BUTTON: '[debug-id="dock-item-home"]',
+        FLUP_ITEM: ".li-popup_lstcasefl",
+        FLUP_BADGE: "#follow-up-badge",
+        APT__BTN: '[data-infocase="appointment_time"]',
+        FLUP__BTN: '[data-infocase="follow_up_time"]',
+        TODAY_BTN: ".datepicker-grid .today",
+        FLUP_INPUT: "#follow-up-days-input",
+        PHONE_DIALOG: "[debug-id=phoneTakeDialog]",
+        SET_FLUP_BTN: "[data-type=follow_up_time]",
+        FINISH_BTN: '[data-thischoice="Finish"]',
+        UI_PANEL: "#script-btn-panel",
+    },
+};
+
 const BTN_STYLE = {
     zIndex: "10",
     padding: "12px 16px",
@@ -42,7 +68,7 @@ function waitEl(selector, { interval = 500, timeout = 3000 } = {}) {
                     resolve(el);
                     return;
                 }
-            }, interval)
+            }, interval);
         }, timeout);
     });
 }
@@ -75,13 +101,13 @@ function observeNode(selector, cb) {
 }
 
 const autoClick = {
-    id: null,
+    func: null,
     on: false,
     btn: null,
     start() {
-        if (this.id) return;
+        if (this.func) return;
         this.on = true;
-        this.id = setInterval(() => {
+        this.func = setInterval(() => {
             click(CFG.SEL.AUTO_CLICK_BTN);
             setTimeout(
                 () => click(CFG.SEL.AUTO_REMOVE_BTN),
@@ -91,9 +117,9 @@ const autoClick = {
         this.updateBtn();
     },
     stop() {
-        if (!this.id) return;
+        if (!this.func) return;
         clearInterval(this.id);
-        this.id = null;
+        this.func = null;
         this.on = false;
         this.updateBtn();
     },
@@ -103,9 +129,7 @@ const autoClick = {
     updateBtn() {
         if (!this.btn) return;
         this.btn.textContent = this.on ? "ON" : "OFF";
-        this.btn.style.backgroundColor = this.on
-            ? "#77DD77"
-            : "#FF746C";
+        this.btn.style.backgroundColor = this.on ? "#77DD77" : "#FF746C";
     },
     createBtn(parent) {
         this.btn = document.createElement("button");
@@ -116,3 +140,37 @@ const autoClick = {
         this.updateBtn();
     },
 };
+
+async function handleFLClick() {
+    click(CFG.SEL.HOME_BUTTON);
+    await waitClick(CFG.SEL.FLUP_ITEM, 0);
+}
+
+function updateFLBadge() {
+    const badge = document.getElementById(CFG.SEL.FLUP_BADGE.substring(1));
+    const item = document.querySelector(CFG.SEL.FLUP_ITEM);
+    if (item && badge) {
+        const count = item.dataset.attr;
+        badge.textContent = count;
+        badge.style.display = count ? "block" : "none";
+    }
+}
+
+function createFLBtn(parent) {
+    const btn = document.createElement("button");
+    btn.id = "follow-up-btn";
+    btn.title = "Click Follow-up Item";
+    btn.style.position = "relative";
+    Object.assign(btn.style, BTN_STYLE, {
+        padding: "10px 12px",
+        backgroundColor: "#A2BFFE",
+        lineHeight: "0",
+    });
+    btn.innerHTML = `
+    <img src="https://cdn-icons-png.flaticon.com/512/1069/1069138.png" style="width: 20px; height: 20px; vertical-align: middle;">
+    <span id="${CFG.SEL.FLUP_BADGE.substring(1)}" style="
+        display: none; position: absolute; top: -5px; right: -5px;
+        background: red; color: white; font-size: 10px; font-weight: bold;
+        border-radius: 50%; padding: 2px 5px; line-height: 1;
+    "></span>
+`;
