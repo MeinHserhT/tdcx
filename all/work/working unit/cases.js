@@ -13,7 +13,7 @@ if (window.location.href.includes("cases.connect")) {
                 AUTO_REMOVE_BTN: ".cdtx__uioncall_control-remove",
                 HOME_BUTTON: '[debug-id="dock-item-home"]',
                 FLUP_ITEM: ".li-popup_lstcasefl",
-                FLUP_BADGE: "#follow-up-badge",
+                FLUP_BADGE: "follow-up-badge",
                 APT__BTN: '[data-infocase="appointment_time"]',
                 FLUP__BTN: '[data-infocase="follow_up_time"]',
                 TODAY_BTN: ".datepicker-grid .today",

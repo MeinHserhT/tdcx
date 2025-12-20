@@ -10,17 +10,18 @@ const CFG = {
     SEL: {
         AUTO_CLICK_BTN: "#cdtx__uioncall--btn",
         AUTO_REMOVE_BTN: ".cdtx__uioncall_control-remove",
-        HOME_BUTTON: '[debug-id="dock-item-home"]',
         FLUP_ITEM: ".li-popup_lstcasefl",
-        FLUP_BADGE: "#follow-up-badge",
-        APT__BTN: '[data-infocase="appointment_time"]',
-        FLUP__BTN: '[data-infocase="follow_up_time"]',
+        FLUP_BADGE: "follow-up-badge",
         TODAY_BTN: ".datepicker-grid .today",
         FLUP_INPUT: "#follow-up-days-input",
+        UI_PANEL: "#script-btn-panel",
+
+        HOME_BUTTON: '[debug-id="dock-item-home"]',
+        APT__BTN: '[data-infocase="appointment_time"]',
+        FLUP__BTN: '[data-infocase="follow_up_time"]',
         PHONE_DIALOG: "[debug-id=phoneTakeDialog]",
         SET_FLUP_BTN: "[data-type=follow_up_time]",
         FINISH_BTN: '[data-thischoice="Finish"]',
-        UI_PANEL: "#script-btn-panel",
     },
 };
 
@@ -141,13 +142,13 @@ const autoClick = {
     },
 };
 
-async function handleFLClick() {
+async function clickFLBtn() {
     click(CFG.SEL.HOME_BUTTON);
     await waitClick(CFG.SEL.FLUP_ITEM, 0);
 }
 
 function updateFLBadge() {
-    const badge = document.getElementById(CFG.SEL.FLUP_BADGE.substring(1));
+    const badge = document.getElementById(CFG.SEL.FLUP_BADGE);
     const item = document.querySelector(CFG.SEL.FLUP_ITEM);
     if (item && badge) {
         const count = item.dataset.attr;
@@ -167,10 +168,47 @@ function createFLBtn(parent) {
         lineHeight: "0",
     });
     btn.innerHTML = `
-    <img src="https://cdn-icons-png.flaticon.com/512/1069/1069138.png" style="width: 20px; height: 20px; vertical-align: middle;">
-    <span id="${CFG.SEL.FLUP_BADGE.substring(1)}" style="
-        display: none; position: absolute; top: -5px; right: -5px;
-        background: red; color: white; font-size: 10px; font-weight: bold;
-        border-radius: 50%; padding: 2px 5px; line-height: 1;
-    "></span>
-`;
+        <img src="https://cdn-icons-png.flaticon.com/512/1069/1069138.png" style="width: 20px; height: 20px; vertical-align: middle;">
+        <span id="${CFG.SEL.FLUP_BADGE}" style="
+            display: none; position: absolute; top: -5px; right: -5px;
+            background: red; color: white; font-size: 10px; font-weight: bold;
+            border-radius: 50%; padding: 2px 5px; line-height: 1;
+        "></span>
+    `;
+    btn.addEventListener("click", handleFLClick);
+    parent.appendChild(btn);
+
+    waitEl(CFG.SEL.FLUP_ITEM)
+        .then((el) => {
+            const observer = new MutationObserver(updateFLBadge);
+            observer.observe(el, {
+                attributes: true,
+                attributeFilter: ["data-attr"],
+            });
+            updateFLBadge();
+        });
+}
+
+async function handleApptClick() {
+    const apptBtn = document.querySelector(CFG.SEL.APT__BTN);
+    if (apptBtn && !apptBtn.dataset.valchoice) {
+        click(CFG.SEL.APT__BTN);
+        await waitClick(CFG.SEL.TODAY_BTN);
+    }
+
+    const input = document.getElementById(
+        CFG.SEL.FLUP_INPUT.substring(1)
+    );
+    const followUpDays = +input.value;
+
+    if (!followUpDays) {
+        await waitClick(CFG.SEL.FINISH_BTN);
+    } else {
+        const today = new Date();
+        const calendarDays = dayDiff(today, addWorkDays(today, followUpDays));
+
+        click(CFG.SEL.FLUP__BTN);
+        await waitClick(CFG.SEL.TODAY_BTN, calendarDays);
+    }
+    await waitClick(CFG.SEL.SET_FLUP_BTN);
+}
