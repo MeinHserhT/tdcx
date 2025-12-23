@@ -8,7 +8,7 @@
 // a[href*="messenger"], a[href*="messenger"] *
 // a[href*="maps"], a[href*="maps"] *
 // a[href*="whatsapp.com"], a[href*="whatsapp.com"] *
-
+// a[href *= "docs.google"], a[href *= "docs.google"] *
 
 // b/456666535
 // --------------------------------------------------------------------------
@@ -78,7 +78,7 @@ document.querySelectorAll('[placeholder*="điện thoại"]').forEach(function (
 
 function a() {
     var p;
-    document.querySelectorAll("input[id=phone]").forEach(function (e) {
+    document.querySelectorAll("input[id*=phone]").forEach(function (e) {
         e.value &&
             (p = "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""));
     });

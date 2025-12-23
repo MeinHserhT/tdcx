@@ -1,6 +1,6 @@
 var dr_items = [],
   businessType = "retail",
-  is_item = document.querySelector(".product-single__wrap"),
+  is_item = document.querySelector(".section_product"),
   is_CV = window.location.href.includes("order");
 function dynamic(e, t) {
   dataLayer.push({ dr_event_type: e, dr_items: t, event: "drmkt" });
@@ -8,13 +8,13 @@ function dynamic(e, t) {
 if (is_item) {
   // ------ VIEW ITEM  ------
   var t = {
-    id: document.querySelector(".btn-add__cart").getAttribute("data-id"),
+    id: document.querySelector(".remove_favourite_product_page").getAttribute("data_product_id"),
     google_business_vertical: businessType,
   };
   dr_items.push(t);
   dynamic("view_item", dr_items);
   // ------ ADD TO CART -------
-  jQuery(".btn-add__cart, .btn-add__cart *").on(
+  jQuery(".add_to_cart_btn, .add_to_cart_btn *").on(
     "click",
     function () {
       var store = JSON.parse(localStorage.getItem("item_storage")) || [];

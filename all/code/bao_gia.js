@@ -21,16 +21,16 @@ document.addEventListener("click", function (e) {
         (f = l && l.closest("[class*=-body]"));
     f &&
         ((p = f.querySelector('input[data-field="DienThoai"]')),
-        setTimeout(function () {
-            r = document.querySelector(".gh-alert-content .msg");
-            !r &&
-                p &&
-                p.value &&
-                dataLayer.push({
-                    event: "formmm",
-                    phone:
-                        "+84" +
-                        p.value.replace(/\D/g, "").replace(/^(84|0)/, ""),
-                });
-        }, 200));
+            setTimeout(function () {
+                r = document.querySelector(".gh-alert-content .msg");
+                !r &&
+                    p &&
+                    p.value &&
+                    dataLayer.push({
+                        event: "formmm",
+                        phone:
+                            "+84" +
+                            p.value.replace(/\D/g, "").replace(/^(84|0)/, ""),
+                    });
+            }, 500));
 });
