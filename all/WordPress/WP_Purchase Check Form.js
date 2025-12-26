@@ -144,3 +144,11 @@ function a() {
   if (a && b && c) return true;
   return "n";
 }
+
+function a() {
+  var ln = document.querySelector("#billing_last_name").value,
+    add = document.querySelector("#billing_address_1").value,
+    ph = document.querySelector("#billing_phone").value,
+    term = document.querySelector('[name="terms"]').checked;
+  if (ln && add && ph && term) return "y";
+}

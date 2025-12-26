@@ -28,6 +28,15 @@ function _p() {
             .innerText.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
     );
 }
+
+function _p() {
+    return (
+        "+84" +
+        document
+            .querySelector("#billing_phone")
+            .innerText.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
+    );
+}
 function _e() {
     return document.querySelector(".woocommerce-customer-details--email")
         .innerText;
