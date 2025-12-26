@@ -1,7 +1,5 @@
 if (window.location.href.includes("adwords.corp")) {
     (() => {
-        "use strict";
-
         const ga4Style = {
             backgroundColor: "rgb(255, 229, 180)",
             borderRadius: "10px",
@@ -15,7 +13,7 @@ if (window.location.href.includes("adwords.corp")) {
         const maxTries = 3;
         let tries = 0;
 
-        function initCopy({
+        const initCopy = ({
             el,
             text,
             title = "Click to copy",
@@ -23,11 +21,14 @@ if (window.location.href.includes("adwords.corp")) {
             okBg = "#007bff",
             okColor = "white",
             timeout = 800,
-        }) {
+        }) => {
             if (el.dataset.copyListener) return;
             el.dataset.copyListener = true;
 
-            Object.assign(el.style, { cursor: "pointer", userSelect: "none" });
+            Object.assign(el.style, {
+                cursor: "pointer",
+                userSelect: "none"
+            });
             el.title = title;
 
             el.addEventListener("click", (e) => {
@@ -35,7 +36,10 @@ if (window.location.href.includes("adwords.corp")) {
                 e.stopPropagation();
 
                 navigator.clipboard.writeText(text).then(() => {
-                    const { backgroundColor: origBg, color: origColor } =
+                    const {
+                        backgroundColor: origBg,
+                        color: origColor
+                    } =
                         el.style;
                     const origText = el.textContent;
 
@@ -54,9 +58,9 @@ if (window.location.href.includes("adwords.corp")) {
                     }, timeout);
                 });
             });
-        }
+        };
 
-        function getDetails(data) {
+        const getDetails = (data) => {
             let type = null,
                 label = null;
             const typeId = data[11];
@@ -70,10 +74,13 @@ if (window.location.href.includes("adwords.corp")) {
                 const labelStr = data[64]?.[1]?.[4];
                 label = labelStr?.split("'")?.[3];
             }
-            return { type, label: label || "no label" };
-        }
+            return {
+                type,
+                label: label || "no label"
+            };
+        };
 
-        function showAwId(id) {
+        const showAwId = (id) => {
             let el = document.getElementById("gpt-aw-id-display");
             if (!el) {
                 el = document.createElement("div");
@@ -105,9 +112,9 @@ if (window.location.href.includes("adwords.corp")) {
                 okText: "Copied!",
                 timeout: 800,
             });
-        }
+        };
 
-        function processRows(dataMap) {
+        const processRows = (dataMap) => {
             document
                 .querySelectorAll(".conversion-name-cell .internal")
                 .forEach((cell) => {
@@ -126,7 +133,10 @@ if (window.location.href.includes("adwords.corp")) {
                     const match = dataMap.get(name);
 
                     if (match) {
-                        const { type, label } = getDetails(match);
+                        const {
+                            type,
+                            label
+                        } = getDetails(match);
 
                         if (type && label !== "no label") {
                             cell.innerHTML = `${label}`;
@@ -156,14 +166,14 @@ if (window.location.href.includes("adwords.corp")) {
                         container.style.display = "none";
                     }
                 });
-        }
+        };
 
-        function run() {
+        const run = () => {
             const dataStr =
                 window.conversions_data.SHARED_ALL_ENABLED_CONVERSIONS;
-            const awID = dataStr.match(/AW-(\d*)/)?.[1];
+            const awId = dataStr.match(/AW-(\d*)/)?.[1];
 
-            if (!awID) {
+            if (!awId) {
                 console.warn("Adwords script: Could not find AW-ID.");
                 return;
             }
@@ -177,10 +187,10 @@ if (window.location.href.includes("adwords.corp")) {
 
             setTimeout(() => processRows(dataMap), 1000);
 
-            showAwId(awID);
-        }
+            showAwId(awId);
+        };
 
-        function poll() {
+        const poll = () => {
             if (
                 typeof window.conversions_data !== "undefined" &&
                 window.conversions_data.SHARED_ALL_ENABLED_CONVERSIONS
@@ -194,7 +204,7 @@ if (window.location.href.includes("adwords.corp")) {
                     "Adwords script: Could not find `conversions_data`. Aborting."
                 );
             }
-        }
+        };
 
         if (
             document.readyState === "complete" ||

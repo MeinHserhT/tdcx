@@ -3,24 +3,24 @@ if (window.location.href.includes("cases.connect")) {
 		if (window.scrRun) return;
 		window.scrRun = 1;
 
-		const CFG = {
-			SOUND_URL: "https://cdn.pixabay.com/audio/2025/07/18/audio_da35bc65d2.mp3",
-			AUTO_CLICK_INTERVAL: 18000,
-			AUTO_REMOVE_DELAY: 6000,
-			CSS: {
-				AUTO_CLICK_BTN: "#cdtx__uioncall--btn",
-				AUTO_REMOVE_BTN: ".cdtx__uioncall_control-remove",
-				FLUP_ITEM: ".li-popup_lstcasefl",
-				TODAY_BTN: ".datepicker-grid .today",
-				FLUP_INPUT_ID: "flup-days-input",
-				FLUP_BADGE_ID: "flup-badge",
-				UI_PANEL_ID: "btn-panel",
-				HOME_BUTTON: '[debug-id="dock-item-home"]',
-				APT__BTN: '[data-infocase="appointment_time"]',
-				FLUP__BTN: '[data-infocase="follow_up_time"]',
-				PHONE_DIALOG: "[debug-id=phoneTakeDialog]",
-				SET_FLUP_BTN: "[data-type=follow_up_time]",
-				FINISH_BTN: '[data-thischoice="Finish"]',
+		const config = {
+			soundUrl: "https://cdn.pixabay.com/audio/2025/07/18/audio_da35bc65d2.mp3",
+			autoClickInterval: 18000,
+			autoRemoveDelay: 6000,
+			selectors: {
+				autoClickBtn: "#cdtx__uioncall--btn",
+				autoRemoveBtn: ".cdtx__uioncall_control-remove",
+				flupItem: ".li-popup_lstcasefl",
+				todayBtn: ".datepicker-grid .today",
+				flupInputId: "flup-days-input",
+				flupBadgeId: "flup-badge",
+				uiPanelId: "btn-panel",
+				homeButton: '[debug-id="dock-item-home"]',
+				apptBtn: '[data-infocase="appointment_time"]',
+				flupBtn: '[data-infocase="follow_up_time"]',
+				phoneDialog: "[debug-id=phoneTakeDialog]",
+				setFlupBtn: "[data-type=follow_up_time]",
+				finishBtn: '[data-thischoice="Finish"]',
 			},
 		};
 
@@ -119,19 +119,19 @@ if (window.location.href.includes("cases.connect")) {
 				}
 			}
 
-			render(targetElement) {
+			render = (targetElement) => {
 				targetElement.appendChild(this.element);
 			}
 
-			setText(text) {
+			setText = (text) => {
 				this.element.innerText = text;
 			}
 
-			setColor(color) {
+			setColor = (color) => {
 				this.element.style.backgroundColor = color;
 			}
 
-			appendChild(childElement) {
+			appendChild = (childElement) => {
 				this.element.appendChild(childElement);
 			}
 		}
@@ -141,13 +141,14 @@ if (window.location.href.includes("cases.connect")) {
 			on: false,
 			btnInstance: null,
 
+			// Cannot use arrow functions here due to 'this' usage
 			start() {
 				if (this.timerId) return;
 				this.on = true;
 				this.timerId = setInterval(() => {
-					click(CFG.CSS.AUTO_CLICK_BTN);
-					setTimeout(() => click(CFG.CSS.AUTO_REMOVE_BTN), CFG.AUTO_REMOVE_DELAY);
-				}, CFG.AUTO_CLICK_INTERVAL);
+					click(config.selectors.autoClickBtn);
+					setTimeout(() => click(config.selectors.autoRemoveBtn), config.autoRemoveDelay);
+				}, config.autoClickInterval);
 				this.updateView();
 			},
 
@@ -182,13 +183,14 @@ if (window.location.href.includes("cases.connect")) {
 		};
 
 		const checkBtn = {
+			// Cannot use arrow functions here due to 'this' usage logic (if extended later) or maintaining consistency
 			async handleClick() {
-				click(CFG.CSS.HOME_BUTTON);
-				await waitClick(CFG.CSS.FLUP_ITEM, 0);
+				click(config.selectors.homeButton);
+				await waitClick(config.selectors.flupItem, 0);
 			},
 
 			updateBadge(el) {
-				const badge = document.getElementById(CFG.CSS.FLUP_BADGE_ID);
+				const badge = document.getElementById(config.selectors.flupBadgeId);
 				if (el && badge) {
 					const count = el.getAttribute("data-attr") || "0";
 					badge.style.display = (count !== "0") ? "block" : "none";
@@ -199,7 +201,7 @@ if (window.location.href.includes("cases.connect")) {
 				const htmlContent = `
                     <img src="https://cdn-icons-png.flaticon.com/512/1069/1069138.png" 
                         style="width: 20px; height: 20px;">
-                    <span id="${CFG.CSS.FLUP_BADGE_ID}" style="
+                    <span id="${config.selectors.flupBadgeId}" style="
                         display: none; position: absolute; top: -5px; right: -5px;
                         background: red; border-radius: 50%; padding: 2px 5px; line-height: 1;
                     ">+</span>
@@ -214,9 +216,12 @@ if (window.location.href.includes("cases.connect")) {
 				});
 
 				btn.render(parent);
-				waitEl(CFG.CSS.FLUP_ITEM).then((el) => {
+				waitEl(config.selectors.flupItem).then((el) => {
 					const observer = new MutationObserver(() => this.updateBadge(el));
-					observer.observe(el, { attributes: true, attributeFilter: ["data-attr"] });
+					observer.observe(el, {
+						attributes: true,
+						attributeFilter: ["data-attr"]
+					});
 					this.updateBadge(el);
 				});
 			},
@@ -225,39 +230,42 @@ if (window.location.href.includes("cases.connect")) {
 		const followUpBtn = {
 			inputEl: null,
 
-			async handleFLUpClick(e) {
-				if (e.target.id === CFG.CSS.FLUP_INPUT_ID) return;
+			// Cannot use arrow functions here due to 'this.inputEl' usage
+			async handleFlupClick(e) {
+				if (e.target.id === config.selectors.flupInputId) return;
 
-				const apptBtn = document.querySelector(CFG.CSS.APT__BTN);
+				const apptBtn = document.querySelector(config.selectors.apptBtn);
 				if (apptBtn && !apptBtn.dataset.valchoice) {
-					click(CFG.CSS.APT__BTN);
-					await waitClick(CFG.CSS.TODAY_BTN);
+					click(config.selectors.apptBtn);
+					await waitClick(config.selectors.todayBtn);
 				}
 
 				const flDays = +this.inputEl.value;
 				if (!flDays) {
-					await waitClick(CFG.CSS.FINISH_BTN);
+					await waitClick(config.selectors.finishBtn);
 				} else {
 					const today = new Date();
 					const addDay = addWorkDays(today, flDays);
 					const calendarDays = dayDiff(today, addDay);
-					click(CFG.CSS.FLUP__BTN);
-					await waitClick(CFG.CSS.TODAY_BTN, calendarDays);
+					click(config.selectors.flupBtn);
+					await waitClick(config.selectors.todayBtn, calendarDays);
 				}
-				await waitClick(CFG.CSS.SET_FLUP_BTN);
+				await waitClick(config.selectors.setFlupBtn);
 			},
 
 			create(parent) {
 				const btn = new Button({
 					text: "FL Up:",
-					onClick: (e) => this.handleFLUpClick(e),
+					onClick: (e) => this.handleFlupClick(e),
 					title: "Set Follow-up",
 					bgColor: "#55B4B0",
-					extraStyles: { paddingRight: "48px" }
+					extraStyles: {
+						paddingRight: "48px"
+					}
 				});
 
 				const input = document.createElement("input");
-				input.id = CFG.CSS.FLUP_INPUT_ID;
+				input.id = config.selectors.flupInputId;
 				input.type = "text";
 				input.value = "2";
 				input.title = "Days to follow-up";
@@ -275,17 +283,17 @@ if (window.location.href.includes("cases.connect")) {
 		};
 
 		// --- Initialization ---
-		async function handleDialog() {
-			const sound = new Audio(CFG.SOUND_URL);
+		const handleDialog = async () => {
+			const sound = new Audio(config.soundUrl);
 			await sound.play();
 			window.focus();
-		}
+		};
 
-		function injectCSS() {
+		const injectSelectors = () => {
 			const id = "cases-connect-enhanced-styles";
 			if (document.getElementById(id)) return;
 			const rules = `
-                #${CFG.CSS.FLUP_INPUT_ID} {
+                #${config.selectors.flupInputId} {
                     position: absolute; top: 50%; transform: translateY(-50%);
                     right: 8px; width: 32px; height: 28px;
                     padding: 0; border: none; border-radius: 3px; 
@@ -294,7 +302,7 @@ if (window.location.href.includes("cases.connect")) {
                     box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); 
                     transition: box-shadow 0.2s ease; -moz-appearance: textfield;
                 }
-                #${CFG.CSS.FLUP_INPUT_ID}:focus {
+                #${config.selectors.flupInputId}:focus {
                     outline: none;
                     box-shadow: inset 0 1px 3px rgba(0,0,0,0.2), 0 0 0 3px rgba(255, 255, 255, 0.7);
                 }
@@ -303,28 +311,33 @@ if (window.location.href.includes("cases.connect")) {
 			el.id = id;
 			el.textContent = rules;
 			document.head.appendChild(el);
-		}
+		};
 
-		function createPanel() {
+		const createPanel = () => {
 			const div = document.createElement("div");
-			div.id = CFG.CSS.UI_PANEL_ID;
+			div.id = config.selectors.uiPanelId;
 			Object.assign(div.style, {
-				position: "fixed", bottom: "16px", left: "16px",
-				display: "flex", gap: "8px", alignItems: "center", zIndex: "9999",
+				position: "fixed",
+				bottom: "16px",
+				left: "16px",
+				display: "flex",
+				gap: "8px",
+				alignItems: "center",
+				zIndex: "9999",
 			});
 			document.body.appendChild(div);
 			return div;
-		}
+		};
 
-		function init() {
-			observeNode(CFG.CSS.PHONE_DIALOG, handleDialog);
-			injectCSS();
+		const init = () => {
+			observeNode(config.selectors.phoneDialog, handleDialog);
+			injectSelectors();
 			const panel = createPanel();
 
 			autoBtn.create(panel);
 			checkBtn.create(panel);
 			followUpBtn.create(panel);
-		}
+		};
 
 		init();
 	})();
