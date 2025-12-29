@@ -294,13 +294,14 @@ if (window.location.href.includes("cases.connect")) {
                 }
 
                 const flDays = +this.inputEl.value;
+                click(config.selectors.flupBtn);
+
                 if (!flDays) {
                     await waitClick(config.selectors.finishBtn);
                 } else {
                     const today = new Date();
                     const addDay = addWorkDays(today, flDays);
                     const calendarDays = dayDiff(today, addDay);
-                    click(config.selectors.flupBtn);
                     await waitClick(config.selectors.todayBtn, calendarDays);
                 }
                 await waitClick(config.selectors.setFlupBtn);
@@ -839,7 +840,7 @@ if (window.location.href.includes("cases.connect")) {
                         backgroundColor: origBg,
                         color: origColor
                     } =
-                    el.style;
+                        el.style;
                     const origText = el.textContent;
 
                     Object.assign(el.style, {
@@ -972,7 +973,7 @@ if (window.location.href.includes("cases.connect")) {
                 .forEach((container) => {
                     if (
                         !container.querySelectorAll(".particle-table-row")
-                        .length
+                            .length
                     ) {
                         container.style.display = "none";
                     }
