@@ -27,7 +27,7 @@ if (window.location.href.includes("adwords.corp")) {
 
             Object.assign(el.style, {
                 cursor: "pointer",
-                userSelect: "none"
+                userSelect: "none",
             });
             el.title = title;
 
@@ -36,10 +36,7 @@ if (window.location.href.includes("adwords.corp")) {
                 e.stopPropagation();
 
                 navigator.clipboard.writeText(text).then(() => {
-                    const {
-                        backgroundColor: origBg,
-                        color: origColor
-                    } =
+                    const { backgroundColor: origBg, color: origColor } =
                         el.style;
                     const origText = el.textContent;
 
@@ -76,7 +73,7 @@ if (window.location.href.includes("adwords.corp")) {
             }
             return {
                 type,
-                label: label || "no label"
+                label: label || "no label",
             };
         };
 
@@ -129,14 +126,11 @@ if (window.location.href.includes("adwords.corp")) {
                         }
                     }
 
-                    const name = cell.innerText;
-                    const match = dataMap.get(name);
+                    const id = cell.innerText;
+                    const match = dataMap.get(id);
 
                     if (match) {
-                        const {
-                            type,
-                            label
-                        } = getDetails(match);
+                        const { type, label } = getDetails(match);
 
                         if (type && label !== "no label") {
                             cell.innerHTML = `${label}`;
