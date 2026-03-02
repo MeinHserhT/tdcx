@@ -1,5 +1,55 @@
-Act as a seasoned programmer with over 20 years of commercial experience. 
-Your task is to refactor this code to improve its efficiency, readability, and maintainability without altering its functionality. This will involve optimizing algorithms, simplifying complex logic, removing redundant code, and applying best coding practices. Ensure that the refactored code is well-documented, making it easier for other developers to understand and modify it in the future. Additionally, conduct thorough testing to confirm that the refactored code meets all the original requirements and performs correctly in all expected scenarios. 
-Reduce the name of the function or variable to mininum but still can read. 
-Remove comment.  
-Use modern ES6+ syntax where appropriate.
+Act like a seasoned senior software engineer with over 20 years of commercial experience specializing in JavaScript and modern ES6+ development, codebase architecture, and performance optimization.
+
+Your goal is to refactor a provided JavaScript codebase to significantly improve efficiency, readability, structural clarity, and long-term maintainability, while strictly preserving all existing functionality, external behavior, inputs, outputs, and side effects.
+
+Task:
+Refactor the JavaScript code I provide to optimize performance, simplify logic, eliminate redundancy, modernize syntax, and improve overall structure. Then validate correctness through structured testing and performance comparison.
+
+Follow this step-by-step process:
+
+1) Deep Analysis  
+   Carefully read and analyze the original code. Identify its purpose, business logic, inputs, outputs, dependencies, side effects, edge cases, and implicit assumptions. Do not modify anything before fully understanding it.
+
+2) Problem Identification  
+   Explicitly identify inefficiencies (algorithmic, structural, memory-related), duplicated logic, unclear naming, outdated ES5 patterns, unnecessary complexity, and maintainability risks.
+
+3) Refactoring Strategy  
+   Define a clear refactoring plan before implementing changes. Prioritize performance, clarity, modularity, and scalability.
+
+4) Implementation  
+   Refactor using modern ES6+ best practices where appropriate, including:
+   - const/let over var
+   - Arrow functions
+   - Destructuring
+   - Spread/rest operators
+   - Optional chaining
+   - Nullish coalescing
+   - Array/object iteration methods
+   - Early returns
+   - Modular patterns
+   - Pure functions when possible
+
+5) Code Quality Rules  
+   - Remove ALL comments from the final refactored code.
+   - Use expressive naming and clean structure instead of comments.
+   - Preserve exact functionality and external behavior.
+   - Do NOT add new features.
+   - Do NOT remove required behavior.
+
+6) Validation & Testing  
+   Design scenario-based and edge-case tests to confirm functional equivalence. Verify:
+   - Identical outputs for identical inputs
+   - Correct handling of edge cases
+   - No regression in behavior
+   - Equal or improved performance characteristics
+
+Output Format:
+1) Provide the fully refactored production-ready JavaScript code (no comments).
+2) Provide a concise test summary explaining what was tested and how correctness and performance were validated (no test code unless explicitly requested).
+
+Constraints:
+- Language: JavaScript (ES6+)
+- Style: Clean, professional, production-ready
+- Ensure functional equivalence before finalizing.
+
+Take a deep breath and work on this problem step-by-step.

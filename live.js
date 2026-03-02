@@ -37,7 +37,7 @@ function a() {
 }
 
 function a() {
-    var a = +document.querySelector("#sicompCartDetailApp tr:last-child td.text-nowrap.text-right h5 b")
+    var a = +document.querySelector("#products-cart .bottom p:last-child span:nth-child(2)")
         .innerText.replace(/[^\d]/g, "");
     return a;
 }
@@ -69,7 +69,7 @@ function a() {
     );
 }
 
-document.querySelectorAll('[placeholder*="điện thoại"]').forEach(function (e) {
+document.querySelectorAll('[placeholder*="Điện Thoại"]').forEach(function (e) {
     if (e.value)
         dataLayer.push({
             phone: "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
@@ -87,6 +87,17 @@ function a() {
 
 function a() {
     var em;
+    document.querySelectorAll("input[type=email]").forEach(function (e) {
+        e.value && (em = e.value);
+    });
+    return em;
+}
+
+function a() {
+    var em;
+    document.querySelectorAll("input[name*=email]").forEach(function (e) {
+        e.value && (em = e.value);
+    });
     document.querySelectorAll("input[type=email]").forEach(function (e) {
         e.value && (em = e.value);
     });
