@@ -6,6 +6,7 @@
 // a[href*="mailto:"], a[href*="mailto:"] *
 // a[href*="facebook"], a[href*="facebook"] *
 // a[href*="messenger"], a[href*="messenger"] *
+// a[href*="kakao.com"], a[href*="kakao.com"] *
 // a[href*="maps"], a[href*="maps"] *
 // a[href*="whatsapp.com"], a[href*="whatsapp.com"] *
 // a[href *= "docs.google"], a[href *= "docs.google"] *
@@ -42,11 +43,13 @@ function a() {
     return a;
 }
 
+
+
 function a() {
     return (
         "+84" +
         document
-            .querySelector("#txtDienThoaiBaoGiaPopup")
+            .querySelector("#Mobile")
             .value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
     );
 }
@@ -64,7 +67,7 @@ function a() {
     return (
         "+84" +
         document
-            .querySelector('#modalPriceQuote [data-field="DienThoai"]')
+            .querySelector('.d-phone')
             .value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
     );
 }
@@ -76,13 +79,28 @@ document.querySelectorAll('[placeholder*="Điện Thoại"]').forEach(function (
         });
 });
 
+document.querySelectorAll('input[name*=email]').forEach(function (e) {
+    if (e.value)
+        dataLayer.push({
+            phone: "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
+        });
+});
+
 function a() {
     var p;
-    document.querySelectorAll("input[id*=phone]").forEach(function (e) {
+    document.querySelectorAll("input[id*=form-field-email]").forEach(function (e) {
         e.value &&
             (p = "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""));
     });
     return p;
+}
+
+function a() {
+    var em;
+    document.querySelectorAll("input[type=email]").forEach(function (e) {
+        e.value && (em = e.value);
+    });
+    return em;
 }
 
 function a() {
@@ -112,4 +130,13 @@ function a() {
     var e = document.querySelector("#wards").value;
     if (a && b && c && d && e) return "y";
     return "n";
+}
+
+
+function a() {
+    var em;
+    document.querySelectorAll("#Contact_Email").forEach(function (e) {
+        e.value && (em = e.value);
+    });
+    return em;
 }

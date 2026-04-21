@@ -119,49 +119,93 @@ if (window.location.href.includes("cases.connect")) {
         };
 
         const signatureManager = {
-            getStorageValue(key, fallback) {
-              const val = localStorage.getItem(key);
-              if (val) return val;
-              localStorage.setItem(key, fallback);
-              return fallback;
+            getOrSet(key, defaultValue) {
+                let value = localStorage.getItem(key);
+                if (!value) {
+                    value = defaultValue;
+                    localStorage.setItem(key, value);
+                }
+                return value;
             },
-          
-            inject(target) {
-              const table = target || $(CONFIG.selectors.signatureTable);
-              if (!table || table.dataset.sigInjected) return;
-          
-              let name = localStorage.getItem(CONFIG.storage.name);
-              if (!name) {
-                name = prompt("Enter your name:")?.trim() || "";
-                if (name) localStorage.setItem(CONFIG.storage.name, name);
-              }
-          
-              const logo = this.getStorageValue(CONFIG.storage.logo, CONFIG.defaults.logo);
-              const team = this.getStorageValue(CONFIG.storage.team, CONFIG.defaults.team);
-              const comp = this.getStorageValue(CONFIG.storage.comp, CONFIG.defaults.comp);
-          
-              table.innerHTML = `
-                <table style="border-collapse: collapse; margin-left: 30px;">
-                  <tbody>
-                    <tr>
-                      <td style="padding-left: 10px;"/>
-                      <td style="width: 64px; vertical-align: top;">
-                        <img src="${logo}" width="64" height="64" style="display: block; border-radius: 4px;">
-                      </td>
-                      <td style="width: 10px;"></td>
-                      <td style="vertical-align: middle;">
-                        <p style="font-size: 14px; font-family: Roboto, sans-serif; margin: 0; line-height: 1.4; color: #3c4043;">
-                          <span style="font-size: 110%;">${name}</span>
-                          <br><span style="font-style: italic; color: #70757a;">${team}</span>
-                          <br><span style="font-style: italic; color: #70757a;">${comp}</span>
-                        </p>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>`;
-              table.dataset.sigInjected = "true";
+
+            // Extracted logic to just build the HTML element
+            buildSignatureElement() {
+                let userName = localStorage.getItem(CONFIG.storage.name);
+                if (!userName) {
+                    userName = prompt("Enter your name (it will save to localStorage): ")?.trim() || "";
+                    if (userName) localStorage.setItem(CONFIG.storage.name, userName);
+                }
+
+                const logo = this.getOrSet(CONFIG.storage.logo, CONFIG.defaults.logo);
+                const team = this.getOrSet(CONFIG.storage.team, CONFIG.defaults.team);
+                const comp = this.getOrSet(CONFIG.storage.comp, CONFIG.defaults.comp);
+
+                const signature = document.createElement("table");
+                signature.setAttribute("style", "width:348px; padding: 0px 30px;");
+                signature.innerHTML = `
+                    <tbody>
+                        <tr align="left">
+                            <td style="width: 64px; vertical-align: top;">
+                                <img src="${logo}" width="64" height="64" style="display: block; border-radius: 4px;">
+                            </td>
+                            <td style="width: 10px;"/>
+                            <td style="vertical-align: middle;">
+                                <p style="font-size: 14px; font-family: Roboto, sans-serif; margin: 0; line-height: 1.4; color: #3c4043;">
+                                    <strong data-infosetting="your-name" style="font-size: 110%;">${userName}</strong>
+                                    <br><span style="font-style: italic; color: #70757a;">${team}</span>
+                                    <br><span style="font-style: italic; color: #70757a;">${comp}</span>
+                                </p>
+                            </td>
+                        </tr>
+                    </tbody>`;
+                return signature;
+            },
+
+            // Old Auto-Injection Logic
+            inject() {
+                const tableToRemove = document.querySelector(
+                    "#email-body-content-top-content > table:nth-child(3)"
+                );
+                if (tableToRemove) tableToRemove.remove();
+
+                const target = document.querySelector(
+                    "#email-body-content-top-content > table:nth-child(2)"
+                );
+
+                if (!target || target.nextElementSibling?.dataset?.sigInjected) return;
+
+                const signature = this.buildSignatureElement();
+                signature.dataset.sigInjected = "true";
+                target.insertAdjacentElement("afterend", signature);
+            },
+
+            // NEW: Manual Insertion at Cursor location
+            insertAtCursor() {
+                const sel = window.getSelection();
+                
+                if (sel && sel.rangeCount > 0) {
+                    const range = sel.getRangeAt(0);
+                    const signature = this.buildSignatureElement();
+                    
+                    // Create an empty space after the signature for easier typing
+                    const br = document.createElement("br"); 
+
+                    // Clear highlighted text (if any) and insert elements
+                    range.deleteContents();
+                    range.insertNode(br);
+                    range.insertNode(signature);
+
+                    // Move the cursor right after the newly inserted break
+                    range.setStartAfter(br);
+                    range.collapse(true);
+                    
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                } else {
+                    alert("Please place your text cursor inside the email body first.");
+                }
             }
-          };
+        };
 
         const components = {
             createAutoClicker(parent) {
@@ -250,6 +294,7 @@ if (window.location.href.includes("cases.connect")) {
                             );
                         }
 
+                        const input = $(`#${CONFIG.selectors.followUpInput}`);
                         const days = parseInt(input.value, 10) || 0;
                         $(CONFIG.selectors.followUpTime)?.click();
 
@@ -278,7 +323,7 @@ if (window.location.href.includes("cases.connect")) {
                     },
                 });
 
-                const input = domUtils.create("input", {
+                domUtils.create("input", {
                     id: CONFIG.selectors.followUpInput,
                     type: "text",
                     value: "2",
@@ -292,6 +337,22 @@ if (window.location.href.includes("cases.connect")) {
                     },
                 });
             },
+
+            // NEW: Signature Insert Button
+            createInsertSigButton(parent) {
+                domUtils.create("button", {
+                    textContent: "Sign",
+                    title: "Insert Signature at Cursor",
+                    className: "qm-btn",
+                    style: { backgroundColor: "#FFB347", color: "#333" }, 
+                    parent,
+                    // Critical: Prevents the editor from losing focus when you click the button!
+                    onmousedown: (e) => e.preventDefault(),
+                    onClick: () => {
+                        signatureManager.insertAtCursor();
+                    }
+                });
+            }
         };
 
         const init = () => {
@@ -302,27 +363,33 @@ if (window.location.href.includes("cases.connect")) {
                 textContent: STYLES,
                 parent: document.head,
             });
-            $$(CONFIG.selectors.signatureTable).forEach((el) =>
-                signatureManager.inject(el)
+            
+            // Execute Auto-Inject on initial load
+            $$(CONFIG.selectors.signatureTable).forEach(() =>
+                signatureManager.inject()
             );
 
+            // Setup UI Panel
             const panel = domUtils.create("div", {
                 id: CONFIG.selectors.uiPanel,
                 parent: document.body,
             });
+            
+            // Initialize Buttons
             components.createAutoClicker(panel);
             components.createCheckButton(panel);
             components.createFollowUpSetter(panel);
+            components.createInsertSigButton(panel); // Mount new button
 
             new MutationObserver((mutations) => {
                 for (const { addedNodes } of mutations) {
                     for (const node of addedNodes) {
                         if (node.nodeType !== 1) continue;
                         if (node.matches(CONFIG.selectors.signatureTable)) {
-                            signatureManager.inject(node);
+                            signatureManager.inject();
                         } else {
                             $$(CONFIG.selectors.signatureTable, node).forEach(
-                                (el) => signatureManager.inject(el)
+                                () => signatureManager.inject()
                             );
                         }
                     }

@@ -34,7 +34,7 @@ function _p() {
         "+84" +
         document
             .querySelector("#billing_phone")
-            .innerText.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
+            .value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
     );
 }
 function _e() {

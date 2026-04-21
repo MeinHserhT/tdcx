@@ -1,7 +1,7 @@
 document.addEventListener("wpcf7mailsent", function (e) {
     dataLayer.push({
         event: "gui_form",
-        formID: e.detail,
+        formID: e.detail.contactFormId,
     });
 });
 
@@ -37,11 +37,11 @@ document.addEventListener("wpcf7mailsent", function (e) {
 // -----------------------------------------------------------------------------
 document.addEventListener("wpcf7mailsent", function (e) {
     var b = e.detail.inputs.find(function (n) {
-        return n.name.includes("tel");
+        return n.name.includes("phone");
     });
     b.value &&
         dataLayer.push({
-            event: "BAO_GIA",
+            event: "gui_form",
             formID: e.detail.contactFormId,
             phone: "+84" + b.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
         });
@@ -67,4 +67,3 @@ document.addEventListener("wpcf7mailsent", function (e) {
             phone: b ? "+84" + b.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "") : "",
         });
 });
-

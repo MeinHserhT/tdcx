@@ -1,3 +1,9 @@
+const tableToRemove = document.querySelector(
+    "#email-body-content-top-content > table:nth-child(3)"
+);
+if (tableToRemove) {
+    tableToRemove.remove();
+}
 
 const STORAGE_KEYS = {
     NAME: "__signature_name",
@@ -33,14 +39,16 @@ const logo = getOrSet(STORAGE_KEYS.LOGO, DEFAULTS.LOGO);
 const team = getOrSet(STORAGE_KEYS.TEAM, DEFAULTS.TEAM);
 const comp = getOrSet(STORAGE_KEYS.COMP, DEFAULTS.COMP);
 
-const signatureHTML = `
-<table style="border-collapse: collapse;">
+const signature = document.createElement("table");
+signature.setAttribute("style", "width:348px; padding: 0px 30px;");
+
+signature.innerHTML = `
     <tbody>
-        <tr>
+        <tr align="left">
             <td style="width: 64px; vertical-align: top;">
                 <img src="${logo}" width="64" height="64" style="display: block; border-radius: 4px;">
             </td>
-            <td style="width: 10px;"></td>
+            <td style="width: 10px;"/>
             <td style="vertical-align: middle;">
                 <p style="font-size: 14px; font-family: Roboto, sans-serif; margin: 0; line-height: 1.4; color: #3c4043;">
                     <strong data-infosetting="your-name" style="font-size: 110%;">${userName}</strong>
@@ -49,9 +57,12 @@ const signatureHTML = `
                 </p>
             </td>
         </tr>
-    </tbody>
-</table>`;
+    </tbody>`;
 
 // 4. Injection
-const targetTable = document.querySelector('table[width="348"]');
-targetTable.innerHTML = signatureHTML;
+const target = document.querySelector(
+    "#email-body-content-top-content > table:nth-child(2)"
+);
+if (target) {
+    target.insertAdjacentElement("afterend", signature);
+}
