@@ -13,24 +13,28 @@ if (window.location.href.includes("casemon2.corp")) {
                 assets: {
                     iconBaseUrl: "https://cdn-icons-png.flaticon.com/512",
                     icons: {
+                        video: {
+                            src: "/9571/9571236.png",
+                            animation: "wiggle",
+                        },
                         "coffee-break": {
-                            src: "/2935/2935413.png",
+                            src: "/16108/16108931.png",
                             animation: "wiggle",
                         },
                         "lunch-break": {
-                            src: "/4252/4252424.png",
+                            src: "/1182/1182132.png",
                             animation: "pulse",
                         },
                         phone: {
-                            src: "/1959/1959283.png",
+                            src: "/13332/13332839.png",
                             animation: "wiggle",
                         },
                         email: {
-                            src: "/15781/15781499.png",
+                            src: "/7487/7487055.png",
                             animation: "slide",
                         },
                         break: {
-                            src: "/2115/2115487.png",
+                            src: "/5140/5140652.png",
                             animation: "wiggle",
                         },
                         close: "/9403/9403346.png",
@@ -38,7 +42,8 @@ if (window.location.href.includes("casemon2.corp")) {
                 },
                 priorities: {
                     active: 1,
-                    phone: 2,
+                    video: 2,
+                    phone: 2.5,
                     "lunch-break": 3,
                     email: 4,
                     "coffee-break": 5,

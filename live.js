@@ -38,12 +38,11 @@ function a() {
 }
 
 function a() {
-    var a = +document.querySelector("#products-cart .bottom p:last-child span:nth-child(2)")
+    var a = +document
+        .querySelector(".tt-payment-pending-info-row.notranslate > strong")
         .innerText.replace(/[^\d]/g, "");
     return a;
 }
-
-
 
 function a() {
     return (
@@ -67,7 +66,7 @@ function a() {
     return (
         "+84" +
         document
-            .querySelector('.d-phone')
+            .querySelector(".d-phone")
             .value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
     );
 }
@@ -79,7 +78,14 @@ document.querySelectorAll('[placeholder*="Điện Thoại"]').forEach(function (
         });
 });
 
-document.querySelectorAll('input[name*=email]').forEach(function (e) {
+document.querySelectorAll("[type=tel]").forEach(function (e) {
+    if (e.value)
+        dataLayer.push({
+            phone: "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
+        });
+});
+
+document.querySelectorAll("input[name*=email]").forEach(function (e) {
     if (e.value)
         dataLayer.push({
             phone: "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
@@ -88,16 +94,18 @@ document.querySelectorAll('input[name*=email]').forEach(function (e) {
 
 function a() {
     var p;
-    document.querySelectorAll("input[id*=form-field-email]").forEach(function (e) {
-        e.value &&
-            (p = "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""));
-    });
+    document
+        .querySelectorAll('[data-formname="phone"]')
+        .forEach(function (e) {
+            e.value &&
+                (p = "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""));
+        });
     return p;
 }
 
 function a() {
     var em;
-    document.querySelectorAll("input[type=email]").forEach(function (e) {
+    document.querySelectorAll("input[name=email]").forEach(function (e) {
         e.value && (em = e.value);
     });
     return em;
@@ -132,11 +140,18 @@ function a() {
     return "n";
 }
 
-
 function a() {
     var em;
     document.querySelectorAll("#Contact_Email").forEach(function (e) {
         e.value && (em = e.value);
     });
     return em;
+}
+
+function a() {
+    a = 0;
+    document.querySelectorAll("[type=checkbox]").forEach(function (e) {
+        if (e.checked) a += +e.value.split(" ").pop().slice(0, -1) * 1000;
+    });
+    return a;
 }
