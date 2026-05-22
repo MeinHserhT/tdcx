@@ -1,4 +1,4 @@
-javascript: (() => {
+(() => {
     // ==========================================
     // 1. SHARED UTILITIES
     // ==========================================
@@ -40,6 +40,22 @@ javascript: (() => {
                     }
                 }, 500);
             }),
+        setupCopy: (el, text, successMsg = "Copied!") => {
+            el.addEventListener("click", async () => {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    const origText = el.innerText;
+                    el.innerText = successMsg;
+                    el.classList.add("aw-copied");
+                    setTimeout(() => {
+                        el.innerText = origText;
+                        el.classList.remove("aw-copied");
+                    }, 1500);
+                } catch (e) {
+                    console.error("Copy failed", e);
+                }
+            });
+        },
     };
 
     // ==========================================
@@ -51,11 +67,25 @@ javascript: (() => {
             if (window.dashRun) return;
             window.dashRun = 1;
 
+            // Automatically select/click the unselected element at initialization
+            Utils.$('[aria-selected="false"]')?.click();
+
             const ICON_BASE = "https://cdn-icons-png.flaticon.com/512";
             const config = {
                 uiId: "bento_agent_ui",
                 styleId: "bento-dash-styles",
                 target: ".agent-table-container",
+                maxStatusSeconds: 2700, // ⏱️ The threshold for the border to complete 100% (Default: 2700s / 45 mins)
+                statusConfig: {
+                    active: { color: "#10B981", track: "#D1FAE5" }, // Green
+                    phone: { color: "#EF4444", track: "#FFE4E6" }, // Red
+                    video: { color: "#8B5CF6", track: "#F3E8FF" }, // Purple
+                    email: { color: "#0EA5E9", track: "#E0F2FE" }, // Blue
+                    "coffee-break": { color: "#F59E0B", track: "#FFEDD5" }, // Orange
+                    "lunch-break": { color: "#EAB308", track: "#FEF9C3" }, // Yellow
+                    break: { color: "#6B7280", track: "#F3F4F6" }, // Gray
+                    default: { color: "#9CA3AF", track: "#F3F4F6" },
+                },
                 icons: {
                     video: {
                         src: `${ICON_BASE}/9571/9571236.png`,
@@ -121,9 +151,45 @@ javascript: (() => {
                 .agent-list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
                 
                 .agent-list-container { max-height: 80vh; overflow-y: auto; padding: 12px; background: #F8FAFC; border-radius: 14px; border: 1px solid #E2E8F0; }
-                .agent-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; margin-bottom: 8px; border-radius: 12px; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+                
+                .agent-row { 
+                    display: flex; justify-content: space-between; align-items: center; 
+                    padding: 10px 14px; margin-bottom: 8px; border-radius: 12px; 
+                    transition: transform 0.2s ease, box-shadow 0.2s ease; 
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+                    position: relative;
+                    background-clip: padding-box;
+                    border: 2px solid transparent; /* Replaces static borders to reserve space for gradient mask */
+                    z-index: 1;
+                }
                 .agent-row:last-child { margin-bottom: 0; }
                 .agent-row:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+                
+                .agent-row::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    border-radius: 12px;
+                    padding: 2px; /* Ring thickness */
+                    margin: -2px; /* Aligns correctly over the transparent border */
+                    background: conic-gradient(var(--st-color) var(--progress), var(--st-track) var(--progress));
+                    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                    -webkit-mask-composite: xor;
+                    mask-composite: exclude;
+                    pointer-events: none;
+                    z-index: -1;
+                }
+
+                @keyframes pulseWarning {
+                    0%, 100% { filter: drop-shadow(0 0 2px var(--st-color)); }
+                    50% { filter: drop-shadow(0 0 8px var(--st-color)); }
+                }
+
+                .agent-row.over-time::before {
+                    animation: pulseWarning 1.5s infinite ease-in-out;
+                }
+                /* ======================================= */
+
                 .agent-left { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 13px; }
                 .agent-left img { width: 28px; height: 28px; border-radius: 6px; object-fit: cover; border: 1px solid rgba(0,0,0,0.04); }
                 .agent-right { display: flex; align-items: center; gap: 12px; text-align: right; }
@@ -132,25 +198,26 @@ javascript: (() => {
                 .status-text { font-size: 11px; font-weight: 700; letter-spacing: 0.2px; display: inline-block; margin-top: 1px; }
                 .agent-right img { width: 20px; height: 20px; opacity: 0.8; }
                 
-                .stt-active { background: linear-gradient(135deg, #D1FAE5 0%, #DBEAFE 100%); color: #064E3B; border: 1px solid #A7F3D0; }
+                /* Static borders removed - Handled by the progress pseudo element */
+                .stt-active { background: linear-gradient(135deg, #D1FAE5 0%, #DBEAFE 100%); color: #064E3B; }
                 .stt-active .status-text { color: #047857; }
                 
-                .stt-phone { background: linear-gradient(135deg, #FFE4E6 0%, #FEF3C7 100%); color: #7F1D1D; border: 1px solid #FCA5A5; }
+                .stt-phone { background: linear-gradient(135deg, #FFE4E6 0%, #FEF3C7 100%); color: #7F1D1D; }
                 .stt-phone .status-text { color: #B91C1C; }
                 
-                .stt-video { background: linear-gradient(135deg, #F3E8FF 0%, #FCE7F3 100%); color: #4C1D95; border: 1px solid #E9D5FF; }
+                .stt-video { background: linear-gradient(135deg, #F3E8FF 0%, #FCE7F3 100%); color: #4C1D95; }
                 .stt-video .status-text { color: #6B21A8; }
                 
-                .stt-email { background: linear-gradient(135deg, #E0F2FE 0%, #FFE4E6 100%); color: #0C4A6E; border: 1px solid #BAE6FD; }
+                .stt-email { background: linear-gradient(135deg, #E0F2FE 0%, #FFE4E6 100%); color: #0C4A6E; }
                 .stt-email .status-text { color: #0284C7; }
                 
-                .stt-coffee-break { background: linear-gradient(135deg, #FFEDD5 0%, #E0F2FE 100%); color: #78350F; border: 1px solid #FED7AA; }
+                .stt-coffee-break { background: linear-gradient(135deg, #FFEDD5 0%, #E0F2FE 100%); color: #78350F; }
                 .stt-coffee-break .status-text { color: #B45309; }
                 
-                .stt-lunch-break { background: linear-gradient(135deg, #FEF9C3 0%, #F3E8FF 100%); color: #713F12; border: 1px solid #FEF08A; }
+                .stt-lunch-break { background: linear-gradient(135deg, #FEF9C3 0%, #F3E8FF 100%); color: #713F12; }
                 .stt-lunch-break .status-text { color: #A16207; }
                 
-                .stt-break { background: linear-gradient(135deg, #F3F4F6 0%, #E2E8F0 100%); color: #374151; border: 1px solid #E5E7EB; }
+                .stt-break { background: linear-gradient(135deg, #F3F4F6 0%, #E2E8F0 100%); color: #374151; }
                 .stt-break .status-text { color: #4B5563; }
                 
                 [animation="pulse"] { animation: pulse 2s infinite ease-in-out; }
@@ -207,8 +274,14 @@ javascript: (() => {
                     .map((tr) => {
                         const cells = tr.querySelectorAll("td");
                         if (cells.length < 9) return null;
-                        const phoneCap = (
+                        const phoneStat = (
                             cells[5].innerText.match(/[a-zA-Z\s]+/)?.[0] || ""
+                        )
+                            .trim()
+                            .toLowerCase()
+                            .replace(/\s+/g, "-");
+                        const videoStat = (
+                            cells[8].innerText.match(/[a-zA-Z\s]+/)?.[0] || ""
                         )
                             .trim()
                             .toLowerCase()
@@ -218,7 +291,11 @@ javascript: (() => {
                             .toLowerCase()
                             .replace(/\s+/g, "-");
 
-                        if (displayStatus === "Active" && phoneCap === "busy") {
+                        if (
+                            displayStatus === "Active" &&
+                            phoneStat === "busy" &&
+                            videoStat === "busy"
+                        ) {
                             displayStatus = "Break";
                             statusKey = "break";
                         }
@@ -227,11 +304,11 @@ javascript: (() => {
                             img: tr.querySelector("img")?.src || "",
                             ldap: cells[1].innerText.trim(),
                             timeInState: cells[4].innerText.trim(),
-                            lastChangeRaw: cells[8].innerText.trim(),
+                            lastChangeRaw: cells[9].innerText.trim(),
                             displayStatus,
                             statusKey,
                             cssClass: `stt-${statusKey}`,
-                            durationSeconds: parseSecs(cells[8].innerText),
+                            durationSeconds: parseSecs(cells[9].innerText),
                         };
                     })
                     .filter(Boolean)
@@ -258,11 +335,28 @@ javascript: (() => {
                 const activeCount = agents.filter(
                     (a) => a.statusKey === "active"
                 ).length;
+                const maxSecs = config.maxStatusSeconds;
+
                 const rowsHtml = agents
                     .map((a) => {
                         const icon = config.icons[a.statusKey];
+                        const progressPercent = Math.min(
+                            (a.durationSeconds / maxSecs) * 100,
+                            100
+                        ).toFixed(1);
+                        const stConf =
+                            config.statusConfig[a.statusKey] ||
+                            config.statusConfig.default;
+                        const isOverTime = a.durationSeconds >= maxSecs;
+
+                        // Inject dynamic CSS variables directly into the row style attribute
+                        const inlineStyle = `--progress: ${progressPercent}%; --st-color: ${stConf.color}; --st-track: ${stConf.track};`;
+                        const finalClass = `agent-row ${a.cssClass} ${
+                            isOverTime ? "over-time" : ""
+                        }`;
+
                         return `
-                    <div class="agent-row ${a.cssClass}">
+                    <div class="${finalClass}" style="${inlineStyle}">
                         <div class="agent-left">
                             <img src="${escapeHtml(a.img)}" alt="${escapeHtml(
                             a.ldap
@@ -480,7 +574,7 @@ javascript: (() => {
                             <td style="width: 12px;"/>
                             <td style="vertical-align: middle;">
                                 <p style="font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; line-height: 1.4; color: #1A1D23;">
-                                    <strong style="font-size: 105%; color: #3B72E6;">${name}</strong><br>
+                                    <strong style="font-size: 105%; color: #111111;">${name}</strong><br>
                                     <span style="color: #5F6368;">Technical Solutions Team</span><br>
                                     <span style="color: #5F6368; font-weight: 500;">TDCX, on behalf of Google</span>
                                 </p>
@@ -489,11 +583,14 @@ javascript: (() => {
                     </tbody>
                 </table>`;
 
-            const injectSig = (forceCursor = false) => {
-                // Clear out legacy observer side-effects if needed
-                Utils.$(
-                    "#email-body-content-top-content > table:nth-child(3)"
-                )?.remove();
+            const injectSig = () => {
+                const container = Utils.$("#email-body-content-top-content");
+                if (!container) return;
+
+                // Remove old signatures by class, regardless of where they are
+                document
+                    .querySelectorAll(".aw-sig-table")
+                    .forEach((el) => el.remove());
 
                 const name =
                     localStorage.getItem("__signature_name") ||
@@ -501,56 +598,33 @@ javascript: (() => {
                     "Agent";
                 localStorage.setItem("__signature_name", name);
 
-                const selection = window.getSelection();
-                const editor = Utils.$("#email-body-content-top-content");
+                const sigHtml = getSigHtml(name);
 
-                // Precision Caret/Cursor Point Insertion
-                if (
-                    forceCursor &&
-                    selection &&
-                    selection.rangeCount > 0 &&
-                    editor &&
-                    editor.contains(selection.anchorNode)
-                ) {
-                    const range = selection.getRangeAt(0);
-                    const tempDiv = document.createElement("div");
-                    tempDiv.innerHTML = getSigHtml(name);
-                    const sigNode = tempDiv.firstElementChild;
+                // Create a wrapper for the signature
+                const wrapper = document.createElement("div");
+                wrapper.innerHTML = sigHtml;
+                const sigNode = wrapper.firstElementChild;
 
-                    range.deleteContents();
-                    range.insertNode(sigNode);
+                // Use appendChild to add to the very bottom of the existing content
+                // This is safer than nth-child lookups
+                container.appendChild(sigNode);
 
-                    // Advance selection caret cleanly past the newly dropped signature box
-                    range.setStartAfter(sigNode);
-                    range.setEndAfter(sigNode);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                } else {
-                    // Safe Background Layout Structural Fallback
-                    const target = Utils.$(
-                        "#email-body-content-top-content > table:nth-child(2)"
-                    );
-                    if (target && !Utils.$(".aw-sig-table")) {
-                        target.insertAdjacentHTML("afterend", getSigHtml(name));
-                    }
-                }
+                console.log("Signature injected successfully.");
             };
 
             const autoInjectSig = () => {
                 const savedName = localStorage.getItem("__signature_name");
-                if (!savedName) return; // Block automated prompt popups unless name is saved
+                if (!savedName) return;
                 const target = Utils.$(
                     "#email-body-content-top-content > table:nth-child(2)"
                 );
-                if (target && !Utils.$(".aw-sig-table")) {
+                if (target && !Utils.$(".aw-sig-table"))
                     target.insertAdjacentHTML(
                         "afterend",
                         getSigHtml(savedName)
                     );
-                }
             };
 
-            // Sign Button - Features onmousedown cancellation to preserve active editor cursor position
             Utils.createEl("button", {
                 textContent: "Sign",
                 title: "Insert Signature at Cursor",
@@ -566,106 +640,109 @@ javascript: (() => {
                 subtree: true,
             });
         },
-    };
 
-    adwords: () => {
-        Utils.addStyle(
-            "aw-styles",
+        // --- Adwords Module ---
+        adwords: () => {
+            Utils.addStyle(
+                "aw-styles",
+                `
+                .aw-ga4 { background-color: #FEF3D6; color: #B07505; border: 1px solid rgba(176,117,5,0.15); padding: 2px 6px; border-radius: 6px; font-weight: 600; cursor: pointer; user-select: none; }
+                .aw-ads { background-color: #E2F5E9; color: #1E7F4E; border: 1px solid rgba(30,127,78,0.15); padding: 2px 6px; border-radius: 6px; font-weight: 600; cursor: pointer; user-select: none; }
+                .aw-copied { background-color: #3B72E6 !important; color: white !important; border-color: transparent !important; }
+                #gpt-aw-overlay { position: fixed; bottom: 20px; left: 20px; z-index: 999; padding: 8px 14px; background: #161920; color: #F1F3F5; border: 1px solid #2D323F; border-radius: 8px; font-size: 12px; font-weight: 600; font-family: monospace; box-shadow: 0 4px 16px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s ease; user-select: none; }
+                #gpt-aw-overlay:hover { background: #2D323F; }
             `
-            .aw-ga4 { background-color: #FEF3D6; color: #B07505; border: 1px solid rgba(176,117,5,0.15); padding: 2px 6px; border-radius: 6px; font-weight: 600; cursor: pointer; user-select: none; }
-            .aw-ads { background-color: #E2F5E9; color: #1E7F4E; border: 1px solid rgba(30,127,78,0.15); padding: 2px 6px; border-radius: 6px; font-weight: 600; cursor: pointer; user-select: none; }
-            .aw-copied { background-color: #3B72E6 !important; color: white !important; border-color: transparent !important; }
-            #gpt-aw-overlay { position: fixed; bottom: 20px; left: 20px; z-index: 999; padding: 8px 14px; background: #161920; color: #F1F3F5; border: 1px solid #2D323F; border-radius: 8px; font-size: 12px; font-weight: 600; font-family: monospace; box-shadow: 0 4px 16px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s ease; user-select: none; }
-            #gpt-aw-overlay:hover { background: #2D323F; }
-        `
-        );
+            );
 
-        const init = (rawData) => {
-            const awId = rawData.match(/AW-(\d*)/)?.[1];
-            if (awId) {
-                const overlay =
-                    Utils.$("#gpt-aw-overlay") ||
-                    Utils.createEl("div", {
-                        id: "gpt-aw-overlay",
-                        parent: document.body,
-                    });
-                overlay.textContent = `AW-${awId}`;
-                Utils.setupCopy(overlay, awId, "Copied!");
-            }
+            const init = (rawData) => {
+                const awId = rawData.match(/AW-(\d*)/)?.[1];
+                if (awId) {
+                    const overlay =
+                        Utils.$("#gpt-aw-overlay") ||
+                        Utils.createEl("div", {
+                            id: "gpt-aw-overlay",
+                            parent: document.body,
+                        });
+                    overlay.textContent = `AW-${awId}`;
+                    Utils.setupCopy(overlay, awId, "Copied!");
+                }
 
-            document
-                .querySelectorAll(".expand-more")
-                .forEach((btn) => btn.click());
+                document
+                    .querySelectorAll(".expand-more")
+                    .forEach((btn) => btn.click());
 
-            try {
-                const dataMap = new Map(
-                    JSON.parse(rawData)[1].map((entry) => [entry[1], entry])
-                );
-                setTimeout(() => {
-                    document
-                        .querySelectorAll(".conversion-name-cell .internal")
-                        .forEach((cell) => {
-                            const row = cell.closest(".particle-table-row");
-                            if (
-                                row &&
-                                !row
-                                    .querySelector(
-                                        '[essfield="aggregated_conversion_source"]'
-                                    )
-                                    ?.innerText.toLowerCase()
-                                    .includes("web")
+                try {
+                    const dataMap = new Map(
+                        JSON.parse(rawData)[1].map((entry) => [entry[1], entry])
+                    );
+                    setTimeout(() => {
+                        document
+                            .querySelectorAll(".conversion-name-cell .internal")
+                            .forEach((cell) => {
+                                const row = cell.closest(".particle-table-row");
+                                if (
+                                    row &&
+                                    !row
+                                        .querySelector(
+                                            '[essfield="aggregated_conversion_source"]'
+                                        )
+                                        ?.innerText.toLowerCase()
+                                        .includes("web")
+                                )
+                                    return row.remove();
+
+                                const data = dataMap.get(cell.innerText);
+                                if (!data) return;
+
+                                const [type, label] =
+                                    data[11] === 1
+                                        ? [
+                                              "aw-ads",
+                                              data[64]?.[2]?.[4]
+                                                  ?.split("'")?.[7]
+                                                  ?.split("/")?.[1],
+                                          ]
+                                        : data[11] === 32
+                                        ? [
+                                              "aw-ga4",
+                                              data[64]?.[1]?.[4]?.split(
+                                                  "'"
+                                              )?.[3],
+                                          ]
+                                        : [null, null];
+
+                                if (type && label) {
+                                    cell.innerHTML = label;
+                                    cell.classList.add(type);
+                                    Utils.setupCopy(cell, label);
+                                }
+                            });
+
+                        document
+                            .querySelectorAll(
+                                "category-conversions-container-view, conversion-goal-card"
                             )
-                                return row.remove();
+                            .forEach((c) => {
+                                if (!c.querySelector(".particle-table-row"))
+                                    c.style.display = "none";
+                            });
+                    }, 1000);
+                } catch (e) {
+                    console.error("Data parsing failed", e);
+                }
+            };
 
-                            const data = dataMap.get(cell.innerText);
-                            if (!data) return;
+            const poll = (tries = 0) => {
+                const rawData =
+                    window.conversions_data?.SHARED_ALL_ENABLED_CONVERSIONS;
+                if (rawData) return init(rawData);
+                if (tries < 3) setTimeout(() => poll(tries + 1), 500);
+            };
 
-                            const [type, label] =
-                                data[11] === 1
-                                    ? [
-                                          "aw-ads",
-                                          data[64]?.[2]?.[4]
-                                              ?.split("'")?.[7]
-                                              ?.split("/")?.[1],
-                                      ]
-                                    : data[11] === 32
-                                    ? [
-                                          "aw-ga4",
-                                          data[64]?.[1]?.[4]?.split("'")?.[3],
-                                      ]
-                                    : [null, null];
-
-                            if (type && label) {
-                                cell.innerHTML = label;
-                                cell.classList.add(type);
-                                Utils.setupCopy(cell, label);
-                            }
-                        });
-
-                    document
-                        .querySelectorAll(
-                            "category-conversions-container-view, conversion-goal-card"
-                        )
-                        .forEach((c) => {
-                            if (!c.querySelector(".particle-table-row"))
-                                c.style.display = "none";
-                        });
-                }, 1000);
-            } catch (e) {
-                console.error("Data parsing failed", e);
-            }
-        };
-
-        const poll = (tries = 0) => {
-            const rawData =
-                window.conversions_data?.SHARED_ALL_ENABLED_CONVERSIONS;
-            if (rawData) return init(rawData);
-            if (tries < 3) setTimeout(() => poll(tries + 1), 500);
-        };
-
-        ["complete", "interactive"].includes(document.readyState)
-            ? poll()
-            : window.addEventListener("DOMContentLoaded", () => poll());
+            ["complete", "interactive"].includes(document.readyState)
+                ? poll()
+                : window.addEventListener("DOMContentLoaded", () => poll());
+        },
     };
 
     // ==========================================
