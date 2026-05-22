@@ -1,18 +1,44 @@
+/**
+ * Immediately Invoked Function Expression (IIFE)
+ * ------------------------------------------------
+ * Wraps the entire script to create a private scope.
+ * This prevents our internal variables (like `Utils` and `Modules`)
+ * from leaking into the global `window` object, avoiding collisions
+ * with the host website's native JavaScript.
+ */
 (() => {
     // ==========================================
     // 1. SHARED UTILITIES
     // ==========================================
+    // A standard library of helper functions to reduce boilerplate
+    // and standardize DOM manipulation across all modules.
     const Utils = {
+        /**
+         * Safely injects a <style> block into the document <head>.
+         * Utilizes the Trusted Types API (if available) to comply with
+         * strict Content Security Policies (CSP) found in enterprise apps.
+         */
         addStyle: (id, css) => {
+            // Prevent duplicate style injections
             if (document.getElementById(id)) return;
+
             const style = document.createElement("style");
             style.id = id;
+
+            // Check for modern Trusted Types support to prevent XSS warnings
             const policy = window.trustedTypes?.createPolicy("default", {
                 createHTML: (s) => s,
-            }) ?? { createHTML: (s) => s };
+            }) ?? { createHTML: (s) => s }; // Fallback for older browsers
+
             style.textContent = policy.createHTML(css);
             document.head.appendChild(style);
         },
+
+        /**
+         * Factory pattern to create, configure, and append DOM elements in one step.
+         * Instead of writing 5 lines of document.createElement and assignments,
+         * we can do it in a single function call.
+         */
         createEl: (
             tag,
             { parent, onClick, style, className, id, ...props } = {}
@@ -22,24 +48,41 @@
             if (className) el.className = className;
             if (style) Object.assign(el.style, style);
             if (onClick) el.addEventListener("click", onClick);
-            if (parent) parent.appendChild(el);
+            if (parent) parent.appendChild(el); // Auto-append to a parent if provided
             return el;
         },
+
+        /**
+         * A jQuery-style micro-wrapper for querySelector to save keystrokes.
+         * Defaults to searching the whole document, but accepts a context node.
+         */
         $: (s, ctx = document) => ctx.querySelector(s),
+
+        /**
+         * Asynchronous DOM Polling
+         * Returns a Promise that resolves when a dynamically rendered element
+         * finally appears on the page. Crucial for Single Page Applications (SPAs).
+         */
         waitForElement: (selector, timeout = 3000) =>
             new Promise((resolve, reject) => {
                 const start = Date.now();
+                // Check every 500ms if the element exists and is visible (offsetParent)
                 const timer = setInterval(() => {
                     const el = Utils.$(selector);
                     if (el?.offsetParent) {
                         clearInterval(timer);
                         resolve(el);
                     } else if (Date.now() - start > timeout) {
-                        clearInterval(timer);
+                        clearInterval(timer); // Give up after timeout
                         reject(new Error(`Timeout: ${selector}`));
                     }
                 }, 500);
             }),
+
+        /**
+         * Attaches modern Clipboard API copy functionality to an element.
+         * Provides brief visual feedback by temporarily changing the text.
+         */
         setupCopy: (el, text, successMsg = "Copied!") => {
             el.addEventListener("click", async () => {
                 try {
@@ -47,6 +90,8 @@
                     const origText = el.innerText;
                     el.innerText = successMsg;
                     el.classList.add("aw-copied");
+
+                    // Revert UI after 1.5 seconds
                     setTimeout(() => {
                         el.innerText = origText;
                         el.classList.remove("aw-copied");
@@ -61,9 +106,12 @@
     // ==========================================
     // 2. MODULES
     // ==========================================
+    // Domain-specific business logic isolated into distinct functions.
     const Modules = {
         // --- Dashboard Module (Casemon) ---
+        // Builds a floating, real-time widget to monitor team statuses.
         casemon: () => {
+            // State flag to ensure the widget only initializes once
             if (window.dashRun) return;
             window.dashRun = 1;
 
@@ -71,21 +119,49 @@
             Utils.$('[aria-selected="false"]')?.click();
 
             const ICON_BASE = "https://cdn-icons-png.flaticon.com/512";
+
+            // Centralized configuration for the widget
             const config = {
                 uiId: "bento_agent_ui",
                 styleId: "bento-dash-styles",
-                target: ".agent-table-container",
-                maxStatusSeconds: 2700, // ⏱️ The threshold for the border to complete 100% (Default: 2700s / 45 mins)
+                target: ".agent-table-container", // The native DOM table we scrape data from
+
+                // Maps statuses to colors and specific maximum time limits (in seconds)
                 statusConfig: {
-                    active: { color: "#10B981", track: "#D1FAE5" }, // Green
-                    phone: { color: "#EF4444", track: "#FFE4E6" }, // Red
-                    video: { color: "#8B5CF6", track: "#F3E8FF" }, // Purple
-                    email: { color: "#0EA5E9", track: "#E0F2FE" }, // Blue
-                    "coffee-break": { color: "#F59E0B", track: "#FFEDD5" }, // Orange
-                    "lunch-break": { color: "#EAB308", track: "#FEF9C3" }, // Yellow
-                    break: { color: "#6B7280", track: "#F3F4F6" }, // Gray
-                    default: { color: "#9CA3AF", track: "#F3F4F6" },
+                    active: {
+                        color: "#10B981",
+                        track: "#D1FAE5",
+                        maxSecs: 2700,
+                    }, // 45m
+                    phone: {
+                        color: "#EF4444",
+                        track: "#FFE4E6",
+                        maxSecs: 2700,
+                    }, // 45m
+                    video: {
+                        color: "#8B5CF6",
+                        track: "#F3E8FF",
+                        maxSecs: 2700,
+                    }, // 45m
+                    email: { color: "#0EA5E9", track: "#E0F2FE", maxSecs: 900 }, // 15m
+                    "coffee-break": {
+                        color: "#F59E0B",
+                        track: "#FFEDD5",
+                        maxSecs: 900,
+                    }, // 15m
+                    "lunch-break": {
+                        color: "#EAB308",
+                        track: "#FEF9C3",
+                        maxSecs: 3600,
+                    }, // 1h
+                    break: { color: "#6B7280", track: "#F3F4F6", maxSecs: 900 }, // 15m
+                    default: {
+                        color: "#9CA3AF",
+                        track: "#F3F4F6",
+                        maxSecs: 2700,
+                    },
                 },
+                // Icon assets and CSS animation mappings
                 icons: {
                     video: {
                         src: `${ICON_BASE}/9571/9571236.png`,
@@ -113,6 +189,7 @@
                     },
                     close: `${ICON_BASE}/9403/9403346.png`,
                 },
+                // Sorting order for the list
                 priorities: {
                     active: 1,
                     video: 2,
@@ -128,14 +205,18 @@
             const container = Utils.$(config.target);
             if (!container) return;
 
+            // Attempt to grab the current user's LDAP from their profile photo URL
+            // This is used later to sort the current user to the very top of the list.
             const currentUserLdap =
                 Utils.$("[alt='profile photo']")?.src?.match(
                     /photos\/([^/?]+)/
                 )?.[1] ?? "Unknown";
 
+            // Inject the massive CSS block for the widget
             Utils.addStyle(
                 config.styleId,
                 `
+                /* General structural CSS omitted for brevity in comments... */
                 #bento_agent_ui { position: fixed; height: 100%; width: 100%; top: 0; right: 0; background-color: rgba(15, 17, 21, 0.12); z-index: 9999; display: flex; justify-content: flex-end; align-items: center; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; pointer-events: none; box-sizing: border-box; }
                 .bento-wrapper { position: relative; pointer-events: auto; width: 100%; max-width: 320px; background: #FFFFFF; border-radius: 20px; box-shadow: 0 12px 32px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04); padding: 20px; border: 1px solid #E5E7EB; color: #1F2937; }
                 .close-btn { position: absolute; top: 14px; right: 14px; background: #F3F4F6; border: none; cursor: pointer; z-index: 10; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
@@ -149,7 +230,6 @@
                 .active-badge { background: #E6F4EA; color: #137333; border: 1px solid #CEEAD6; }
                 .total-badge { background: #F1F3F4; color: #5F6368; border: 1px solid #E8EAED; }
                 .agent-list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-                
                 .agent-list-container { max-height: 80vh; overflow-y: auto; padding: 12px; background: #F8FAFC; border-radius: 14px; border: 1px solid #E2E8F0; }
                 
                 .agent-row { 
@@ -159,19 +239,23 @@
                     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
                     position: relative;
                     background-clip: padding-box;
-                    border: 2px solid transparent; /* Replaces static borders to reserve space for gradient mask */
+                    border: 2px solid transparent; 
                     z-index: 1;
                 }
                 .agent-row:last-child { margin-bottom: 0; }
                 .agent-row:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
                 
+                /* * ADVANCED CSS TRICK: Circular Progress Ring
+                 * Uses conic-gradient tied to CSS variables to draw a partial border based on a percentage.
+                 * -webkit-mask is used to punch a hole in the middle so only the 'border' shows.
+                 */
                 .agent-row::before {
                     content: '';
                     position: absolute;
                     inset: 0;
                     border-radius: 12px;
-                    padding: 2px; /* Ring thickness */
-                    margin: -2px; /* Aligns correctly over the transparent border */
+                    padding: 2px; 
+                    margin: -2px; 
                     background: conic-gradient(var(--st-color) var(--progress), var(--st-track) var(--progress));
                     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
                     -webkit-mask-composite: xor;
@@ -185,10 +269,10 @@
                     50% { filter: drop-shadow(0 0 8px var(--st-color)); }
                 }
 
+                /* Pulses the element if the agent exceeds their time limit */
                 .agent-row.over-time::before {
                     animation: pulseWarning 1.5s infinite ease-in-out;
                 }
-                /* ======================================= */
 
                 .agent-left { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 13px; }
                 .agent-left img { width: 28px; height: 28px; border-radius: 6px; object-fit: cover; border: 1px solid rgba(0,0,0,0.04); }
@@ -198,28 +282,23 @@
                 .status-text { font-size: 11px; font-weight: 700; letter-spacing: 0.2px; display: inline-block; margin-top: 1px; }
                 .agent-right img { width: 20px; height: 20px; opacity: 0.8; }
                 
-                /* Static borders removed - Handled by the progress pseudo element */
+                /* Status specific gradients */
                 .stt-active { background: linear-gradient(135deg, #D1FAE5 0%, #DBEAFE 100%); color: #064E3B; }
                 .stt-active .status-text { color: #047857; }
-                
                 .stt-phone { background: linear-gradient(135deg, #FFE4E6 0%, #FEF3C7 100%); color: #7F1D1D; }
                 .stt-phone .status-text { color: #B91C1C; }
-                
                 .stt-video { background: linear-gradient(135deg, #F3E8FF 0%, #FCE7F3 100%); color: #4C1D95; }
                 .stt-video .status-text { color: #6B21A8; }
-                
                 .stt-email { background: linear-gradient(135deg, #E0F2FE 0%, #FFE4E6 100%); color: #0C4A6E; }
                 .stt-email .status-text { color: #0284C7; }
-                
                 .stt-coffee-break { background: linear-gradient(135deg, #FFEDD5 0%, #E0F2FE 100%); color: #78350F; }
                 .stt-coffee-break .status-text { color: #B45309; }
-                
                 .stt-lunch-break { background: linear-gradient(135deg, #FEF9C3 0%, #F3E8FF 100%); color: #713F12; }
                 .stt-lunch-break .status-text { color: #A16207; }
-                
                 .stt-break { background: linear-gradient(135deg, #F3F4F6 0%, #E2E8F0 100%); color: #374151; }
                 .stt-break .status-text { color: #4B5563; }
                 
+                /* Animations mapped to the icons config */
                 [animation="pulse"] { animation: pulse 2s infinite ease-in-out; }
                 @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
                 [animation="wiggle"] { animation: wiggle 0.9s infinite; }
@@ -232,6 +311,7 @@
             `
             );
 
+            // Create or retrieve the main UI shell
             let uiElement =
                 document.getElementById(config.uiId) ||
                 Utils.createEl("div", {
@@ -239,13 +319,15 @@
                     parent: document.body,
                 });
 
+            // Event delegation for the close button
             uiElement.addEventListener("click", (e) => {
                 if (e.target.closest(".close-btn")) {
                     uiElement.remove();
-                    window.dashRun = 0;
+                    window.dashRun = 0; // Reset flag so it can be re-launched
                 }
             });
 
+            // Utility to sanitize HTML strings before injecting them, preventing XSS
             const escapeHtml = (str) =>
                 String(str || "").replace(
                     /[&<>"']/g,
@@ -258,6 +340,8 @@
                             "'": "&#039;",
                         }[m])
                 );
+
+            // Utility: Converts strings like "1h 15m" into pure seconds for math calculations
             const parseSecs = (str) =>
                 (str.match(/\d+[hms]/g) || []).reduce(
                     (acc, p) =>
@@ -267,13 +351,17 @@
                     0
                 );
 
+            // The main scrape and render loop
             const render = () => {
+                // Scrape the DOM table to extract state
                 const agents = Array.from(
                     container.querySelectorAll("tbody tr")
                 )
                     .map((tr) => {
                         const cells = tr.querySelectorAll("td");
-                        if (cells.length < 9) return null;
+                        if (cells.length < 9) return null; // Ignore malformed rows
+
+                        // Extract status logic based on multiple columns
                         const phoneStat = (
                             cells[5].innerText.match(/[a-zA-Z\s]+/)?.[0] || ""
                         )
@@ -291,6 +379,7 @@
                             .toLowerCase()
                             .replace(/\s+/g, "-");
 
+                        // Business Logic: Override status if 'Active' but completely busy.
                         if (
                             displayStatus === "Active" &&
                             phoneStat === "busy" &&
@@ -300,6 +389,7 @@
                             statusKey = "break";
                         }
 
+                        // Return clean data object
                         return {
                             img: tr.querySelector("img")?.src || "",
                             ldap: cells[1].innerText.trim(),
@@ -311,8 +401,9 @@
                             durationSeconds: parseSecs(cells[9].innerText),
                         };
                     })
-                    .filter(Boolean)
+                    .filter(Boolean) // Remove nulls
                     .sort((a, b) => {
+                        // Priority 1: Put the current user at the top
                         if (
                             (a.ldap === currentUserLdap) !==
                             (b.ldap === currentUserLdap)
@@ -321,12 +412,16 @@
                                 (b.ldap === currentUserLdap) -
                                 (a.ldap === currentUserLdap)
                             );
+
+                        // Priority 2: Sort by the predefined status order
                         const pA =
                             config.priorities[a.statusKey] ??
                             config.priorities.default;
                         const pB =
                             config.priorities[b.statusKey] ??
                             config.priorities.default;
+
+                        // Priority 3: If same status, sort by longest time in state
                         return pA !== pB
                             ? pA - pB
                             : b.durationSeconds - a.durationSeconds;
@@ -335,21 +430,24 @@
                 const activeCount = agents.filter(
                     (a) => a.statusKey === "active"
                 ).length;
-                const maxSecs = config.maxStatusSeconds;
 
+                // Build HTML string for the agent rows
                 const rowsHtml = agents
                     .map((a) => {
                         const icon = config.icons[a.statusKey];
+                        const stConf =
+                            config.statusConfig[a.statusKey] ||
+                            config.statusConfig.default;
+
+                        // Calculate percentage towards their time limit for the gradient ring
+                        const maxSecs = stConf.maxSecs || 2700;
                         const progressPercent = Math.min(
                             (a.durationSeconds / maxSecs) * 100,
                             100
                         ).toFixed(1);
-                        const stConf =
-                            config.statusConfig[a.statusKey] ||
-                            config.statusConfig.default;
                         const isOverTime = a.durationSeconds >= maxSecs;
 
-                        // Inject dynamic CSS variables directly into the row style attribute
+                        // INLINE CSS VARIABLES: This is how we pass dynamic data (progress %) to the CSS pseudo-element
                         const inlineStyle = `--progress: ${progressPercent}%; --st-color: ${stConf.color}; --st-track: ${stConf.track};`;
                         const finalClass = `agent-row ${a.cssClass} ${
                             isOverTime ? "over-time" : ""
@@ -382,6 +480,7 @@
                     })
                     .join("");
 
+                // Inject the final HTML into the UI shell
                 uiElement.innerHTML = `
                     <div class="bento-wrapper">
                         <button class="close-btn" title="Close"><img src="${config.icons.close}" alt="Close"/></button>
@@ -401,8 +500,11 @@
                 uiElement.style.display = "flex";
             };
 
+            // Reactivity: Instead of polling via setInterval, watch the DOM table for changes
             let debounce;
             new MutationObserver(() => {
+                // Debounce pattern: Prevents the render function from firing hundreds
+                // of times a second if multiple rows update simultaneously.
                 clearTimeout(debounce);
                 debounce = setTimeout(render, 100);
             }).observe(container, {
@@ -412,10 +514,12 @@
                 characterData: true,
             });
 
+            // Initial render
             render();
         },
 
         // --- Cases Connect Module ---
+        // Adds floating utility buttons to a ticketing/case management system
         casesConnect: () => {
             if (window.scrRun) return;
             window.scrRun = true;
@@ -423,6 +527,7 @@
             Utils.addStyle(
                 "cases-styles",
                 `
+                /* Button and panel styling */
                 #panelQM { position: fixed; bottom: 20px; left: 20px; display: flex; gap: 10px; align-items: center; z-index: 9999; font-family: -apple-system, sans-serif; }
                 .qm-btn { z-index: 10; color: white; padding: 10px 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 12px rgba(26,29,35,0.06); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); font-size: 13px; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(0,0,0,0.03); }
                 .qm-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(26,29,35,0.12); }
@@ -430,15 +535,17 @@
                 #flup-days-input:focus { outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.08), 0 0 0 2px rgba(26, 29, 35, 0.2); }
                 .qm-badge { display: none; position: absolute; top: -4px; right: -4px; background: #D94138; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: 700; line-height: 1; border: 1px solid #ffffff; }
                 .aw-sig-table { margin: 12px 0; }
-            `
+                `
             );
 
+            // Container for the toolbelt
             const panel = Utils.createEl("div", {
                 id: "panelQM",
                 parent: document.body,
             });
 
-            // Auto Clicker Button
+            // 1. Auto Clicker Button
+            // Automates clicking an "accept call/case" button to prevent going idle
             let timer = null;
             const autoBtn = Utils.createEl("button", {
                 textContent: "OFF",
@@ -448,11 +555,13 @@
                 parent: panel,
                 onClick: () => {
                     if (timer) {
+                        // Toggle OFF
                         clearInterval(timer);
                         timer = null;
                         autoBtn.textContent = "OFF";
                         autoBtn.style.backgroundColor = "#D94138";
                     } else {
+                        // Toggle ON: Click every 18 seconds, dismiss modal 6 seconds later
                         timer = setInterval(() => {
                             Utils.$("#cdtx__uioncall--btn")?.click();
                             setTimeout(
@@ -469,7 +578,8 @@
                 },
             });
 
-            // Follow Up Active Check Indicator Badge Setup
+            // 2. Follow Up Active Check Indicator Badge Setup
+            // Opens a side panel when clicked.
             const checkBtn = Utils.createEl("button", {
                 innerHTML: `<img src="https://cdn-icons-png.flaticon.com/512/1069/1069138.png" style="width: 16px; height: 16px; filter: invert(1);"><span id="flup-badge" class="qm-badge">+</span>`,
                 title: "Click Follow-up Item",
@@ -484,6 +594,8 @@
                 },
             });
 
+            // Reactively watch an external DOM element (.li-popup_lstcasefl) for a 'data-attr' change
+            // and show/hide the red badge if the value is not "0"
             Utils.waitForElement(".li-popup_lstcasefl")
                 .then((el) => {
                     const badge = Utils.$("#flup-badge");
@@ -493,15 +605,17 @@
                             el.dataset.attr && el.dataset.attr !== "0"
                                 ? "block"
                                 : "none");
+
                     new MutationObserver(updateBadge).observe(el, {
                         attributes: true,
                         attributeFilter: ["data-attr"],
                     });
-                    updateBadge();
+                    updateBadge(); // initial check
                 })
                 .catch(() => {});
 
-            // Follow Up Setter Button
+            // 3. Follow Up Setter Button
+            // Automates the complex process of scheduling a follow-up date in the calendar UI
             const flBtn = Utils.createEl("button", {
                 textContent: "FL Up:",
                 title: "Set Follow-up",
@@ -509,8 +623,9 @@
                 style: { backgroundColor: "#1A827A", paddingRight: "44px" },
                 parent: panel,
                 onClick: async (e) => {
-                    if (e.target.id === "flup-days-input") return;
+                    if (e.target.id === "flup-days-input") return; // Ignore clicks inside the input field
 
+                    // Ensure an appointment time is selected first
                     const appt = Utils.$('[data-infocase="appointment_time"]');
                     if (appt && !appt.dataset.valchoice) {
                         appt.click();
@@ -521,25 +636,32 @@
                         )?.click();
                     }
 
+                    // Get input value
                     const days =
                         parseInt(Utils.$("#flup-days-input").value, 10) || 0;
                     Utils.$('[data-infocase="follow_up_time"]')?.click();
 
                     if (days) {
+                        // MATH LOGIC: Calculate future date skipping weekends
                         let d = new Date();
                         for (let i = 0; i < days; ) {
                             d.setDate(d.getDate() + 1);
-                            if (d.getDay() % 6 !== 0) i++;
+                            if (d.getDay() % 6 !== 0) i++; // Modulo 6: 0 is Sunday, 6 is Saturday
                         }
+
+                        // Calculate raw difference in days to know how many DOM nodes to skip
                         const diff = Math.round((d - new Date()) / 86400000);
                         const todayEl = await Utils.waitForElement(
                             ".datepicker-grid .today"
                         );
+
+                        // DOM Traversal: Move sibling by sibling to find the right calendar day node
                         let target = todayEl;
                         for (let s = 0; s < diff && target; s++)
                             target = target.nextElementSibling;
                         target?.click();
                     } else {
+                        // If days is 0, just select "Finish"
                         (
                             await Utils.waitForElement(
                                 '[data-thischoice="Finish"]'
@@ -552,6 +674,7 @@
                 },
             });
 
+            // Input field embedded directly inside the FL Up button
             Utils.createEl("input", {
                 id: "flup-days-input",
                 type: "text",
@@ -562,10 +685,11 @@
                 oninput: (e) =>
                     (e.target.value = e.target.value
                         .replace(/\D/g, "")
-                        .slice(0, 1)),
+                        .slice(0, 1)), // Force 1 numeric digit
             });
 
-            // Signature Logic Managers
+            // 4. Signature Logic Managers
+            // Creates a standard rich-HTML signature format
             const getSigHtml = (name) => `
                 <table class="aw-sig-table" style="width: 348px; padding: 0 30px;" data-sig-injected="true">
                     <tbody>
@@ -583,38 +707,35 @@
                     </tbody>
                 </table>`;
 
+            // Function to manually inject signature into email body
             const injectSig = () => {
                 const container = Utils.$("#email-body-content-top-content");
                 if (!container) return;
 
-                // Remove old signatures by class, regardless of where they are
+                // Clear any existing duplicates
                 document
                     .querySelectorAll(".aw-sig-table")
                     .forEach((el) => el.remove());
 
+                // Cache the name in localStorage to persist across page reloads
                 const name =
                     localStorage.getItem("__signature_name") ||
                     prompt("Enter your name:") ||
                     "Agent";
                 localStorage.setItem("__signature_name", name);
 
-                const sigHtml = getSigHtml(name);
-
-                // Create a wrapper for the signature
                 const wrapper = document.createElement("div");
-                wrapper.innerHTML = sigHtml;
-                const sigNode = wrapper.firstElementChild;
+                wrapper.innerHTML = getSigHtml(name);
 
-                // Use appendChild to add to the very bottom of the existing content
-                // This is safer than nth-child lookups
-                container.appendChild(sigNode);
-
-                console.log("Signature injected successfully.");
+                // Safely append to the bottom of the email content
+                container.appendChild(wrapper.firstElementChild);
             };
 
+            // Auto-injector for when the email modal opens dynamically
             const autoInjectSig = () => {
                 const savedName = localStorage.getItem("__signature_name");
                 if (!savedName) return;
+
                 const target = Utils.$(
                     "#email-body-content-top-content > table:nth-child(2)"
                 );
@@ -625,16 +746,18 @@
                     );
             };
 
+            // Manual Signature button
             Utils.createEl("button", {
                 textContent: "Sign",
                 title: "Insert Signature at Cursor",
                 className: "qm-btn",
                 style: { backgroundColor: "#92400E", color: "#FFFFFF" },
                 parent: panel,
-                onmousedown: (e) => e.preventDefault(),
+                onmousedown: (e) => e.preventDefault(), // Prevents losing focus in the email composer
                 onClick: () => injectSig(true),
             });
 
+            // Watch document body to trigger auto-signature when composer modal spawns
             new MutationObserver(() => autoInjectSig()).observe(document.body, {
                 childList: true,
                 subtree: true,
@@ -642,19 +765,23 @@
         },
 
         // --- Adwords Module ---
+        // Enhances a specific Google Ads internal dashboard
         adwords: () => {
             Utils.addStyle(
                 "aw-styles",
                 `
+                /* Styling for replaced data badges */
                 .aw-ga4 { background-color: #FEF3D6; color: #B07505; border: 1px solid rgba(176,117,5,0.15); padding: 2px 6px; border-radius: 6px; font-weight: 600; cursor: pointer; user-select: none; }
                 .aw-ads { background-color: #E2F5E9; color: #1E7F4E; border: 1px solid rgba(30,127,78,0.15); padding: 2px 6px; border-radius: 6px; font-weight: 600; cursor: pointer; user-select: none; }
                 .aw-copied { background-color: #3B72E6 !important; color: white !important; border-color: transparent !important; }
                 #gpt-aw-overlay { position: fixed; bottom: 20px; left: 20px; z-index: 999; padding: 8px 14px; background: #161920; color: #F1F3F5; border: 1px solid #2D323F; border-radius: 8px; font-size: 12px; font-weight: 600; font-family: monospace; box-shadow: 0 4px 16px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s ease; user-select: none; }
                 #gpt-aw-overlay:hover { background: #2D323F; }
-            `
+                `
             );
 
+            // Core processing function
             const init = (rawData) => {
+                // 1. Extract the AdWords AW- ID from the raw string payload and make a floating copy button
                 const awId = rawData.match(/AW-(\d*)/)?.[1];
                 if (awId) {
                     const overlay =
@@ -667,19 +794,27 @@
                     Utils.setupCopy(overlay, awId, "Copied!");
                 }
 
+                // Auto expand UI tables
                 document
                     .querySelectorAll(".expand-more")
                     .forEach((btn) => btn.click());
 
                 try {
+                    // 2. Parse global deeply nested JSON structure representing tracking conversions.
+                    // Creates a Map using the specific conversion ID (entry[1]) as the key.
                     const dataMap = new Map(
                         JSON.parse(rawData)[1].map((entry) => [entry[1], entry])
                     );
+
+                    // Delay slightly to let the framework render the table after expanding
                     setTimeout(() => {
+                        // Iterate over specific data cells in the table
                         document
                             .querySelectorAll(".conversion-name-cell .internal")
                             .forEach((cell) => {
                                 const row = cell.closest(".particle-table-row");
+
+                                // Cleanup: Remove rows that don't belong to the "web" category
                                 if (
                                     row &&
                                     !row
@@ -694,6 +829,9 @@
                                 const data = dataMap.get(cell.innerText);
                                 if (!data) return;
 
+                                // 3. Deep Array indexing to extract readable names.
+                                // The payload format is a complex protobuf-to-JSON map.
+                                // data[11] === 1 means Google Ads tracker, data[11] === 32 means GA4 tracker.
                                 const [type, label] =
                                     data[11] === 1
                                         ? [
@@ -701,7 +839,7 @@
                                               data[64]?.[2]?.[4]
                                                   ?.split("'")?.[7]
                                                   ?.split("/")?.[1],
-                                          ]
+                                          ] // Extracts label from nested string
                                         : data[11] === 32
                                         ? [
                                               "aw-ga4",
@@ -711,13 +849,15 @@
                                           ]
                                         : [null, null];
 
+                                // If successfully mapped, replace the raw ID in the UI with a styled badge
                                 if (type && label) {
                                     cell.innerHTML = label;
                                     cell.classList.add(type);
-                                    Utils.setupCopy(cell, label);
+                                    Utils.setupCopy(cell, label); // Allow clicking the badge to copy the ID
                                 }
                             });
 
+                        // Hide container cards entirely if all their rows were removed
                         document
                             .querySelectorAll(
                                 "category-conversions-container-view, conversion-goal-card"
@@ -732,6 +872,9 @@
                 }
             };
 
+            // SPA Polling setup:
+            // The `window.conversions_data` variable might not be hydrated immediately when the script runs.
+            // This polls up to 3 times (every 500ms) waiting for the framework to attach the data payload.
             const poll = (tries = 0) => {
                 const rawData =
                     window.conversions_data?.SHARED_ALL_ENABLED_CONVERSIONS;
@@ -739,6 +882,7 @@
                 if (tries < 3) setTimeout(() => poll(tries + 1), 500);
             };
 
+            // Hook into DOM ready to start polling
             ["complete", "interactive"].includes(document.readyState)
                 ? poll()
                 : window.addEventListener("DOMContentLoaded", () => poll());
@@ -748,6 +892,8 @@
     // ==========================================
     // 3. ROUTER
     // ==========================================
+    // Inspects the current URL domain to dynamically decide which module to execute.
+    // This prevents AdWords logic from erroring out on the Cases dashboard, etc.
     const href = window.location.href;
     if (href.includes("casemon2.corp")) Modules.casemon();
     else if (href.includes("cases.connect")) Modules.casesConnect();

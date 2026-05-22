@@ -68,22 +68,47 @@
                         uiId: "bento_agent_ui",
                         styleId: "bento-dash-styles",
                         target: ".agent-table-container",
-                        maxStatusSeconds: 2700,
                         statusConfig: {
-                            active: { color: "#10B981", track: "#D1FAE5" },
-                            phone: { color: "#EF4444", track: "#FFE4E6" },
-                            video: { color: "#8B5CF6", track: "#F3E8FF" },
-                            email: { color: "#0EA5E9", track: "#E0F2FE" },
+                            active: {
+                                color: "#10B981",
+                                track: "#D1FAE5",
+                                maxSecs: 3600,
+                            },
+                            phone: {
+                                color: "#EF4444",
+                                track: "#FFE4E6",
+                                maxSecs: 2700,
+                            },
+                            video: {
+                                color: "#8B5CF6",
+                                track: "#F3E8FF",
+                                maxSecs: 2700,
+                            },
+                            email: {
+                                color: "#0EA5E9",
+                                track: "#E0F2FE",
+                                maxSecs: 900,
+                            },
                             "coffee-break": {
                                 color: "#F59E0B",
                                 track: "#FFEDD5",
+                                maxSecs: 900,
                             },
                             "lunch-break": {
                                 color: "#EAB308",
                                 track: "#FEF9C3",
+                                maxSecs: 3600,
                             },
-                            break: { color: "#6B7280", track: "#F3F4F6" },
-                            default: { color: "#9CA3AF", track: "#F3F4F6" },
+                            break: {
+                                color: "#6B7280",
+                                track: "#F3F4F6",
+                                maxSecs: 900,
+                            },
+                            default: {
+                                color: "#9CA3AF",
+                                track: "#F3F4F6",
+                                maxSecs: 2700,
+                            },
                         },
                         icons: {
                             video: {
@@ -155,7 +180,7 @@
                     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
                     position: relative;
                     background-clip: padding-box;
-                    border: 2px solid transparent; /* Replaces static borders to reserve space for gradient mask */
+                    border: 2px solid transparent; 
                     z-index: 1;
                 }
                 .agent-row:last-child { margin-bottom: 0; }
@@ -166,8 +191,8 @@
                     position: absolute;
                     inset: 0;
                     border-radius: 12px;
-                    padding: 2px; /* Ring thickness */
-                    margin: -2px; /* Aligns correctly over the transparent border */
+                    padding: 2px; 
+                    margin: -2px; 
                     background: conic-gradient(var(--st-color) var(--progress), var(--st-track) var(--progress));
                     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
                     -webkit-mask-composite: xor;
@@ -184,7 +209,6 @@
                 .agent-row.over-time::before {
                     animation: pulseWarning 1.5s infinite ease-in-out;
                 }
-                /* ======================================= */
 
                 .agent-left { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 13px; }
                 .agent-left img { width: 28px; height: 28px; border-radius: 6px; object-fit: cover; border: 1px solid rgba(0,0,0,0.04); }
@@ -194,7 +218,6 @@
                 .status-text { font-size: 11px; font-weight: 700; letter-spacing: 0.2px; display: inline-block; margin-top: 1px; }
                 .agent-right img { width: 20px; height: 20px; opacity: 0.8; }
                 
-                /* Static borders removed - Handled by the progress pseudo element */
                 .stt-active { background: linear-gradient(135deg, #D1FAE5 0%, #DBEAFE 100%); color: #064E3B; }
                 .stt-active .status-text { color: #047857; }
                 
@@ -317,24 +340,24 @@
                             t = e.filter(
                                 (e) => "active" === e.statusKey
                             ).length,
-                            l = a.maxStatusSeconds,
-                            c = e
+                            l = e
                                 .map((e) => {
                                     let t = a.icons[e.statusKey],
-                                        r = Math.min(
-                                            (e.durationSeconds / l) * 100,
-                                            100
-                                        ).toFixed(1),
-                                        n =
+                                        r =
                                             a.statusConfig[e.statusKey] ||
                                             a.statusConfig.default,
-                                        o = e.durationSeconds >= l,
-                                        s = `--progress: ${r}%; --st-color: ${n.color}; --st-track: ${n.track};`,
+                                        n = r.maxSecs || 2700,
+                                        o = Math.min(
+                                            (e.durationSeconds / n) * 100,
+                                            100
+                                        ).toFixed(1),
+                                        s = e.durationSeconds >= n,
+                                        l = `--progress: ${o}%; --st-color: ${r.color}; --st-track: ${r.track};`,
                                         c = `agent-row ${e.cssClass} ${
-                                            o ? "over-time" : ""
+                                            s ? "over-time" : ""
                                         }`;
                                     return `
-                    <div class="${c}" style="${s}">
+                    <div class="${c}" style="${l}">
                         <div class="agent-left">
                             <img src="${i(e.img)}" alt="${i(
                                         e.ldap
@@ -371,7 +394,7 @@
                                         <span class="agent-count total-badge">${e.length} Total</span>
                                     </div>
                                 </div>
-                                <div class="agent-list-container">${c}</div>
+                                <div class="agent-list-container">${l}</div>
                             </div>
                         </div>
                     </div>`),
@@ -401,7 +424,7 @@
                 #flup-days-input:focus { outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.08), 0 0 0 2px rgba(26, 29, 35, 0.2); }
                 .qm-badge { display: none; position: absolute; top: -4px; right: -4px; background: #D94138; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: 700; line-height: 1; border: 1px solid #ffffff; }
                 .aw-sig-table { margin: 12px 0; }
-            `
+                `
                     );
                 let t = e.createEl("div", {
                         id: "panelQM",
@@ -592,7 +615,7 @@
                 .aw-copied { background-color: #3B72E6 !important; color: white !important; border-color: transparent !important; }
                 #gpt-aw-overlay { position: fixed; bottom: 20px; left: 20px; z-index: 999; padding: 8px 14px; background: #161920; color: #F1F3F5; border: 1px solid #2D323F; border-radius: 8px; font-size: 12px; font-weight: 600; font-family: monospace; box-shadow: 0 4px 16px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s ease; user-select: none; }
                 #gpt-aw-overlay:hover { background: #2D323F; }
-            `
+                `
                 );
                 let t = (t) => {
                         let a = t.match(/AW-(\d*)/)?.[1];
