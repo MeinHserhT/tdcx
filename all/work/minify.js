@@ -1,30 +1,36 @@
 (() => {
     let e = {
+            debounce(e, t) {
+                let a;
+                return (...o) => {
+                    clearTimeout(a), (a = setTimeout(() => e(...o), t));
+                };
+            },
             addStyle(e, t) {
                 if (document.getElementById(e)) return;
                 let a = document.createElement("style");
                 a.id = e;
-                let r = window.trustedTypes?.createPolicy("default", {
+                let o = window.trustedTypes?.createPolicy("default", {
                     createHTML: (e) => e,
                 }) ?? { createHTML: (e) => e };
-                (a.textContent = r.createHTML(t)), document.head.appendChild(a);
+                (a.textContent = o.createHTML(t)), document.head.appendChild(a);
             },
             createEl(
                 e,
                 {
                     parent: t,
                     onClick: a,
-                    style: r,
-                    className: n,
-                    id: o,
+                    style: o,
+                    className: r,
+                    id: n,
                     ...i
                 } = {}
             ) {
                 let s = Object.assign(document.createElement(e), i);
                 return (
-                    o && (s.id = o),
-                    n && (s.className = n),
-                    r && Object.assign(s.style, r),
+                    n && (s.id = n),
+                    r && (s.className = r),
+                    o && Object.assign(s.style, o),
                     a && s.addEventListener("click", a),
                     t && t.appendChild(s),
                     s
@@ -32,32 +38,49 @@
             },
             $: (e, t = document) => t.querySelector(e),
             waitForElement: (t, a = 3e3) =>
-                new Promise((r, n) => {
-                    let o = Date.now(),
+                new Promise((o, r) => {
+                    let n = Date.now(),
                         i = setInterval(() => {
                             let s = e.$(t);
                             s?.offsetParent
-                                ? (clearInterval(i), r(s))
-                                : Date.now() - o > a &&
-                                  (clearInterval(i), n(Error(`Timeout: ${t}`)));
-                        }, 500);
+                                ? (clearInterval(i), o(s))
+                                : Date.now() - n > a &&
+                                  (clearInterval(i),
+                                  r(Error(`Timeout waiting for: ${t}`)));
+                        }, 250);
                 }),
             setupCopy(e, t, a = "Copied!") {
-                e.addEventListener("click", async () => {
+                let o;
+                e.addEventListener("click", async (r) => {
+                    r.stopPropagation();
                     try {
-                        await navigator.clipboard.writeText(t);
-                        let r = e.innerText;
-                        (e.innerText = a),
+                        await navigator.clipboard.writeText(t),
+                            e.dataset.origText ||
+                                (e.dataset.origText = e.innerText),
+                            (e.innerText = a),
                             e.classList.add("aw-copied"),
-                            setTimeout(() => {
-                                (e.innerText = r),
+                            clearTimeout(o),
+                            (o = setTimeout(() => {
+                                (e.innerText = e.dataset.origText),
                                     e.classList.remove("aw-copied");
-                            }, 1500);
+                            }, 1500));
                     } catch (n) {
                         console.error("Copy failed", n);
                     }
                 });
             },
+            escapeHtml: (e) =>
+                String(e || "").replace(
+                    /[&<>"']/g,
+                    (e) =>
+                        ({
+                            "&": "&amp;",
+                            "<": "&lt;",
+                            ">": "&gt;",
+                            '"': "&quot;",
+                            "'": "&#039;",
+                        }[e])
+                ),
         },
         t = {
             casemon() {
@@ -148,9 +171,12 @@
                             default: 99,
                         },
                     },
-                    r = e.$(a.target);
-                if (!r) return;
-                let n =
+                    o = e.$(a.target);
+                if (!o) {
+                    window.dashRun = 0;
+                    return;
+                }
+                let r =
                     e
                         .$("[alt='profile photo']")
                         ?.src?.match(/photos\/([^/?]+)/)?.[1] ?? "Unknown";
@@ -158,118 +184,67 @@
                     a.styleId,
                     `
                 #bento_agent_ui { position: fixed; height: 100%; width: 100%; top: 0; right: 0; background-color: rgba(15, 17, 21, 0.12); z-index: 9999; display: flex; justify-content: flex-end; align-items: center; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; pointer-events: none; box-sizing: border-box; }
-                .bento-wrapper { position: relative; pointer-events: auto; width: 100%; max-width: 320px; background: #FFFFFF; border-radius: 20px; box-shadow: 0 12px 32px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04); padding: 20px; border: 1px solid #E5E7EB; color: #1F2937; }
-                .close-btn { position: absolute; top: 14px; right: 14px; background: #F3F4F6; border: none; cursor: pointer; z-index: 10; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
-                .close-btn:hover { background: #E5E7EB; transform: scale(1.05); }
-                .close-btn img { width: 10px; height: 10px; opacity: 0.6; }
-                .bento-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+                .bento-wrapper { position: relative; pointer-events: auto; width: 100%; max-width: 320px; background: #FFFFFF; border-radius: 20px; box-shadow: 0 12px 32px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04); padding: 20px; border: 1px solid #E5E7EB; color: #1F2937; transition: border-color 0.3s ease; }
+                .close-btn { position: absolute; top: -10px; right: -10px; background: #FFFFFF; border: 1px solid #E5E7EB; cursor: pointer; z-index: 20; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: all 0.2s ease; }
+                .close-btn:hover { background: #F3F4F6; transform: scale(1.1); }
+                .close-btn img { width: 11px; height: 11px; opacity: 0.7; }
+                .bento-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
                 .bento-card { background: transparent; display: flex; flex-direction: column; }
-                .bento-card h3 { margin: 0 0 12px 0; font-size: 12px; color: #4B5563; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; }
-                .header-counters { display: flex; gap: 6px; }
-                .agent-count { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+                .agent-list-header { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+                .agent-list-header h3 { margin: 0; font-size: 12px; color: #4B5563; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; display: flex; align-items: center; justify-content: space-between; }
+                .header-counters { display: flex; gap: 6px; justify-content: flex-start; width: 100%; }
+                .agent-count { font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 700; white-space: nowrap; }
                 .active-badge { background: #E6F4EA; color: #137333; border: 1px solid #CEEAD6; }
+                .phone-badge { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+                .break-badge { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
                 .total-badge { background: #F1F3F4; color: #5F6368; border: 1px solid #E8EAED; }
-                .agent-list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-                
-                .agent-list-container { max-height: 80vh; overflow-y: auto; padding: 12px; background: #F8FAFC; border-radius: 14px; border: 1px solid #E2E8F0; }
-                
-                .agent-row { 
-                    display: flex; justify-content: space-between; align-items: center; 
-                    padding: 10px 14px; margin-bottom: 8px; border-radius: 12px; 
-                    transition: transform 0.2s ease, box-shadow 0.2s ease; 
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-                    position: relative;
-                    background-clip: padding-box;
-                    border: 2px solid transparent; 
-                    z-index: 1;
-                }
-                .agent-row:last-child { margin-bottom: 0; }
+                .health-warning { animation: pulseHealth 2.5s infinite; border-color: #EF4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.15); }
+                @keyframes pulseHealth { 0%, 100% { border-color: #E5E7EB; } 50% { border-color: #EF4444; } }
+                .health-text { font-size: 10px; color: #DC2626; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+                .agent-list-container { max-height: 72vh; overflow-y: auto; padding: 2px; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid #F1F5F9; padding-top: 12px; }
+                .status-group-block { display: flex; width: 100%; gap: 10px; align-items: flex-start; }
+                .status-inline-label { width: 50px; min-width: 35px; text-align: left; font-size: 9px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 4px; border-left: 2px solid #E2E8F0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+                .status-inline-label.user-label { color: #2563EB; border-left-color: #2563EB; background: #EFF6FF; border-radius: 0 4px 4px 0; }
+                .status-rows-stack { flex-grow: 1; display: flex; flex-direction: column; gap: 6px; }
+                .agent-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: 10px; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.02); position: relative; background-clip: padding-box; border: 2px solid transparent; z-index: 1; }
                 .agent-row:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
-                
-                .agent-row::before {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    border-radius: 12px;
-                    padding: 2px; 
-                    margin: -2px; 
-                    background: conic-gradient(var(--st-color) var(--progress), var(--st-track) var(--progress));
-                    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-                    -webkit-mask-composite: xor;
-                    mask-composite: exclude;
-                    pointer-events: none;
-                    z-index: -1;
-                }
-
-                @keyframes pulseWarning {
-                    0%, 100% { filter: drop-shadow(0 0 2px var(--st-color)); }
-                    50% { filter: drop-shadow(0 0 8px var(--st-color)); }
-                }
-
-                .agent-row.over-time::before {
-                    animation: pulseWarning 1.5s infinite ease-in-out;
-                }
-
-                .agent-left { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 13px; }
-                .agent-left img { width: 28px; height: 28px; border-radius: 6px; object-fit: cover; border: 1px solid rgba(0,0,0,0.04); }
-                .agent-right { display: flex; align-items: center; gap: 12px; text-align: right; }
+                .agent-row::before { content: ''; position: absolute; inset: 0; border-radius: 10px; padding: 2px; margin: -2px; background: conic-gradient(var(--st-color) var(--progress), var(--st-track) var(--progress)); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; z-index: -1; }
+                @keyframes pulseWarning { 0%, 100% { filter: drop-shadow(0 0 2px var(--st-color)); } 50% { filter: drop-shadow(0 0 8px var(--st-color)); } }
+                .agent-row.over-time::before { animation: pulseWarning 1.5s infinite ease-in-out; }
+                .agent-left { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 12px; }
+                .agent-left img { width: 26px; height: 26px; border-radius: 6px; object-fit: cover; border: 1px solid rgba(0,0,0,0.04); }
+                .agent-right { display: flex; align-items: center; gap: 10px; text-align: right; }
                 .agent-meta { display: flex; flex-direction: column; }
-                .time-state { font-size: 11px; font-weight: 500; opacity: 0.85; }
-                .status-text { font-size: 11px; font-weight: 700; letter-spacing: 0.2px; display: inline-block; margin-top: 1px; }
-                .agent-right img { width: 20px; height: 20px; opacity: 0.8; }
-                
-                .stt-active { background: linear-gradient(135deg, #D1FAE5 0%, #DBEAFE 100%); color: #064E3B; }
-                .stt-active .status-text { color: #047857; }
-                
-                .stt-phone { background: linear-gradient(135deg, #FFE4E6 0%, #FEF3C7 100%); color: #7F1D1D; }
-                .stt-phone .status-text { color: #B91C1C; }
-                
-                .stt-video { background: linear-gradient(135deg, #F3E8FF 0%, #FCE7F3 100%); color: #4C1D95; }
-                .stt-video .status-text { color: #6B21A8; }
-                
-                .stt-email { background: linear-gradient(135deg, #E0F2FE 0%, #FFE4E6 100%); color: #0C4A6E; }
-                .stt-email .status-text { color: #0284C7; }
-                
-                .stt-coffee-break { background: linear-gradient(135deg, #FFEDD5 0%, #E0F2FE 100%); color: #78350F; }
-                .stt-coffee-break .status-text { color: #B45309; }
-                
-                .stt-lunch-break { background: linear-gradient(135deg, #FEF9C3 0%, #F3E8FF 100%); color: #713F12; }
-                .stt-lunch-break .status-text { color: #A16207; }
-                
-                .stt-break { background: linear-gradient(135deg, #F3F4F6 0%, #E2E8F0 100%); color: #374151; }
-                .stt-break .status-text { color: #4B5563; }
-                
+                .time-state { font-size: 10px; font-weight: 500; opacity: 0.85; }
+                .status-text { font-size: 10px; font-weight: 700; letter-spacing: 0.2px; display: inline-block; margin-top: 1px; }
+                .agent-right img { width: 18px; height: 18px; opacity: 0.8; }
+                .stt-active { background: linear-gradient(135deg, #D1FAE5 0%, #DBEAFE 100%); color: #064E3B; } .stt-active .status-text { color: #047857; }
+                .stt-phone { background: linear-gradient(135deg, #FFE4E6 0%, #FEF3C7 100%); color: #7F1D1D; } .stt-phone .status-text { color: #B91C1C; }
+                .stt-video { background: linear-gradient(135deg, #F3E8FF 0%, #FCE7F3 100%); color: #4C1D95; } .stt-video .status-text { color: #6B21A8; }
+                .stt-email { background: linear-gradient(135deg, #E0F2FE 0%, #FFE4E6 100%); color: #0C4A6E; } .stt-email .status-text { color: #0284C7; }
+                .stt-coffee-break { background: linear-gradient(135deg, #FFEDD5 0%, #E0F2FE 100%); color: #78350F; } .stt-coffee-break .status-text { color: #B45309; }
+                .stt-lunch-break { background: linear-gradient(135deg, #FEF9C3 0%, #F3E8FF 100%); color: #713F12; } .stt-lunch-break .status-text { color: #A16207; }
+                .stt-break { background: linear-gradient(135deg, #F3F4F6 0%, #E2E8F0 100%); color: #374151; } .stt-break .status-text { color: #4B5563; }
                 [animation="pulse"] { animation: pulse 2s infinite ease-in-out; }
                 @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
                 [animation="wiggle"] { animation: wiggle 0.9s infinite; }
                 @keyframes wiggle { 0%, 100% { transform: rotate(0deg); } 15%, 45%, 75% { transform: rotate(4deg); } 30%, 60% { transform: rotate(-4deg); } }
                 [animation="slide"] { animation: slide-lr 1.2s infinite alternate ease-in-out; }
                 @keyframes slide-lr { from { transform: translateX(0); } to { transform: translateX(2px); } }
-                .agent-list-container::-webkit-scrollbar { width: 5px; }
+                .agent-list-container::-webkit-scrollbar { width: 4px; }
                 .agent-list-container::-webkit-scrollbar-track { background: transparent; }
                 .agent-list-container::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.1); border-radius: 10px; }
-            `
+                `
                 );
-                let o =
-                    document.getElementById(a.uiId) ||
-                    e.createEl("div", { id: a.uiId, parent: document.body });
-                o.addEventListener("click", (e) => {
-                    e.target.closest(".close-btn") &&
-                        (o.remove(), (window.dashRun = 0));
-                });
-                let i = (e) =>
-                        String(e || "").replace(
-                            /[&<>"']/g,
-                            (e) =>
-                                ({
-                                    "&": "&amp;",
-                                    "<": "&lt;",
-                                    ">": "&gt;",
-                                    '"': "&quot;",
-                                    "'": "&#039;",
-                                }[e])
-                        ),
-                    s = (e) =>
+                let n =
+                        document.getElementById(a.uiId) ||
+                        e.createEl("div", {
+                            id: a.uiId,
+                            parent: document.body,
+                        }),
+                    i = "",
+                    s = /[a-zA-Z\s]+/,
+                    l = (e) =>
                         (e.match(/\d+[hms]/g) || []).reduce(
                             (e, t) =>
                                 e +
@@ -278,138 +253,203 @@
                                         0),
                             0
                         ),
-                    l = () => {
-                        let e = Array.from(r.querySelectorAll("tbody tr"))
-                                .map((e) => {
-                                    let t = e.querySelectorAll("td");
-                                    if (t.length < 9) return null;
-                                    let a = (
-                                            t[5].innerText.match(
-                                                /[a-zA-Z\s]+/
-                                            )?.[0] || ""
+                    c = () => {
+                        try {
+                            let t = Array.from(o.querySelectorAll("tbody tr"))
+                                    .map((e) => {
+                                        let t = e.querySelectorAll("td");
+                                        if (!t || t.length < 10) return null;
+                                        let a = (
+                                                t[5].innerText.match(s)?.[0] ||
+                                                ""
+                                            )
+                                                .trim()
+                                                .toLowerCase()
+                                                .replace(/\s+/g, "-"),
+                                            o = (
+                                                t[8].innerText.match(s)?.[0] ||
+                                                ""
+                                            )
+                                                .trim()
+                                                .toLowerCase()
+                                                .replace(/\s+/g, "-"),
+                                            r = t[3].innerText.trim(),
+                                            n = r
+                                                .toLowerCase()
+                                                .replace(/\s+/g, "-");
+                                        return (
+                                            "Active" === r &&
+                                                "busy" === a &&
+                                                "busy" === o &&
+                                                ((r = "Break"), (n = "break")),
+                                            {
+                                                img:
+                                                    e.querySelector("img")
+                                                        ?.src || "",
+                                                ldap: t[1].innerText.trim(),
+                                                timeInState:
+                                                    t[4].innerText.trim(),
+                                                lastChangeRaw:
+                                                    t[9].innerText.trim(),
+                                                displayStatus: r,
+                                                statusKey: n,
+                                                cssClass: `stt-${n}`,
+                                                durationSeconds: l(
+                                                    t[9].innerText
+                                                ),
+                                            }
+                                        );
+                                    })
+                                    .filter(Boolean)
+                                    .sort((e, t) => {
+                                        let o = e.ldap === r,
+                                            n = t.ldap === r;
+                                        if (o !== n) return n - o;
+                                        let i =
+                                                a.priorities[e.statusKey] ??
+                                                a.priorities.default,
+                                            s =
+                                                a.priorities[t.statusKey] ??
+                                                a.priorities.default;
+                                        return i !== s
+                                            ? i - s
+                                            : t.durationSeconds -
+                                                  e.durationSeconds;
+                                    }),
+                                c = t.filter(
+                                    (e) => "active" === e.statusKey
+                                ).length,
+                                d = t.filter((e) =>
+                                    ["phone", "video"].includes(e.statusKey)
+                                ).length,
+                                p = t.filter(
+                                    (e) =>
+                                        !["phone", "video", "active"].includes(
+                                            e.statusKey
                                         )
-                                            .trim()
-                                            .toLowerCase()
-                                            .replace(/\s+/g, "-"),
-                                        r = (
-                                            t[8].innerText.match(
-                                                /[a-zA-Z\s]+/
-                                            )?.[0] || ""
-                                        )
-                                            .trim()
-                                            .toLowerCase()
-                                            .replace(/\s+/g, "-"),
-                                        n = t[3].innerText.trim(),
-                                        o = n
-                                            .toLowerCase()
-                                            .replace(/\s+/g, "-");
-                                    return (
-                                        "Active" === n &&
-                                            "busy" === a &&
-                                            "busy" === r &&
-                                            ((n = "Break"), (o = "break")),
-                                        {
-                                            img:
-                                                e.querySelector("img")?.src ||
-                                                "",
-                                            ldap: t[1].innerText.trim(),
-                                            timeInState: t[4].innerText.trim(),
-                                            lastChangeRaw:
-                                                t[9].innerText.trim(),
-                                            displayStatus: n,
-                                            statusKey: o,
-                                            cssClass: `stt-${o}`,
-                                            durationSeconds: s(t[9].innerText),
-                                        }
-                                    );
-                                })
-                                .filter(Boolean)
-                                .sort((e, t) => {
-                                    if ((e.ldap === n) != (t.ldap === n))
-                                        return (t.ldap === n) - (e.ldap === n);
-                                    let r =
-                                            a.priorities[e.statusKey] ??
-                                            a.priorities.default,
-                                        o =
-                                            a.priorities[t.statusKey] ??
-                                            a.priorities.default;
-                                    return r !== o
-                                        ? r - o
-                                        : t.durationSeconds - e.durationSeconds;
-                                }),
-                            t = e.filter(
-                                (e) => "active" === e.statusKey
-                            ).length,
-                            l = e
-                                .map((e) => {
-                                    let t = a.icons[e.statusKey],
-                                        r =
-                                            a.statusConfig[e.statusKey] ||
+                                ).length,
+                                $ = t.length,
+                                g = ($ > 0 ? c / $ : 0) < 0.2 && $ > 0,
+                                u = [],
+                                x = null;
+                            t.forEach((e) => {
+                                let t = e.ldap === r,
+                                    a = t ? "You" : e.displayStatus;
+                                t ||
+                                    ("phone" !== e.statusKey &&
+                                        "video" !== e.statusKey) ||
+                                    (a = "On Call"),
+                                    (x && x.label === a) ||
+                                        ((x = {
+                                            label: a,
+                                            isUser: t,
+                                            rows: [],
+                                        }),
+                                        u.push(x)),
+                                    x.rows.push(e);
+                            });
+                            let b = "";
+                            u.forEach((t) => {
+                                let o = "";
+                                t.rows.forEach((t) => {
+                                    let r = a.icons[t.statusKey],
+                                        n =
+                                            a.statusConfig[t.statusKey] ||
                                             a.statusConfig.default,
-                                        n = r.maxSecs || 2700,
-                                        o = Math.min(
-                                            (e.durationSeconds / n) * 100,
+                                        i = n.maxSecs || 2700,
+                                        s = Math.min(
+                                            (t.durationSeconds / i) * 100,
                                             100
                                         ).toFixed(1),
-                                        s = e.durationSeconds >= n,
-                                        l = `--progress: ${o}%; --st-color: ${r.color}; --st-track: ${r.track};`,
-                                        c = `agent-row ${e.cssClass} ${
-                                            s ? "over-time" : ""
+                                        l = t.durationSeconds >= i,
+                                        c = `--progress: ${s}%; --st-color: ${n.color}; --st-track: ${n.track};`,
+                                        d = `agent-row ${t.cssClass} ${
+                                            l ? "over-time" : ""
                                         }`;
-                                    return `
-                    <div class="${c}" style="${l}">
-                        <div class="agent-left">
-                            <img src="${i(e.img)}" alt="${i(
-                                        e.ldap
-                                    )}" onerror="this.style.display='none'" />
-                            <span>${i(e.ldap)}</span>
-                        </div>
-                        <div class="agent-right">
-                            <div class="agent-meta">
-                                <span class="time-state">${i(
-                                    e.lastChangeRaw
-                                )} (${i(e.timeInState)})</span>
-                                <span class="status-text">${i(
-                                    e.displayStatus
-                                )}</span> 
-                            </div>
-                            ${
-                                t
-                                    ? `<img src="${t.src}" animation="${t.animation}" alt="${e.statusKey} icon"/>`
-                                    : ""
-                            }
-                        </div>
-                    </div>`;
-                                })
-                                .join("");
-                        (o.innerHTML = `
-                    <div class="bento-wrapper">
-                        <button class="close-btn" title="Close"><img src="${a.icons.close}" alt="Close"/></button>
-                        <div class="bento-grid">
-                            <div class="bento-card">
-                                <div class="agent-list-header">
-                                    <h3>Team Status</h3>
-                                    <div class="header-counters">
-                                        <span class="agent-count active-badge">${t} Active</span>
-                                        <span class="agent-count total-badge">${e.length} Total</span>
+                                    o += `
+                                <div class="${d}" style="${c}">
+                                    <div class="agent-left">
+                                        <img src="${e.escapeHtml(
+                                            t.img
+                                        )}" alt="${e.escapeHtml(
+                                        t.ldap
+                                    )}" loading="lazy" />
+                                        <span>${e.escapeHtml(t.ldap)}</span>
                                     </div>
+                                    <div class="agent-right">
+                                        <div class="agent-meta">
+                                            <span class="time-state">${e.escapeHtml(
+                                                t.lastChangeRaw
+                                            )} (${e.escapeHtml(
+                                        t.timeInState
+                                    )})</span>
+                                            <span class="status-text">${e.escapeHtml(
+                                                t.displayStatus
+                                            )}</span> 
+                                        </div>
+                                        ${
+                                            r
+                                                ? `<img src="${r.src}" animation="${r.animation}" alt="${t.statusKey} icon" loading="lazy" />`
+                                                : ""
+                                        }
+                                    </div>
+                                </div>`;
+                                }),
+                                    (b += `
+                            <div class="status-group-block">
+                                <div class="status-inline-label ${
+                                    t.isUser ? "user-label" : ""
+                                }">${e.escapeHtml(t.label)}</div>
+                                <div class="status-rows-stack">${o}</div>
+                            </div>`);
+                            });
+                            let f = `
+                        <div class="bento-wrapper ${g ? "health-warning" : ""}">
+                            <button class="close-btn" title="Close"><img src="${
+                                a.icons.close
+                            }" alt="Close"/></button>
+                            <div class="bento-grid">
+                                <div class="bento-card">
+                                    <div class="agent-list-header">
+                                        <h3>
+                                            <span>Team Status</span>
+                                            ${
+                                                g
+                                                    ? `<span class="health-text">⚠️ Low Availability</span>`
+                                                    : ""
+                                            }
+                                        </h3>
+                                        <div class="header-counters">
+                                            <span class="agent-count active-badge" title="Active">Act: ${c}</span> +
+                                            <span class="agent-count phone-badge" title="On Phone">Phn: ${d}</span> +
+                                            <span class="agent-count break-badge" title="On Break">Brk: ${p}</span> =
+                                            <span class="agent-count total-badge" title="Total">Tot: ${$}</span>
+                                        </div>
+                                    </div>
+                                    <div class="agent-list-container">${b}</div>
                                 </div>
-                                <div class="agent-list-container">${l}</div>
                             </div>
-                        </div>
-                    </div>`),
-                            (o.style.display = "flex");
+                        </div>`;
+                            f !== i &&
+                                ((n.innerHTML = f),
+                                (i = f),
+                                (n.style.display = "flex"));
+                        } catch (m) {
+                            console.error("Casemon render error:", m);
+                        }
                     },
-                    c;
-                new MutationObserver(() => {
-                    clearTimeout(c), (c = setTimeout(l, 100));
-                }).observe(r, {
+                    d = new MutationObserver(e.debounce(c, 150));
+                d.observe(o, {
                     attributes: !0,
                     childList: !0,
                     subtree: !0,
                     characterData: !0,
                 }),
-                    l();
+                    n.addEventListener("click", (e) => {
+                        e.target.closest(".close-btn") &&
+                            (n.remove(), (window.dashRun = 0), d.disconnect());
+                    }),
+                    c();
             },
             casesConnect() {
                 if (window.scrRun) return;
@@ -431,7 +471,7 @@
                         parent: document.body,
                     }),
                     a = null,
-                    r = e.createEl("button", {
+                    o = e.createEl("button", {
                         textContent: "OFF",
                         title: "Auto Click",
                         className: "qm-btn",
@@ -441,8 +481,8 @@
                             a
                                 ? (clearInterval(a),
                                   (a = null),
-                                  (r.textContent = "OFF"),
-                                  (r.style.backgroundColor = "#D94138"))
+                                  (o.textContent = "OFF"),
+                                  (o.style.backgroundColor = "#D94138"))
                                 : ((a = setInterval(() => {
                                       e.$("#cdtx__uioncall--btn")?.click(),
                                           setTimeout(
@@ -455,8 +495,8 @@
                                               6e3
                                           );
                                   }, 18e3)),
-                                  (r.textContent = "ON"),
-                                  (r.style.backgroundColor = "#1E7F4E"));
+                                  (o.textContent = "ON"),
+                                  (o.style.backgroundColor = "#1E7F4E"));
                         },
                     });
                 e.createEl("button", {
@@ -467,80 +507,102 @@
                     style: { backgroundColor: "#3B72E6" },
                     parent: t,
                     async onClick() {
-                        e.$('[debug-id="dock-item-home"]')?.click(),
-                            (
-                                await e.waitForElement(".li-popup_lstcasefl")
-                            )?.click();
+                        e.$('[debug-id="dock-item-home"]')?.click();
+                        try {
+                            let t = await e.waitForElement(
+                                ".li-popup_lstcasefl"
+                            );
+                            t?.click();
+                        } catch (a) {
+                            console.warn("Follow-up popup not found");
+                        }
                     },
                 }),
                     e
                         .waitForElement(".li-popup_lstcasefl")
                         .then((t) => {
                             let a = e.$("#flup-badge"),
-                                r = () =>
+                                o = () => {
                                     a &&
-                                    (a.style.display =
-                                        t.dataset.attr && "0" !== t.dataset.attr
-                                            ? "block"
-                                            : "none");
-                            new MutationObserver(r).observe(t, {
+                                        (a.style.display =
+                                            t.dataset.attr &&
+                                            "0" !== t.dataset.attr
+                                                ? "block"
+                                                : "none");
+                                };
+                            new MutationObserver(o).observe(t, {
                                 attributes: !0,
                                 attributeFilter: ["data-attr"],
                             }),
-                                r();
+                                o();
                         })
                         .catch(() => {});
-                let n = e.createEl("button", {
+                let r = e.createEl("button", {
                     textContent: "FL Up:",
                     title: "Set Follow-up",
                     className: "qm-btn",
                     style: { backgroundColor: "#1A827A", paddingRight: "44px" },
                     parent: t,
                     async onClick(t) {
-                        if ("flup-days-input" === t.target.id) return;
-                        let a = e.$('[data-infocase="appointment_time"]');
-                        a &&
-                            !a.dataset.valchoice &&
-                            (a.click(),
-                            (
-                                await e.waitForElement(
-                                    ".datepicker-grid .today"
-                                )
-                            )?.click());
-                        let r =
-                            parseInt(e.$("#flup-days-input").value, 10) || 0;
-                        if (
-                            (e.$('[data-infocase="follow_up_time"]')?.click(),
-                            r)
-                        ) {
-                            let n = new Date();
-                            for (let o = 0; o < r; )
-                                n.setDate(n.getDate() + 1),
-                                    n.getDay() % 6 != 0 && o++;
-                            let i = Math.round((n - new Date()) / 864e5),
-                                s = await e.waitForElement(
-                                    ".datepicker-grid .today"
-                                ),
-                                l = s;
-                            for (let c = 0; c < i && l; c++)
-                                l = l.nextElementSibling;
-                            l?.click();
-                        } else
-                            (
-                                await e.waitForElement(
-                                    '[data-thischoice="Finish"]'
-                                )
-                            )?.click();
-                        (
-                            await e.waitForElement("[data-type=follow_up_time]")
-                        )?.click();
+                        if ("flup-days-input" !== t.target.id)
+                            try {
+                                let a = e.$(
+                                    '[data-infocase="appointment_time"]'
+                                );
+                                a &&
+                                    !a.dataset.valchoice &&
+                                    (a.click(),
+                                    (
+                                        await e.waitForElement(
+                                            ".datepicker-grid .today"
+                                        )
+                                    )?.click());
+                                let o =
+                                    parseInt(
+                                        e.$("#flup-days-input").value,
+                                        10
+                                    ) || 0;
+                                if (
+                                    (e
+                                        .$('[data-infocase="follow_up_time"]')
+                                        ?.click(),
+                                    o > 0)
+                                ) {
+                                    let r = new Date();
+                                    for (let n = 0; n < o; )
+                                        r.setDate(r.getDate() + 1),
+                                            r.getDay() % 6 != 0 && n++;
+                                    let i = Math.round(
+                                            (r - new Date()) / 864e5
+                                        ),
+                                        s = await e.waitForElement(
+                                            ".datepicker-grid .today"
+                                        ),
+                                        l = s;
+                                    for (let c = 0; c < i && l; c++)
+                                        l = l.nextElementSibling;
+                                    l?.click();
+                                } else
+                                    (
+                                        await e.waitForElement(
+                                            '[data-thischoice="Finish"]'
+                                        )
+                                    )?.click();
+                                (
+                                    await e.waitForElement(
+                                        "[data-type=follow_up_time]"
+                                    )
+                                )?.click();
+                            } catch (d) {
+                                console.error("Follow up script failed", d);
+                            }
                     },
                 });
                 e.createEl("input", {
                     id: "flup-days-input",
                     type: "text",
                     value: "2",
-                    parent: n,
+                    parent: r,
                     onClick: (e) => e.stopPropagation(),
                     onfocus: (e) => e.target.select(),
                     oninput: (e) =>
@@ -548,7 +610,7 @@
                             .replace(/\D/g, "")
                             .slice(0, 1)),
                 });
-                let o = (e) => `
+                let n = (t) => `
                 <table class="aw-sig-table" style="width: 348px; padding: 0 30px;" data-sig-injected="true">
                     <tbody>
                         <tr align="left">
@@ -556,7 +618,9 @@
                             <td style="width: 12px;"/>
                             <td style="vertical-align: middle;">
                                 <p style="font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; line-height: 1.4; color: #1A1D23;">
-                                    <strong style="font-size: 105%; color: #111111;">${e}</strong><br>
+                                    <strong style="font-size: 105%; color: #111111;">${e.escapeHtml(
+                                        t
+                                    )}</strong><br>
                                     <span style="color: #5F6368;">Technical Solutions Team</span><br>
                                     <span style="color: #5F6368; font-weight: 500;">TDCX, on behalf of Google</span>
                                 </p>
@@ -575,12 +639,9 @@
                             prompt("Enter your name:") ||
                             "Agent";
                         localStorage.setItem("__signature_name", a);
-                        let r = o(a),
-                            n = document.createElement("div");
-                        n.innerHTML = r;
-                        let i = n.firstElementChild;
-                        t.appendChild(i),
-                            console.log("Signature injected successfully.");
+                        let o = document.createElement("div");
+                        (o.innerHTML = n(a)),
+                            t.appendChild(o.firstElementChild);
                     },
                     s = () => {
                         let t = localStorage.getItem("__signature_name");
@@ -590,7 +651,7 @@
                         );
                         a &&
                             !e.$(".aw-sig-table") &&
-                            a.insertAdjacentHTML("afterend", o(t));
+                            a.insertAdjacentHTML("afterend", n(t));
                     };
                 e.createEl("button", {
                     textContent: "Sign",
@@ -599,12 +660,13 @@
                     style: { backgroundColor: "#92400E", color: "#FFFFFF" },
                     parent: t,
                     onmousedown: (e) => e.preventDefault(),
-                    onClick: () => i(!0),
-                }),
-                    new MutationObserver(() => s()).observe(document.body, {
-                        childList: !0,
-                        subtree: !0,
-                    });
+                    onClick: i,
+                });
+                let l = e.debounce(s, 400);
+                new MutationObserver(l).observe(document.body, {
+                    childList: !0,
+                    subtree: !0,
+                });
             },
             adwords() {
                 e.addStyle(
@@ -620,22 +682,22 @@
                 let t = (t) => {
                         let a = t.match(/AW-(\d*)/)?.[1];
                         if (a) {
-                            let r =
+                            let o =
                                 e.$("#gpt-aw-overlay") ||
                                 e.createEl("div", {
                                     id: "gpt-aw-overlay",
                                     parent: document.body,
                                 });
-                            (r.textContent = `AW-${a}`),
-                                e.setupCopy(r, a, "Copied!");
+                            (o.textContent = `AW-${a}`),
+                                e.setupCopy(o, a, "Copied!");
                         }
                         document
                             .querySelectorAll(".expand-more")
                             .forEach((e) => e.click());
                         try {
-                            let n = new Map(
-                                JSON.parse(t)[1].map((e) => [e[1], e])
-                            );
+                            let r = JSON.parse(t);
+                            if (!r || !r[1]) return;
+                            let n = new Map(r[1].map((e) => [e[1], e]));
                             setTimeout(() => {
                                 document
                                     .querySelectorAll(
@@ -651,33 +713,30 @@
                                                 .querySelector(
                                                     '[essfield="aggregated_conversion_source"]'
                                                 )
-                                                ?.innerText.toLowerCase()
+                                                ?.innerText?.toLowerCase()
                                                 .includes("web")
                                         )
                                             return a.remove();
-                                        let r = n.get(t.innerText);
-                                        if (!r) return;
-                                        let [o, i] =
-                                            1 === r[11]
-                                                ? [
-                                                      "aw-ads",
-                                                      r[64]?.[2]?.[4]
-                                                          ?.split("'")?.[7]
-                                                          ?.split("/")?.[1],
-                                                  ]
-                                                : 32 === r[11]
-                                                ? [
-                                                      "aw-ga4",
-                                                      r[64]?.[1]?.[4]?.split(
-                                                          "'"
-                                                      )?.[3],
-                                                  ]
-                                                : [null, null];
-                                        o &&
-                                            i &&
-                                            ((t.innerHTML = i),
-                                            t.classList.add(o),
-                                            e.setupCopy(t, i));
+                                        let o = n.get(t.innerText);
+                                        if (!o) return;
+                                        let r = null,
+                                            i = null;
+                                        1 === o[11]
+                                            ? ((r = "aw-ads"),
+                                              (i = o[64]?.[2]?.[4]
+                                                  ?.split("'")?.[7]
+                                                  ?.split("/")?.[1]))
+                                            : 32 === o[11] &&
+                                              ((r = "aw-ga4"),
+                                              (i =
+                                                  o[64]?.[1]?.[4]?.split(
+                                                      "'"
+                                                  )?.[3])),
+                                            r &&
+                                                i &&
+                                                ((t.innerHTML = i),
+                                                t.classList.add(r),
+                                                e.setupCopy(t, i));
                                     }),
                                     document
                                         .querySelectorAll(
@@ -688,17 +747,17 @@
                                                 ".particle-table-row"
                                             ) || (e.style.display = "none");
                                         });
-                            }, 1e3);
-                        } catch (o) {
-                            console.error("Data parsing failed", o);
+                            }, 1200);
+                        } catch (i) {
+                            console.error("Adwords Data parsing failed", i);
                         }
                     },
                     a = (e = 0) => {
-                        let r =
+                        let o =
                             window.conversions_data
                                 ?.SHARED_ALL_ENABLED_CONVERSIONS;
-                        if (r) return t(r);
-                        e < 3 && setTimeout(() => a(e + 1), 500);
+                        if (o) return t(o);
+                        e < 5 && setTimeout(() => a(e + 1), 600);
                     };
                 ["complete", "interactive"].includes(document.readyState)
                     ? a()
