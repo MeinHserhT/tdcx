@@ -17,7 +17,7 @@ document.querySelectorAll(".arcu-button").forEach(function (e) {
 });
 
 document.addEventListener("click", function (e) {
-    (l = e.target.closest('a[title*="báo giá"],a[title*="lái thử"]')),
+    (l = e.target.closest('a.btn-price-document')),
         (f = l && l.closest("[class*=-body]"));
     f &&
         ((p = f.querySelector('input[data-field="DienThoai"]')),
@@ -32,5 +32,5 @@ document.addEventListener("click", function (e) {
                             "+84" +
                             p.value.replace(/\D/g, "").replace(/^(84|0)/, ""),
                     });
-            }, 500));
+            }, 200));
 });

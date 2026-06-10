@@ -1,7 +1,6 @@
 (() => {
     // ==========================================
     // 1. SHARED UTILITIES
-    // ==========================================
     const Utils = {
         debounce: (func, wait) => {
             let timeout;
@@ -10,6 +9,7 @@
                 timeout = setTimeout(() => func(...args), wait);
             };
         },
+        sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
         addStyle: (id, css) => {
             if (document.getElementById(id)) return;
             const style = document.createElement("style");
@@ -33,26 +33,36 @@
             return el;
         },
         $: (s, ctx = document) => ctx.querySelector(s),
+
         waitForElement: (selector, timeout = 3000) =>
             new Promise((resolve, reject) => {
-                const start = Date.now();
-                const timer = setInterval(() => {
-                    const el = Utils.$(selector);
-                    if (el?.offsetParent) {
-                        clearInterval(timer);
-                        resolve(el);
-                    } else if (Date.now() - start > timeout) {
-                        clearInterval(timer);
-                        reject(new Error(`Timeout waiting for: ${selector}`));
+                const el = Utils.$(selector);
+                if (el) return resolve(el);
+
+                const observer = new MutationObserver((mutations, obs) => {
+                    const target = Utils.$(selector);
+                    if (target) {
+                        obs.disconnect();
+                        resolve(target);
                     }
-                }, 250); // Increased polling frequency slightly for better responsiveness
+                });
+
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true,
+                });
+
+                setTimeout(() => {
+                    observer.disconnect();
+                    reject(new Error(`Timeout waiting for: ${selector}`));
+                }, timeout);
             }),
+
         setupCopy: (el, text, successMsg = "Copied!") => {
             let resetTimeout;
             el.addEventListener("click", async (e) => {
                 try {
                     await navigator.clipboard.writeText(text);
-                    // Store original text on the element dataset to prevent overwriting with "Copied!" on spam clicks
                     if (!el.dataset.origText)
                         el.dataset.origText = el.innerText;
 
@@ -85,9 +95,7 @@
 
     // ==========================================
     // 2. MODULES
-    // ==========================================
     const Modules = {
-        // --- Dashboard Module (Casemon) ---
         casemon: () => {
             if (window.dashRun) return;
             window.dashRun = 1;
@@ -221,13 +229,16 @@
                 .time-state { font-size: 10px; font-weight: 500; opacity: 0.85; }
                 .status-text { font-size: 10px; font-weight: 700; letter-spacing: 0.2px; display: inline-block; margin-top: 1px; }
                 .agent-right img { width: 18px; height: 18px; opacity: 0.8; }
-                .stt-active { background: linear-gradient(135deg, #D1FAE5 0%, #DBEAFE 100%); color: #064E3B; } .stt-active .status-text { color: #047857; }
-                .stt-phone { background: linear-gradient(135deg, #FFE4E6 0%, #FEF3C7 100%); color: #7F1D1D; } .stt-phone .status-text { color: #B91C1C; }
-                .stt-video { background: linear-gradient(135deg, #F3E8FF 0%, #FCE7F3 100%); color: #4C1D95; } .stt-video .status-text { color: #6B21A8; }
-                .stt-email { background: linear-gradient(135deg, #E0F2FE 0%, #FFE4E6 100%); color: #0C4A6E; } .stt-email .status-text { color: #0284C7; }
-                .stt-coffee-break { background: linear-gradient(135deg, #FFEDD5 0%, #E0F2FE 100%); color: #78350F; } .stt-coffee-break .status-text { color: #B45309; }
-                .stt-lunch-break { background: linear-gradient(135deg, #FEF9C3 0%, #F3E8FF 100%); color: #713F12; } .stt-lunch-break .status-text { color: #A16207; }
-                .stt-break { background: linear-gradient(135deg, #F3F4F6 0%, #E2E8F0 100%); color: #374151; } .stt-break .status-text { color: #4B5563; }
+        
+                /* STATUS GRADIENTS */
+                .stt-active { background: linear-gradient(135deg, #D1FAE5 0%, #FCE7F3 100%); color: #064E3B; } .stt-active .status-text { color: #047857; }
+                .stt-phone { background: linear-gradient(135deg, #FEE2E2 0%, #CCFBF1 100%); color: #7F1D1D; } .stt-phone .status-text { color: #B91C1C; }
+                .stt-video { background: linear-gradient(135deg, #F3E8FF 0%, #FEF9C3 100%); color: #4C1D95; } .stt-video .status-text { color: #6B21A8; }
+                .stt-email { background: linear-gradient(135deg, #E0F2FE 0%, #FFEDD5 100%); color: #0C4A6E; } .stt-email .status-text { color: #0284C7; }
+                .stt-coffee-break { background: linear-gradient(135deg, #FFEDD5 0%, #EDE9FE 100%); color: #78350F; } .stt-coffee-break .status-text { color: #B45309; }
+                .stt-lunch-break { background: linear-gradient(135deg, #FEF9C3 0%, #DBEAFE 100%); color: #713F12; } .stt-lunch-break .status-text { color: #A16207; }
+                .stt-break { background: linear-gradient(135deg, #F1F5F9 0%, #E7E5E4 100%); color: #374151; } .stt-break .status-text { color: #4B5563; }
+        
                 [animation="pulse"] { animation: pulse 2s infinite ease-in-out; }
                 @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
                 [animation="wiggle"] { animation: wiggle 0.9s infinite; }
@@ -237,6 +248,25 @@
                 .agent-list-container::-webkit-scrollbar { width: 4px; }
                 .agent-list-container::-webkit-scrollbar-track { background: transparent; }
                 .agent-list-container::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.1); border-radius: 10px; }
+        
+                /* --- RESPONSIVE BEHAVIOR --- */
+                /* 1. Hide status inline label */
+                @media screen and (max-width: 380px) {
+                    .status-inline-label { display: none !important; }
+                }
+                /* 2. Hide header count */
+                @media screen and (max-width: 320px) {
+                    .header-counters { display: none !important; }
+                    .agent-list-header h3 { margin-bottom: 0; }
+                }
+                /* 3. Hide user image */
+                @media screen and (max-width: 280px) {
+                    .agent-left img { display: none !important; }
+                }
+                /* 4. Hide status icon */
+                @media screen and (max-width: 240px) {
+                    .agent-right img { display: none !important; }
+                }
                 `
             );
 
@@ -246,17 +276,15 @@
                     id: config.uiId,
                     parent: document.body,
                 });
-
-            // Prevent DOM thrashing by checking state
             let lastRenderedHTML = "";
 
-            // Hoisted regex and helpers for loop performance
             const alphaRegex = /[a-zA-Z\s]+/;
+            const timeRegex = /\d+[hms]/g;
             const parseSecs = (str) =>
-                (str.match(/\d+[hms]/g) || []).reduce(
+                (str.match(timeRegex) || []).reduce(
                     (acc, p) =>
                         acc +
-                        parseInt(p) *
+                        parseInt(p, 10) *
                             ({ h: 3600, m: 60, s: 1 }[p.slice(-1)] || 0),
                     0
                 );
@@ -268,7 +296,6 @@
                     )
                         .map((tr) => {
                             const cells = tr.querySelectorAll("td");
-                            // Guard against out of bounds if DOM layout shifts
                             if (!cells || cells.length < 10) return null;
 
                             const phoneStat = (
@@ -283,6 +310,7 @@
                                 .trim()
                                 .toLowerCase()
                                 .replace(/\s+/g, "-");
+
                             let displayStatus = cells[3].innerText.trim();
                             let statusKey = displayStatus
                                 .toLowerCase()
@@ -348,11 +376,14 @@
                         let isUser = a.ldap === currentUserLdap;
                         let groupLabel = isUser ? "You" : a.displayStatus;
 
-                        if (
-                            !isUser &&
-                            (a.statusKey === "phone" || a.statusKey === "video")
-                        ) {
-                            groupLabel = "On Call";
+                        if (!isUser) {
+                            if (
+                                a.statusKey === "phone" ||
+                                a.statusKey === "video"
+                            )
+                                groupLabel = "On Call";
+                            else if (a.statusKey.includes("break"))
+                                groupLabel = a.statusKey.split("-")[0];
                         }
 
                         if (
@@ -369,64 +400,67 @@
                         currentGroup.rows.push(a);
                     });
 
-                    let statusBlock = "";
-                    groupedByState.forEach((group) => {
-                        let internalRows = "";
-                        group.rows.forEach((a) => {
-                            const icon = config.icons[a.statusKey];
-                            const stConf =
-                                config.statusConfig[a.statusKey] ||
-                                config.statusConfig.default;
-                            const maxSecs = stConf.maxSecs || 2700;
-                            const progressPercent = Math.min(
-                                (a.durationSeconds / maxSecs) * 100,
-                                100
-                            ).toFixed(1);
-                            const isOverTime = a.durationSeconds >= maxSecs;
+                    const statusBlock = groupedByState
+                        .map((group) => {
+                            const internalRows = group.rows
+                                .map((a) => {
+                                    const icon = config.icons[a.statusKey];
+                                    const stConf =
+                                        config.statusConfig[a.statusKey] ||
+                                        config.statusConfig.default;
+                                    const maxSecs = stConf.maxSecs || 2700;
+                                    const progressPercent = Math.min(
+                                        (a.durationSeconds / maxSecs) * 100,
+                                        100
+                                    ).toFixed(1);
+                                    const isOverTime =
+                                        a.durationSeconds >= maxSecs;
 
-                            const inlineStyle = `--progress: ${progressPercent}%; --st-color: ${stConf.color}; --st-track: ${stConf.track};`;
-                            const finalClass = `agent-row ${a.cssClass} ${
-                                isOverTime ? "over-time" : ""
-                            }`;
+                                    const inlineStyle = `--progress: ${progressPercent}%; --st-color: ${stConf.color}; --st-track: ${stConf.track};`;
+                                    const finalClass = `agent-row ${
+                                        a.cssClass
+                                    } ${isOverTime ? "over-time" : ""}`;
 
-                            internalRows += `
-                                <div class="${finalClass}" style="${inlineStyle}">
-                                    <div class="agent-left">
-                                        <img src="${Utils.escapeHtml(
-                                            a.img
-                                        )}" alt="${Utils.escapeHtml(
-                                a.ldap
-                            )}" loading="lazy" />
-                                        <span>${Utils.escapeHtml(a.ldap)}</span>
+                                    return `
+                            <div class="${finalClass}" style="${inlineStyle}">
+                                <div class="agent-left">
+                                    <img src="${Utils.escapeHtml(
+                                        a.img
+                                    )}" alt="${Utils.escapeHtml(
+                                        a.ldap
+                                    )}" loading="lazy" />
+                                    <span>${Utils.escapeHtml(a.ldap)}</span>
+                                </div>
+                                <div class="agent-right">
+                                    <div class="agent-meta">
+                                        <span class="time-state">${Utils.escapeHtml(
+                                            a.lastChangeRaw
+                                        )} (${Utils.escapeHtml(
+                                        a.timeInState
+                                    )})</span>
+                                        <span class="status-text">${Utils.escapeHtml(
+                                            a.displayStatus
+                                        )}</span> 
                                     </div>
-                                    <div class="agent-right">
-                                        <div class="agent-meta">
-                                            <span class="time-state">${Utils.escapeHtml(
-                                                a.lastChangeRaw
-                                            )} (${Utils.escapeHtml(
-                                a.timeInState
-                            )})</span>
-                                            <span class="status-text">${Utils.escapeHtml(
-                                                a.displayStatus
-                                            )}</span> 
-                                        </div>
-                                        ${
-                                            icon
-                                                ? `<img src="${icon.src}" animation="${icon.animation}" alt="${a.statusKey} icon" loading="lazy" />`
-                                                : ""
-                                        }
-                                    </div>
-                                </div>`;
-                        });
-
-                        statusBlock += `
-                            <div class="status-group-block">
-                                <div class="status-inline-label ${
-                                    group.isUser ? "user-label" : ""
-                                }">${Utils.escapeHtml(group.label)}</div>
-                                <div class="status-rows-stack">${internalRows}</div>
+                                    ${
+                                        icon
+                                            ? `<img src="${icon.src}" animation="${icon.animation}" alt="${a.statusKey} icon" loading="lazy" />`
+                                            : ""
+                                    }
+                                </div>
                             </div>`;
-                    });
+                                })
+                                .join("");
+
+                            return `
+                        <div class="status-group-block">
+                            <div class="status-inline-label ${
+                                group.isUser ? "user-label" : ""
+                            }">${Utils.escapeHtml(group.label)}</div>
+                            <div class="status-rows-stack">${internalRows}</div>
+                        </div>`;
+                        })
+                        .join("");
 
                     const newHTML = `
                         <div class="bento-wrapper ${
@@ -480,14 +514,13 @@
                 if (e.target.closest(".close-btn")) {
                     uiElement.remove();
                     window.dashRun = 0;
-                    observer.disconnect(); // Memory Leak fix
+                    observer.disconnect();
                 }
             });
 
             render();
         },
 
-        // --- Cases Connect Module ---
         casesConnect: () => {
             if (window.scrRun) return;
             window.scrRun = true;
@@ -510,7 +543,6 @@
                 parent: document.body,
             });
 
-            // Auto Clicker
             let timer = null;
             const autoBtn = Utils.createEl("button", {
                 textContent: "OFF",
@@ -541,7 +573,6 @@
                 },
             });
 
-            // Active Check Indicator
             const checkBtn = Utils.createEl("button", {
                 innerHTML: `<img src="https://cdn-icons-png.flaticon.com/512/1069/1069138.png" style="width: 16px; height: 16px; filter: invert(1);"><span id="flup-badge" class="qm-badge">+</span>`,
                 title: "Click Follow-up Item",
@@ -579,7 +610,6 @@
                 })
                 .catch(() => {});
 
-            // Follow Up Setter
             const flBtn = Utils.createEl("button", {
                 textContent: "FL Up:",
                 title: "Set Follow-up",
@@ -588,23 +618,38 @@
                 parent: panel,
                 onClick: async (e) => {
                     if (e.target.id === "flup-days-input") return;
+
                     try {
+                        // Prevent spam-clicking while the script is running
+                        flBtn.style.opacity = "0.6";
+                        flBtn.style.pointerEvents = "none";
+
                         const appt = Utils.$(
                             '[data-infocase="appointment_time"]'
                         );
                         if (appt && !appt.dataset.valchoice) {
                             appt.click();
-                            (
-                                await Utils.waitForElement(
-                                    ".datepicker-grid .today"
-                                )
-                            )?.click();
+                            await Utils.sleep(150); // Yield to event loop, allow picker to render
+
+                            const todayEl = await Utils.waitForElement(
+                                ".datepicker-grid .today"
+                            );
+                            if (todayEl) todayEl.click();
+
+                            await Utils.sleep(200); // Allow time for the popup to close before proceeding
                         }
 
                         const days =
                             parseInt(Utils.$("#flup-days-input").value, 10) ||
                             0;
-                        Utils.$('[data-infocase="follow_up_time"]')?.click();
+
+                        const followUpTrigger = Utils.$(
+                            '[data-infocase="follow_up_time"]'
+                        );
+                        if (followUpTrigger) {
+                            followUpTrigger.click();
+                            await Utils.sleep(150); // Give the second datepicker time to open
+                        }
 
                         if (days > 0) {
                             let d = new Date();
@@ -615,6 +660,7 @@
                             const diff = Math.round(
                                 (d - new Date()) / 86400000
                             );
+
                             const todayEl = await Utils.waitForElement(
                                 ".datepicker-grid .today"
                             );
@@ -622,21 +668,31 @@
                             for (let s = 0; s < diff && target; s++) {
                                 target = target.nextElementSibling;
                             }
-                            target?.click();
+
+                            if (target) {
+                                target.click();
+                                await Utils.sleep(200); // Wait for the click to register and UI to update
+                            }
                         } else {
-                            (
-                                await Utils.waitForElement(
-                                    '[data-thischoice="Finish"]'
-                                )
-                            )?.click();
+                            const finishBtn = await Utils.waitForElement(
+                                '[data-thischoice="Finish"]'
+                            );
+                            if (finishBtn) {
+                                finishBtn.click();
+                                await Utils.sleep(200);
+                            }
                         }
-                        (
-                            await Utils.waitForElement(
-                                "[data-type=follow_up_time]"
-                            )
-                        )?.click();
+
+                        const typeConfirm = await Utils.waitForElement(
+                            "[data-type=follow_up_time]"
+                        );
+                        if (typeConfirm) typeConfirm.click();
                     } catch (err) {
                         console.error("Follow up script failed", err);
+                    } finally {
+                        // Re-enable the button once operations finish or fail
+                        flBtn.style.opacity = "1";
+                        flBtn.style.pointerEvents = "auto";
                     }
                 },
             });
@@ -654,7 +710,6 @@
                         .slice(0, 1)),
             });
 
-            // Signature Logic Managers
             const getSigHtml = (name) => `
                 <table class="aw-sig-table" style="width: 348px; padding: 0 30px;" data-sig-injected="true">
                     <tbody>
@@ -675,36 +730,48 @@
                 </table>`;
 
             const injectSig = () => {
-                const container = Utils.$("#email-body-content-top-content");
-                if (!container) return;
+                const selection = window.getSelection();
+                if (!selection.rangeCount) {
+                    alert(
+                        "Please click inside the email body to place your cursor first."
+                    );
+                    return;
+                }
+
+                const activeNode =
+                    selection.getRangeAt(0).startContainer.parentNode;
+                if (!activeNode || !activeNode.closest("[contenteditable]")) {
+                    alert(
+                        "Please place your cursor inside the text area where you want the signature."
+                    );
+                    return;
+                }
 
                 document
                     .querySelectorAll(".aw-sig-table")
                     .forEach((el) => el.remove());
 
-                const name =
-                    localStorage.getItem("__signature_name") ||
-                    prompt("Enter your name:") ||
-                    "Agent";
-                localStorage.setItem("__signature_name", name);
-
-                const wrapper = document.createElement("div");
-                wrapper.innerHTML = getSigHtml(name);
-                container.appendChild(wrapper.firstElementChild);
-            };
-
-            const autoInjectSig = () => {
-                const savedName = localStorage.getItem("__signature_name");
-                if (!savedName) return;
-                const target = Utils.$(
-                    "#email-body-content-top-content > table:nth-child(2)"
-                );
-                if (target && !Utils.$(".aw-sig-table")) {
-                    target.insertAdjacentHTML(
-                        "afterend",
-                        getSigHtml(savedName)
-                    );
+                let name = localStorage.getItem("__signature_name");
+                if (!name) {
+                    name = prompt("Enter your name:") || "Agent";
+                    localStorage.setItem("__signature_name", name);
                 }
+
+                const html = getSigHtml(name);
+                const getTrustedHtml = (str) => {
+                    if (
+                        window.trustedTypes &&
+                        window.trustedTypes.createPolicy
+                    ) {
+                        const policy = trustedTypes.createPolicy("sig-inject", {
+                            createHTML: (s) => s,
+                        });
+                        return policy.createHTML(str);
+                    }
+                    return str;
+                };
+
+                document.execCommand("insertHTML", false, getTrustedHtml(html));
             };
 
             Utils.createEl("button", {
@@ -716,16 +783,8 @@
                 onmousedown: (e) => e.preventDefault(),
                 onClick: injectSig,
             });
-
-            // Prevent heavy DOM thrashing by debouncing body mutations
-            const debouncedAutoInject = Utils.debounce(autoInjectSig, 400);
-            new MutationObserver(debouncedAutoInject).observe(document.body, {
-                childList: true,
-                subtree: true,
-            });
         },
 
-        // --- Adwords Module ---
         adwords: () => {
             Utils.addStyle(
                 "aw-styles",
@@ -811,7 +870,7 @@
                                 if (!c.querySelector(".particle-table-row"))
                                     c.style.display = "none";
                             });
-                    }, 1200); // Slight bump to ensure expanded rows render
+                    }, 1200);
                 } catch (e) {
                     console.error("Adwords Data parsing failed", e);
                 }
@@ -832,7 +891,6 @@
 
     // ==========================================
     // 3. ROUTER
-    // ==========================================
     const href = window.location.href;
     if (href.includes("casemon2.corp")) Modules.casemon();
     else if (href.includes("cases.connect")) Modules.casesConnect();

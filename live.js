@@ -11,7 +11,9 @@
 // a[href*="whatsapp.com"], a[href*="whatsapp.com"] *
 // a[href *= "docs.google"], a[href *= "docs.google"] *
 
-// b/456666535
+function a() {
+    return Math.floor(performance.now() / 1000);
+}
 // --------------------------------------------------------------------------
 // gtm.timerInterval
 // gtm.scrollThreshold
@@ -48,7 +50,7 @@ function a() {
     return (
         "+84" +
         document
-            .querySelector("#Mobile")
+            .querySelector('[data-target*="order_phone_number"] p')
             .value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
     );
 }
@@ -85,21 +87,28 @@ document.querySelectorAll("[type=tel]").forEach(function (e) {
         });
 });
 
-document.querySelectorAll("input[name*=email]").forEach(function (e) {
+document.querySelectorAll("[type=email]").forEach(function (e) {
     if (e.value)
         dataLayer.push({
-            phone: "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
+            email: e.value,
         });
 });
 
 function a() {
     var p;
-    document
-        .querySelectorAll('[data-formname="phone"]')
-        .forEach(function (e) {
-            e.value &&
-                (p = "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""));
-        });
+    document.querySelectorAll('[type="tel"]').forEach(function (e) {
+        e.value &&
+            (p = "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""));
+    });
+    return p;
+}
+
+function a() {
+    var p;
+    document.querySelectorAll('[name="phone"]').forEach(function (e) {
+        e.value &&
+            (p = "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""));
+    });
     return p;
 }
 

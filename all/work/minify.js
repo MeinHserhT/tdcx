@@ -2,26 +2,27 @@
     let e = {
             debounce(e, t) {
                 let a;
-                return (...o) => {
-                    clearTimeout(a), (a = setTimeout(() => e(...o), t));
+                return (...r) => {
+                    clearTimeout(a), (a = setTimeout(() => e(...r), t));
                 };
             },
+            sleep: (e) => new Promise((t) => setTimeout(t, e)),
             addStyle(e, t) {
                 if (document.getElementById(e)) return;
                 let a = document.createElement("style");
                 a.id = e;
-                let o = window.trustedTypes?.createPolicy("default", {
+                let r = window.trustedTypes?.createPolicy("default", {
                     createHTML: (e) => e,
                 }) ?? { createHTML: (e) => e };
-                (a.textContent = o.createHTML(t)), document.head.appendChild(a);
+                (a.textContent = r.createHTML(t)), document.head.appendChild(a);
             },
             createEl(
                 e,
                 {
                     parent: t,
                     onClick: a,
-                    style: o,
-                    className: r,
+                    style: r,
+                    className: o,
                     id: n,
                     ...i
                 } = {}
@@ -29,8 +30,8 @@
                 let s = Object.assign(document.createElement(e), i);
                 return (
                     n && (s.id = n),
-                    r && (s.className = r),
-                    o && Object.assign(s.style, o),
+                    o && (s.className = o),
+                    r && Object.assign(s.style, r),
                     a && s.addEventListener("click", a),
                     t && t.appendChild(s),
                     s
@@ -38,29 +39,30 @@
             },
             $: (e, t = document) => t.querySelector(e),
             waitForElement: (t, a = 3e3) =>
-                new Promise((o, r) => {
-                    let n = Date.now(),
-                        i = setInterval(() => {
-                            let s = e.$(t);
-                            s?.offsetParent
-                                ? (clearInterval(i), o(s))
-                                : Date.now() - n > a &&
-                                  (clearInterval(i),
-                                  r(Error(`Timeout waiting for: ${t}`)));
-                        }, 250);
+                new Promise((r, o) => {
+                    let n = e.$(t);
+                    if (n) return r(n);
+                    let i = new MutationObserver((a, o) => {
+                        let n = e.$(t);
+                        n && (o.disconnect(), r(n));
+                    });
+                    i.observe(document.body, { childList: !0, subtree: !0 }),
+                        setTimeout(() => {
+                            i.disconnect(),
+                                o(Error(`Timeout waiting for: ${t}`));
+                        }, a);
                 }),
             setupCopy(e, t, a = "Copied!") {
-                let o;
-                e.addEventListener("click", async (r) => {
-                    r.stopPropagation();
+                let r;
+                e.addEventListener("click", async (o) => {
                     try {
                         await navigator.clipboard.writeText(t),
                             e.dataset.origText ||
                                 (e.dataset.origText = e.innerText),
                             (e.innerText = a),
                             e.classList.add("aw-copied"),
-                            clearTimeout(o),
-                            (o = setTimeout(() => {
+                            clearTimeout(r),
+                            (r = setTimeout(() => {
                                 (e.innerText = e.dataset.origText),
                                     e.classList.remove("aw-copied");
                             }, 1500));
@@ -171,12 +173,12 @@
                             default: 99,
                         },
                     },
-                    o = e.$(a.target);
-                if (!o) {
+                    r = e.$(a.target);
+                if (!r) {
                     window.dashRun = 0;
                     return;
                 }
-                let r =
+                let o =
                     e
                         .$("[alt='profile photo']")
                         ?.src?.match(/photos\/([^/?]+)/)?.[1] ?? "Unknown";
@@ -218,13 +220,16 @@
                 .time-state { font-size: 10px; font-weight: 500; opacity: 0.85; }
                 .status-text { font-size: 10px; font-weight: 700; letter-spacing: 0.2px; display: inline-block; margin-top: 1px; }
                 .agent-right img { width: 18px; height: 18px; opacity: 0.8; }
-                .stt-active { background: linear-gradient(135deg, #D1FAE5 0%, #DBEAFE 100%); color: #064E3B; } .stt-active .status-text { color: #047857; }
-                .stt-phone { background: linear-gradient(135deg, #FFE4E6 0%, #FEF3C7 100%); color: #7F1D1D; } .stt-phone .status-text { color: #B91C1C; }
-                .stt-video { background: linear-gradient(135deg, #F3E8FF 0%, #FCE7F3 100%); color: #4C1D95; } .stt-video .status-text { color: #6B21A8; }
-                .stt-email { background: linear-gradient(135deg, #E0F2FE 0%, #FFE4E6 100%); color: #0C4A6E; } .stt-email .status-text { color: #0284C7; }
-                .stt-coffee-break { background: linear-gradient(135deg, #FFEDD5 0%, #E0F2FE 100%); color: #78350F; } .stt-coffee-break .status-text { color: #B45309; }
-                .stt-lunch-break { background: linear-gradient(135deg, #FEF9C3 0%, #F3E8FF 100%); color: #713F12; } .stt-lunch-break .status-text { color: #A16207; }
-                .stt-break { background: linear-gradient(135deg, #F3F4F6 0%, #E2E8F0 100%); color: #374151; } .stt-break .status-text { color: #4B5563; }
+        
+                /* STATUS GRADIENTS */
+                .stt-active { background: linear-gradient(135deg, #D1FAE5 0%, #FCE7F3 100%); color: #064E3B; } .stt-active .status-text { color: #047857; }
+                .stt-phone { background: linear-gradient(135deg, #FEE2E2 0%, #CCFBF1 100%); color: #7F1D1D; } .stt-phone .status-text { color: #B91C1C; }
+                .stt-video { background: linear-gradient(135deg, #F3E8FF 0%, #FEF9C3 100%); color: #4C1D95; } .stt-video .status-text { color: #6B21A8; }
+                .stt-email { background: linear-gradient(135deg, #E0F2FE 0%, #FFEDD5 100%); color: #0C4A6E; } .stt-email .status-text { color: #0284C7; }
+                .stt-coffee-break { background: linear-gradient(135deg, #FFEDD5 0%, #EDE9FE 100%); color: #78350F; } .stt-coffee-break .status-text { color: #B45309; }
+                .stt-lunch-break { background: linear-gradient(135deg, #FEF9C3 0%, #DBEAFE 100%); color: #713F12; } .stt-lunch-break .status-text { color: #A16207; }
+                .stt-break { background: linear-gradient(135deg, #F1F5F9 0%, #E7E5E4 100%); color: #374151; } .stt-break .status-text { color: #4B5563; }
+        
                 [animation="pulse"] { animation: pulse 2s infinite ease-in-out; }
                 @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
                 [animation="wiggle"] { animation: wiggle 0.9s infinite; }
@@ -234,6 +239,25 @@
                 .agent-list-container::-webkit-scrollbar { width: 4px; }
                 .agent-list-container::-webkit-scrollbar-track { background: transparent; }
                 .agent-list-container::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.1); border-radius: 10px; }
+        
+                /* --- RESPONSIVE BEHAVIOR --- */
+                /* 1. Hide status inline label */
+                @media screen and (max-width: 380px) {
+                    .status-inline-label { display: none !important; }
+                }
+                /* 2. Hide header count */
+                @media screen and (max-width: 320px) {
+                    .header-counters { display: none !important; }
+                    .agent-list-header h3 { margin-bottom: 0; }
+                }
+                /* 3. Hide user image */
+                @media screen and (max-width: 280px) {
+                    .agent-left img { display: none !important; }
+                }
+                /* 4. Hide status icon */
+                @media screen and (max-width: 240px) {
+                    .agent-right img { display: none !important; }
+                }
                 `
                 );
                 let n =
@@ -244,18 +268,19 @@
                         }),
                     i = "",
                     s = /[a-zA-Z\s]+/,
-                    l = (e) =>
-                        (e.match(/\d+[hms]/g) || []).reduce(
+                    l = /\d+[hms]/g,
+                    c = (e) =>
+                        (e.match(l) || []).reduce(
                             (e, t) =>
                                 e +
-                                parseInt(t) *
+                                parseInt(t, 10) *
                                     ({ h: 3600, m: 60, s: 1 }[t.slice(-1)] ||
                                         0),
                             0
                         ),
-                    c = () => {
+                    d = () => {
                         try {
-                            let t = Array.from(o.querySelectorAll("tbody tr"))
+                            let t = Array.from(r.querySelectorAll("tbody tr"))
                                     .map((e) => {
                                         let t = e.querySelectorAll("td");
                                         if (!t || t.length < 10) return null;
@@ -266,22 +291,22 @@
                                                 .trim()
                                                 .toLowerCase()
                                                 .replace(/\s+/g, "-"),
-                                            o = (
+                                            r = (
                                                 t[8].innerText.match(s)?.[0] ||
                                                 ""
                                             )
                                                 .trim()
                                                 .toLowerCase()
                                                 .replace(/\s+/g, "-"),
-                                            r = t[3].innerText.trim(),
-                                            n = r
+                                            o = t[3].innerText.trim(),
+                                            n = o
                                                 .toLowerCase()
                                                 .replace(/\s+/g, "-");
                                         return (
-                                            "Active" === r &&
+                                            "Active" === o &&
                                                 "busy" === a &&
-                                                "busy" === o &&
-                                                ((r = "Break"), (n = "break")),
+                                                "busy" === r &&
+                                                ((o = "Break"), (n = "break")),
                                             {
                                                 img:
                                                     e.querySelector("img")
@@ -291,10 +316,10 @@
                                                     t[4].innerText.trim(),
                                                 lastChangeRaw:
                                                     t[9].innerText.trim(),
-                                                displayStatus: r,
+                                                displayStatus: o,
                                                 statusKey: n,
                                                 cssClass: `stt-${n}`,
-                                                durationSeconds: l(
+                                                durationSeconds: c(
                                                     t[9].innerText
                                                 ),
                                             }
@@ -302,9 +327,9 @@
                                     })
                                     .filter(Boolean)
                                     .sort((e, t) => {
-                                        let o = e.ldap === r,
-                                            n = t.ldap === r;
-                                        if (o !== n) return n - o;
+                                        let r = e.ldap === o,
+                                            n = t.ldap === o;
+                                        if (r !== n) return n - r;
                                         let i =
                                                 a.priorities[e.statusKey] ??
                                                 a.priorities.default,
@@ -316,7 +341,7 @@
                                             : t.durationSeconds -
                                                   e.durationSeconds;
                                     }),
-                                c = t.filter(
+                                l = t.filter(
                                     (e) => "active" === e.statusKey
                                 ).length,
                                 d = t.filter((e) =>
@@ -329,16 +354,18 @@
                                         )
                                 ).length,
                                 $ = t.length,
-                                g = ($ > 0 ? c / $ : 0) < 0.2 && $ > 0,
+                                g = ($ > 0 ? l / $ : 0) < 0.2 && $ > 0,
                                 u = [],
                                 x = null;
                             t.forEach((e) => {
-                                let t = e.ldap === r,
+                                let t = e.ldap === o,
                                     a = t ? "You" : e.displayStatus;
-                                t ||
-                                    ("phone" !== e.statusKey &&
-                                        "video" !== e.statusKey) ||
-                                    (a = "On Call"),
+                                !t &&
+                                    ("phone" === e.statusKey ||
+                                    "video" === e.statusKey
+                                        ? (a = "On Call")
+                                        : e.statusKey.includes("break") &&
+                                          (a = e.statusKey.split("-")[0])),
                                     (x && x.label === a) ||
                                         ((x = {
                                             label: a,
@@ -348,62 +375,68 @@
                                         u.push(x)),
                                     x.rows.push(e);
                             });
-                            let b = "";
-                            u.forEach((t) => {
-                                let o = "";
-                                t.rows.forEach((t) => {
-                                    let r = a.icons[t.statusKey],
-                                        n =
-                                            a.statusConfig[t.statusKey] ||
-                                            a.statusConfig.default,
-                                        i = n.maxSecs || 2700,
-                                        s = Math.min(
-                                            (t.durationSeconds / i) * 100,
-                                            100
-                                        ).toFixed(1),
-                                        l = t.durationSeconds >= i,
-                                        c = `--progress: ${s}%; --st-color: ${n.color}; --st-track: ${n.track};`,
-                                        d = `agent-row ${t.cssClass} ${
-                                            l ? "over-time" : ""
-                                        }`;
-                                    o += `
-                                <div class="${d}" style="${c}">
-                                    <div class="agent-left">
-                                        <img src="${e.escapeHtml(
-                                            t.img
-                                        )}" alt="${e.escapeHtml(
-                                        t.ldap
-                                    )}" loading="lazy" />
-                                        <span>${e.escapeHtml(t.ldap)}</span>
+                            let b = u
+                                    .map((t) => {
+                                        let r = t.rows
+                                            .map((t) => {
+                                                let r = a.icons[t.statusKey],
+                                                    o =
+                                                        a.statusConfig[
+                                                            t.statusKey
+                                                        ] ||
+                                                        a.statusConfig.default,
+                                                    n = o.maxSecs || 2700,
+                                                    i = Math.min(
+                                                        (t.durationSeconds /
+                                                            n) *
+                                                            100,
+                                                        100
+                                                    ).toFixed(1),
+                                                    s = t.durationSeconds >= n,
+                                                    l = `--progress: ${i}%; --st-color: ${o.color}; --st-track: ${o.track};`,
+                                                    c = `agent-row ${
+                                                        t.cssClass
+                                                    } ${s ? "over-time" : ""}`;
+                                                return `
+                            <div class="${c}" style="${l}">
+                                <div class="agent-left">
+                                    <img src="${e.escapeHtml(
+                                        t.img
+                                    )}" alt="${e.escapeHtml(
+                                                    t.ldap
+                                                )}" loading="lazy" />
+                                    <span>${e.escapeHtml(t.ldap)}</span>
+                                </div>
+                                <div class="agent-right">
+                                    <div class="agent-meta">
+                                        <span class="time-state">${e.escapeHtml(
+                                            t.lastChangeRaw
+                                        )} (${e.escapeHtml(
+                                                    t.timeInState
+                                                )})</span>
+                                        <span class="status-text">${e.escapeHtml(
+                                            t.displayStatus
+                                        )}</span> 
                                     </div>
-                                    <div class="agent-right">
-                                        <div class="agent-meta">
-                                            <span class="time-state">${e.escapeHtml(
-                                                t.lastChangeRaw
-                                            )} (${e.escapeHtml(
-                                        t.timeInState
-                                    )})</span>
-                                            <span class="status-text">${e.escapeHtml(
-                                                t.displayStatus
-                                            )}</span> 
-                                        </div>
-                                        ${
-                                            r
-                                                ? `<img src="${r.src}" animation="${r.animation}" alt="${t.statusKey} icon" loading="lazy" />`
-                                                : ""
-                                        }
-                                    </div>
-                                </div>`;
-                                }),
-                                    (b += `
-                            <div class="status-group-block">
-                                <div class="status-inline-label ${
-                                    t.isUser ? "user-label" : ""
-                                }">${e.escapeHtml(t.label)}</div>
-                                <div class="status-rows-stack">${o}</div>
-                            </div>`);
-                            });
-                            let f = `
+                                    ${
+                                        r
+                                            ? `<img src="${r.src}" animation="${r.animation}" alt="${t.statusKey} icon" loading="lazy" />`
+                                            : ""
+                                    }
+                                </div>
+                            </div>`;
+                                            })
+                                            .join("");
+                                        return `
+                        <div class="status-group-block">
+                            <div class="status-inline-label ${
+                                t.isUser ? "user-label" : ""
+                            }">${e.escapeHtml(t.label)}</div>
+                            <div class="status-rows-stack">${r}</div>
+                        </div>`;
+                                    })
+                                    .join(""),
+                                m = `
                         <div class="bento-wrapper ${g ? "health-warning" : ""}">
                             <button class="close-btn" title="Close"><img src="${
                                 a.icons.close
@@ -420,7 +453,7 @@
                                             }
                                         </h3>
                                         <div class="header-counters">
-                                            <span class="agent-count active-badge" title="Active">Act: ${c}</span> +
+                                            <span class="agent-count active-badge" title="Active">Act: ${l}</span> +
                                             <span class="agent-count phone-badge" title="On Phone">Phn: ${d}</span> +
                                             <span class="agent-count break-badge" title="On Break">Brk: ${p}</span> =
                                             <span class="agent-count total-badge" title="Total">Tot: ${$}</span>
@@ -430,16 +463,16 @@
                                 </div>
                             </div>
                         </div>`;
-                            f !== i &&
-                                ((n.innerHTML = f),
-                                (i = f),
+                            m !== i &&
+                                ((n.innerHTML = m),
+                                (i = m),
                                 (n.style.display = "flex"));
-                        } catch (m) {
-                            console.error("Casemon render error:", m);
+                        } catch (_) {
+                            console.error("Casemon render error:", _);
                         }
                     },
-                    d = new MutationObserver(e.debounce(c, 150));
-                d.observe(o, {
+                    p = new MutationObserver(e.debounce(d, 150));
+                p.observe(r, {
                     attributes: !0,
                     childList: !0,
                     subtree: !0,
@@ -447,9 +480,9 @@
                 }),
                     n.addEventListener("click", (e) => {
                         e.target.closest(".close-btn") &&
-                            (n.remove(), (window.dashRun = 0), d.disconnect());
+                            (n.remove(), (window.dashRun = 0), p.disconnect());
                     }),
-                    c();
+                    d();
             },
             casesConnect() {
                 if (window.scrRun) return;
@@ -471,7 +504,7 @@
                         parent: document.body,
                     }),
                     a = null,
-                    o = e.createEl("button", {
+                    r = e.createEl("button", {
                         textContent: "OFF",
                         title: "Auto Click",
                         className: "qm-btn",
@@ -481,8 +514,8 @@
                             a
                                 ? (clearInterval(a),
                                   (a = null),
-                                  (o.textContent = "OFF"),
-                                  (o.style.backgroundColor = "#D94138"))
+                                  (r.textContent = "OFF"),
+                                  (r.style.backgroundColor = "#D94138"))
                                 : ((a = setInterval(() => {
                                       e.$("#cdtx__uioncall--btn")?.click(),
                                           setTimeout(
@@ -495,8 +528,8 @@
                                               6e3
                                           );
                                   }, 18e3)),
-                                  (o.textContent = "ON"),
-                                  (o.style.backgroundColor = "#1E7F4E"));
+                                  (r.textContent = "ON"),
+                                  (r.style.backgroundColor = "#1E7F4E"));
                         },
                     });
                 e.createEl("button", {
@@ -522,7 +555,7 @@
                         .waitForElement(".li-popup_lstcasefl")
                         .then((t) => {
                             let a = e.$("#flup-badge"),
-                                o = () => {
+                                r = () => {
                                     a &&
                                         (a.style.display =
                                             t.dataset.attr &&
@@ -530,14 +563,14 @@
                                                 ? "block"
                                                 : "none");
                                 };
-                            new MutationObserver(o).observe(t, {
+                            new MutationObserver(r).observe(t, {
                                 attributes: !0,
                                 attributeFilter: ["data-attr"],
                             }),
-                                o();
+                                r();
                         })
                         .catch(() => {});
-                let r = e.createEl("button", {
+                let o = e.createEl("button", {
                     textContent: "FL Up:",
                     title: "Set Follow-up",
                     className: "qm-btn",
@@ -546,55 +579,57 @@
                     async onClick(t) {
                         if ("flup-days-input" !== t.target.id)
                             try {
+                                (o.style.opacity = "0.6"),
+                                    (o.style.pointerEvents = "none");
                                 let a = e.$(
                                     '[data-infocase="appointment_time"]'
                                 );
-                                a &&
-                                    !a.dataset.valchoice &&
-                                    (a.click(),
-                                    (
-                                        await e.waitForElement(
-                                            ".datepicker-grid .today"
-                                        )
-                                    )?.click());
-                                let o =
-                                    parseInt(
-                                        e.$("#flup-days-input").value,
-                                        10
-                                    ) || 0;
+                                if (a && !a.dataset.valchoice) {
+                                    a.click(), await e.sleep(150);
+                                    let r = await e.waitForElement(
+                                        ".datepicker-grid .today"
+                                    );
+                                    r && r.click(), await e.sleep(200);
+                                }
+                                let n =
+                                        parseInt(
+                                            e.$("#flup-days-input").value,
+                                            10
+                                        ) || 0,
+                                    i = e.$('[data-infocase="follow_up_time"]');
                                 if (
-                                    (e
-                                        .$('[data-infocase="follow_up_time"]')
-                                        ?.click(),
-                                    o > 0)
+                                    (i && (i.click(), await e.sleep(150)),
+                                    n > 0)
                                 ) {
-                                    let r = new Date();
-                                    for (let n = 0; n < o; )
-                                        r.setDate(r.getDate() + 1),
-                                            r.getDay() % 6 != 0 && n++;
-                                    let i = Math.round(
-                                            (r - new Date()) / 864e5
+                                    let s = new Date();
+                                    for (let l = 0; l < n; )
+                                        s.setDate(s.getDate() + 1),
+                                            s.getDay() % 6 != 0 && l++;
+                                    let c = Math.round(
+                                            (s - new Date()) / 864e5
                                         ),
-                                        s = await e.waitForElement(
+                                        d = await e.waitForElement(
                                             ".datepicker-grid .today"
                                         ),
-                                        l = s;
-                                    for (let c = 0; c < i && l; c++)
-                                        l = l.nextElementSibling;
-                                    l?.click();
-                                } else
-                                    (
-                                        await e.waitForElement(
-                                            '[data-thischoice="Finish"]'
-                                        )
-                                    )?.click();
-                                (
-                                    await e.waitForElement(
-                                        "[data-type=follow_up_time]"
-                                    )
-                                )?.click();
-                            } catch (d) {
-                                console.error("Follow up script failed", d);
+                                        p = d;
+                                    for (let $ = 0; $ < c && p; $++)
+                                        p = p.nextElementSibling;
+                                    p && (p.click(), await e.sleep(200));
+                                } else {
+                                    let g = await e.waitForElement(
+                                        '[data-thischoice="Finish"]'
+                                    );
+                                    g && (g.click(), await e.sleep(200));
+                                }
+                                let u = await e.waitForElement(
+                                    "[data-type=follow_up_time]"
+                                );
+                                u && u.click();
+                            } catch (x) {
+                                console.error("Follow up script failed", x);
+                            } finally {
+                                (o.style.opacity = "1"),
+                                    (o.style.pointerEvents = "auto");
                             }
                     },
                 });
@@ -602,7 +637,7 @@
                     id: "flup-days-input",
                     type: "text",
                     value: "2",
-                    parent: r,
+                    parent: o,
                     onClick: (e) => e.stopPropagation(),
                     onfocus: (e) => e.target.select(),
                     oninput: (e) =>
@@ -629,29 +664,45 @@
                     </tbody>
                 </table>`,
                     i = () => {
-                        let t = e.$("#email-body-content-top-content");
-                        if (!t) return;
+                        let e = window.getSelection();
+                        if (!e.rangeCount) {
+                            alert(
+                                "Please click inside the email body to place your cursor first."
+                            );
+                            return;
+                        }
+                        let t = e.getRangeAt(0).startContainer.parentNode;
+                        if (!t || !t.closest("[contenteditable]")) {
+                            alert(
+                                "Please place your cursor inside the text area where you want the signature."
+                            );
+                            return;
+                        }
                         document
                             .querySelectorAll(".aw-sig-table")
                             .forEach((e) => e.remove());
-                        let a =
-                            localStorage.getItem("__signature_name") ||
-                            prompt("Enter your name:") ||
-                            "Agent";
-                        localStorage.setItem("__signature_name", a);
-                        let o = document.createElement("div");
-                        (o.innerHTML = n(a)),
-                            t.appendChild(o.firstElementChild);
-                    },
-                    s = () => {
-                        let t = localStorage.getItem("__signature_name");
-                        if (!t) return;
-                        let a = e.$(
-                            "#email-body-content-top-content > table:nth-child(2)"
+                        let a = localStorage.getItem("__signature_name");
+                        a ||
+                            ((a = prompt("Enter your name:") || "Agent"),
+                            localStorage.setItem("__signature_name", a));
+                        let r = n(a);
+                        document.execCommand(
+                            "insertHTML",
+                            !1,
+                            ((e) => {
+                                if (
+                                    window.trustedTypes &&
+                                    window.trustedTypes.createPolicy
+                                ) {
+                                    let t = trustedTypes.createPolicy(
+                                        "sig-inject",
+                                        { createHTML: (e) => e }
+                                    );
+                                    return t.createHTML(e);
+                                }
+                                return e;
+                            })(r)
                         );
-                        a &&
-                            !e.$(".aw-sig-table") &&
-                            a.insertAdjacentHTML("afterend", n(t));
                     };
                 e.createEl("button", {
                     textContent: "Sign",
@@ -661,11 +712,6 @@
                     parent: t,
                     onmousedown: (e) => e.preventDefault(),
                     onClick: i,
-                });
-                let l = e.debounce(s, 400);
-                new MutationObserver(l).observe(document.body, {
-                    childList: !0,
-                    subtree: !0,
                 });
             },
             adwords() {
@@ -682,22 +728,22 @@
                 let t = (t) => {
                         let a = t.match(/AW-(\d*)/)?.[1];
                         if (a) {
-                            let o =
+                            let r =
                                 e.$("#gpt-aw-overlay") ||
                                 e.createEl("div", {
                                     id: "gpt-aw-overlay",
                                     parent: document.body,
                                 });
-                            (o.textContent = `AW-${a}`),
-                                e.setupCopy(o, a, "Copied!");
+                            (r.textContent = `AW-${a}`),
+                                e.setupCopy(r, a, "Copied!");
                         }
                         document
                             .querySelectorAll(".expand-more")
                             .forEach((e) => e.click());
                         try {
-                            let r = JSON.parse(t);
-                            if (!r || !r[1]) return;
-                            let n = new Map(r[1].map((e) => [e[1], e]));
+                            let o = JSON.parse(t);
+                            if (!o || !o[1]) return;
+                            let n = new Map(o[1].map((e) => [e[1], e]));
                             setTimeout(() => {
                                 document
                                     .querySelectorAll(
@@ -717,25 +763,25 @@
                                                 .includes("web")
                                         )
                                             return a.remove();
-                                        let o = n.get(t.innerText);
-                                        if (!o) return;
-                                        let r = null,
+                                        let r = n.get(t.innerText);
+                                        if (!r) return;
+                                        let o = null,
                                             i = null;
-                                        1 === o[11]
-                                            ? ((r = "aw-ads"),
-                                              (i = o[64]?.[2]?.[4]
+                                        1 === r[11]
+                                            ? ((o = "aw-ads"),
+                                              (i = r[64]?.[2]?.[4]
                                                   ?.split("'")?.[7]
                                                   ?.split("/")?.[1]))
-                                            : 32 === o[11] &&
-                                              ((r = "aw-ga4"),
+                                            : 32 === r[11] &&
+                                              ((o = "aw-ga4"),
                                               (i =
-                                                  o[64]?.[1]?.[4]?.split(
+                                                  r[64]?.[1]?.[4]?.split(
                                                       "'"
                                                   )?.[3])),
-                                            r &&
+                                            o &&
                                                 i &&
                                                 ((t.innerHTML = i),
-                                                t.classList.add(r),
+                                                t.classList.add(o),
                                                 e.setupCopy(t, i));
                                     }),
                                     document
@@ -753,10 +799,10 @@
                         }
                     },
                     a = (e = 0) => {
-                        let o =
+                        let r =
                             window.conversions_data
                                 ?.SHARED_ALL_ENABLED_CONVERSIONS;
-                        if (o) return t(o);
+                        if (r) return t(r);
                         e < 5 && setTimeout(() => a(e + 1), 600);
                     };
                 ["complete", "interactive"].includes(document.readyState)
