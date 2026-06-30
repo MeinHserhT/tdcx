@@ -37,7 +37,7 @@ document.addEventListener("wpcf7mailsent", function (e) {
 // -----------------------------------------------------------------------------
 document.addEventListener("wpcf7mailsent", function (e) {
     var b = e.detail.inputs.find(function (n) {
-        return n.name.includes("phone");
+        return n.name.includes("number");
     });
     b.value &&
         dataLayer.push({

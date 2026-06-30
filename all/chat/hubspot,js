@@ -1,0 +1,40 @@
+(function() {
+  // Đảm bảo dataLayer đã được khởi tạo
+  window.dataLayer = window.dataLayer || [];
+
+  window.addEventListener('message', function (e) {
+    var eventData;
+
+    try {
+      eventData = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+    } catch (err) {
+      return;
+    }
+    if (eventData && typeof eventData === 'object') {
+      if (eventData.type === 'external-api-event' && eventData.data) {
+        var hsData = eventData.data;
+        var eventType = hsData.eventType;
+        var payload = hsData.payload || {};
+        var uuid = eventData.uuid || '';
+
+        if (eventType) {
+          window.dataLayer.push({
+            'event': 'hubspot_chat',
+            'hs_chat_event_type': eventType,
+            'hs_chat_payload': payload,
+            'hs_chat_uuid': uuid
+          });
+        }
+      }
+
+      if (eventData.type === 'clear-page-title-notification') {
+        window.dataLayer.push({
+          'event': 'hubspot_chat',
+          'hs_chat_event_type': 'clearPageTitleNotification',
+          'hs_chat_payload': {},
+          'hs_chat_uuid': eventData.uuid || ''
+        });
+      }
+    }
+  });
+})();
