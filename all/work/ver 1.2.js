@@ -83,13 +83,13 @@
             String(str || "").replace(
                 /[&<>"']/g,
                 (m) =>
-                    ({
-                        "&": "&amp;",
-                        "<": "&lt;",
-                        ">": "&gt;",
-                        '"': "&quot;",
-                        "'": "&#039;",
-                    }[m])
+                ({
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#039;",
+                }[m])
             ),
     };
 
@@ -285,7 +285,7 @@
                     (acc, p) =>
                         acc +
                         parseInt(p, 10) *
-                            ({ h: 3600, m: 60, s: 1 }[p.slice(-1)] || 0),
+                        ({ h: 3600, m: 60, s: 1 }[p.slice(-1)] || 0),
                     0
                 );
 
@@ -417,9 +417,8 @@
                                         a.durationSeconds >= maxSecs;
 
                                     const inlineStyle = `--progress: ${progressPercent}%; --st-color: ${stConf.color}; --st-track: ${stConf.track};`;
-                                    const finalClass = `agent-row ${
-                                        a.cssClass
-                                    } ${isOverTime ? "over-time" : ""}`;
+                                    const finalClass = `agent-row ${a.cssClass
+                                        } ${isOverTime ? "over-time" : ""}`;
 
                                     return `
                             <div class="${finalClass}" style="${inlineStyle}">
@@ -434,19 +433,18 @@
                                 <div class="agent-right">
                                     <div class="agent-meta">
                                         <span class="time-state">${Utils.escapeHtml(
-                                            a.lastChangeRaw
-                                        )} (${Utils.escapeHtml(
+                                        a.lastChangeRaw
+                                    )} (${Utils.escapeHtml(
                                         a.timeInState
                                     )})</span>
                                         <span class="status-text">${Utils.escapeHtml(
-                                            a.displayStatus
-                                        )}</span> 
+                                        a.displayStatus
+                                    )}</span> 
                                     </div>
-                                    ${
-                                        icon
+                                    ${icon
                                             ? `<img src="${icon.src}" animation="${icon.animation}" alt="${a.statusKey} icon" loading="lazy" />`
                                             : ""
-                                    }
+                                        }
                                 </div>
                             </div>`;
                                 })
@@ -454,31 +452,27 @@
 
                             return `
                         <div class="status-group-block">
-                            <div class="status-inline-label ${
-                                group.isUser ? "user-label" : ""
-                            }">${Utils.escapeHtml(group.label)}</div>
+                            <div class="status-inline-label ${group.isUser ? "user-label" : ""
+                                }">${Utils.escapeHtml(group.label)}</div>
                             <div class="status-rows-stack">${internalRows}</div>
                         </div>`;
                         })
                         .join("");
 
                     const newHTML = `
-                        <div class="bento-wrapper ${
-                            isTeamBusy ? "health-warning" : ""
+                        <div class="bento-wrapper ${isTeamBusy ? "health-warning" : ""
                         }">
-                            <button class="close-btn" title="Close"><img src="${
-                                config.icons.close
-                            }" alt="Close"/></button>
+                            <button class="close-btn" title="Close"><img src="${config.icons.close
+                        }" alt="Close"/></button>
                             <div class="bento-grid">
                                 <div class="bento-card">
                                     <div class="agent-list-header">
                                         <h3>
                                             <span>Team Status</span>
-                                            ${
-                                                isTeamBusy
-                                                    ? `<span class="health-text">⚠️ Low Availability</span>`
-                                                    : ""
-                                            }
+                                            ${isTeamBusy
+                            ? `<span class="health-text">⚠️ Low Availability</span>`
+                            : ""
+                        }
                                         </h3>
                                         <div class="header-counters">
                                             <span class="agent-count active-badge" title="Active">Act: ${activeCount}</span> +
@@ -608,7 +602,7 @@
                     });
                     updateBadge();
                 })
-                .catch(() => {});
+                .catch(() => { });
 
             const flBtn = Utils.createEl("button", {
                 textContent: "FL Up:",
@@ -653,7 +647,7 @@
 
                         if (days > 0) {
                             let d = new Date();
-                            for (let i = 0; i < days; ) {
+                            for (let i = 0; i < days;) {
                                 d.setDate(d.getDate() + 1);
                                 if (d.getDay() % 6 !== 0) i++;
                             }
@@ -705,9 +699,9 @@
                 onClick: (e) => e.stopPropagation(),
                 onfocus: (e) => e.target.select(),
                 oninput: (e) =>
-                    (e.target.value = e.target.value
-                        .replace(/\D/g, "")
-                        .slice(0, 1)),
+                (e.target.value = e.target.value
+                    .replace(/\D/g, "")
+                    .slice(0, 1)),
             });
 
             const getSigHtml = (name) => `
@@ -719,8 +713,8 @@
                             <td style="vertical-align: middle;">
                                 <p style="font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; line-height: 1.4; color: #1A1D23;">
                                     <strong style="font-size: 105%; color: #111111;">${Utils.escapeHtml(
-                                        name
-                                    )}</strong><br>
+                name
+            )}</strong><br>
                                     <span style="color: #5F6368;">Technical Solutions Team</span><br>
                                     <span style="color: #5F6368; font-weight: 500;">TDCX, on behalf of Google</span>
                                 </p>
@@ -798,16 +792,25 @@
             );
 
             const init = (rawData) => {
-                const awId = rawData.match(/AW-(\d*)/)?.[1];
-                if (awId) {
-                    const overlay =
-                        Utils.$("#gpt-aw-overlay") ||
+                const matches = [...rawData.matchAll(/AW-(\d+)/g)];
+                const awIds = [...new Set(matches.map(m => m[1]))];
+                if (awIds.length > 0) {
+                    const container =
+                        Utils.$("#gpt-aw-container") ||
                         Utils.createEl("div", {
-                            id: "gpt-aw-overlay",
+                            id: "gpt-aw-container",
                             parent: document.body,
                         });
-                    overlay.textContent = `AW-${awId}`;
-                    Utils.setupCopy(overlay, awId, "Copied!");
+
+                    container.innerHTML = "";
+                    awIds.forEach((awId) => {
+                        const badge = Utils.createEl("div", {
+                            className: "gpt-aw-badge",
+                            parent: container,
+                        });
+                        badge.textContent = `AW-${awId}`;
+                        Utils.setupCopy(badge, awId, "Copied!");
+                    });
                 }
 
                 document
