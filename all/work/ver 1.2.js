@@ -368,7 +368,13 @@
                 );
 
                 let panel = utils.createEl("div", { id: "panelQM", parent: document.body });
-                let clickerInterval = null;
+
+                const autoClickTask = () => {
+                    utils.$("#cdtx__uioncall--btn")?.click();
+                    setTimeout(() => utils.$(".cdtx__uioncall_control-remove")?.click(), 6000);
+                };
+
+                let clickerInterval = setInterval(autoClickTask, 16000);
 
                 let toggleBtn = utils.createEl("button", {
                     textContent: "OFF",
@@ -380,15 +386,12 @@
                         if (clickerInterval) {
                             clearInterval(clickerInterval);
                             clickerInterval = null;
-                            toggleBtn.textContent = "OFF";
-                            toggleBtn.style.backgroundColor = "#D94138";
-                        } else {
-                            clickerInterval = setInterval(() => {
-                                utils.$("#cdtx__uioncall--btn")?.click();
-                                setTimeout(() => utils.$(".cdtx__uioncall_control-remove")?.click(), 6000);
-                            }, 16000);
                             toggleBtn.textContent = "ON";
                             toggleBtn.style.backgroundColor = "#1E7F4E";
+                        } else {
+                            clickerInterval = setInterval(autoClickTask, 16000);
+                            toggleBtn.textContent = "OFF";
+                            toggleBtn.style.backgroundColor = "#D94138";
                         }
                     },
                 });

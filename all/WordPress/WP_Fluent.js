@@ -6,14 +6,6 @@
         var $form = $(this);
         var FluentFormID = $form.data("form_id");
 
-        // Push Form View
-        window.dataLayer.push({
-            event: "FluentFormActivities",
-            eventCategory: "FluentForm",
-            eventAction: "FormView",
-            FluentFormID: FluentFormID,
-        });
-
         // Listen for successful submission
         $form.on("fluentform_submission_success", function (event, data) {
             var formSubmittedData = {};
@@ -50,9 +42,7 @@
 
             // Push Form Submitted
             window.dataLayer.push({
-                event: "FluentFormActivities",
-                eventCategory: "FluentForm",
-                eventAction: "FormSubmitted",
+                event: "fluent_formmm",
                 FluentFormID: FluentFormID,
                 formSubmittedData: formSubmittedData,
                 serverResponse: serverResponse,
