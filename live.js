@@ -10,9 +10,9 @@
 // a[href*="maps"], a[href*="maps"] *
 // a[href*="whatsapp.com"], a[href*="whatsapp.com"] *
 // a[href *= "docs.google"], a[href *= "docs.google"] *
-function a() {
-    return Math.floor(performance.now() / 1000);
-}
+    function a() {
+        return Math.floor(performance.now() / 1000);
+    }
 jQuery("input[name*=phone]").validity.patternMismatch;
 // --------------------------------------------------------------------------
 // gtm.timerInterval
@@ -49,7 +49,7 @@ function a() {
     return (
         "+84" +
         document
-            .querySelector(".d-phone")
+            .querySelector("[name='tel']")
             .value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
     );
 }
@@ -105,8 +105,8 @@ function a() {
 }
 
 function a() {
-    return ["#fullname", "#email", "#phone"].every(function (selector) {
-        return document.querySelector(selector).value;
+    return ['[data-selected="Có, còn đủ cả hai"]', '[data-selected="Từ xa - Học online 100%"]'].every(function (selector) {
+        return document.querySelector(selector);
     })
         ? "y"
         : "n";
