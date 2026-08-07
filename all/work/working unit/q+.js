@@ -126,22 +126,6 @@
 					{ id: "IN", label: "Inactive" },
 				];
 
-				const tasksByStatus = {
-					SO: [
-						{ id: "CT", label: "Conversion Tracking" },
-						{ id: "EC", label: "Enhanced Conversion Tracking" },
-						{ id: "GA4", label: "GA4 setup" },
-						{ id: "GA4_UPD", label: "GA4 UPD" },
-						{ id: "AUD", label: "Ads Audiences" },
-					],
-					NI: [
-						{ id: "WAIT_INPUT", label: "Waiting Input" },
-						{ id: "WAIT_VALIDATION", label: "Waiting Validation" },
-						{ id: "IN_CONSULT", label: "In Consult" },
-					],
-					IN: [{ id: "UNREACHABLE", label: "Unreachable" }],
-				};
-
 				// The options for Step 3 (Waiting Validation specific tasks)
 				const validationSubTasks = [
 					{ id: "CT", label: "Conversion Tracking" },
@@ -150,6 +134,16 @@
 					{ id: "GA4_UPD", label: "GA4 UPD" },
 					{ id: "AUD", label: "Ads Audiences" },
 				];
+
+				const tasksByStatus = {
+					SO: validationSubTasks,
+					NI: [
+						{ id: "WAIT_INPUT", label: "Waiting Input" },
+						{ id: "WAIT_VALIDATION", label: "Waiting Validation" },
+						{ id: "IN_CONSULT", label: "In Consult" },
+					],
+					IN: [{ id: "UNREACHABLE", label: "Unreachable" }],
+				};
 
 				let selectedStatus = null;
 				let selectedTask = null;
@@ -430,7 +424,11 @@
 						ecOption = "Manual";
 						break;
 					case "AUD":
-						taskTypeArr = ["Ads Standard Remarketing"];
+						taskTypeArr = [
+							"Ads Standard Remarketing",
+							"GA4 Standard Remarketing",
+						];
+						ga4Features = ["Standard Audiences"];
 						break;
 				}
 			};
@@ -620,4 +618,25 @@
 	} else {
 		window.addEventListener("DOMContentLoaded", () => AppRouter.init());
 	}
+})();
+
+(function () {
+	// 1. Extract your variable from the page (DOM, inline script, text, etc.)
+
+	// 2. Send the extracted variable to the background/extension logic
+	chrome.runtime.sendMessage(
+		"jkoemmkocjacgolhnfegemilnlkbaolo",
+		{ status: "success", payload: "User info" },
+
+		(response) => {
+			if (chrome.runtime.lastError) {
+				console.error(
+					"Failed to send message:",
+					chrome.runtime.lastError.message,
+				);
+			} else {
+				console.log("Server response:", response?.status);
+			}
+		},
+	);
 })();

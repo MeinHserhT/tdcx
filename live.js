@@ -30,21 +30,14 @@ function a() {
 // Value
 function a() {
 	var a = +document
-		.querySelector(
-			".w19-paydone__items > div:last-child .w19-paydone__items__item__num__text",
-		)
+		.querySelector("#bankInfo > p:nth-child(4)")
 		.innerText.replace(/[^\d]/g, "");
 	return a;
 }
 
 // JS Phone
 function a() {
-	return (
-		"+84" +
-		document
-			.querySelector("[type=tel]")
-			.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
-	);
+	return document.querySelector("#doneCode").innerText;
 }
 
 function a() {
@@ -107,6 +100,7 @@ function a() {
 	});
 	return em;
 }
+
 function a() {
 	var em;
 	document.querySelectorAll("input[name=email]").forEach(function (e) {
@@ -125,14 +119,22 @@ function a() {
 }
 
 function a() {
-	return [
-		'[data-selected="Có, còn đủ cả hai"]',
-		'[data-selected="Từ xa - Học online 100%"]',
-	].every(function (selector) {
-		return document.querySelector(selector);
+	return ['[name="name"]', '[name="email"]'].every(function (selector) {
+		return document.querySelector(selector)?.value;
 	})
 		? "y"
 		: "n";
+}
+
+function a() {
+	var a = document.querySelector('[name="name"]').value;
+	var b = document.querySelector('[name="email"]').value;
+	var c =
+		document.querySelector('[role="combobox"] span').innerText !==
+		"Select a reason";
+	var d = document.querySelector('[name="message"]').value;
+	if (a && b && c && d) return "y";
+	return "n";
 }
 
 function a() {
