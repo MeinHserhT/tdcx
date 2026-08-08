@@ -32,19 +32,16 @@
 		$$: (selector, parent = document) =>
 			Array.from(parent.querySelectorAll(selector)),
 
-		/**
-		 * Helper tạo DOM Element linh hoạt, tự động bind event và style
-		 */
 		createEl: (
 			tag,
 			{
 				parent,
 				onClick,
-				style,
 				className,
 				id,
 				html,
 				text,
+				style,
 				...props
 			} = {},
 		) => {
@@ -53,7 +50,13 @@
 			if (className) el.className = className;
 			if (text !== undefined) el.textContent = text;
 			if (html !== undefined) el.innerHTML = html;
-			if (style) Object.assign(el.style, style);
+			if (style) {
+				if (typeof style === "string") {
+					el.style.cssText = style;
+				} else {
+					Object.assign(el.style, style);
+				}
+			}
 			if (onClick) el.addEventListener("click", onClick);
 
 			for (const [key, value] of Object.entries(props)) {
@@ -145,15 +148,88 @@
 	// ==========================================
 	class TagInspector {
 		static TAG_REGEX = /\b(GTM-[A-Z0-9]{4,10}|G-[A-Z0-9]{6,12}|AW-\d+)\b/g;
-
 		static PRIORITIES = { GTM: 1, G: 2, AW: 3 };
-
 		static THEMES = {
-			"GTM-": { bg: "#e0f2fe", border: "#bae6fd", color: "#0369a1" },
-			"G-": { bg: "#fef9c3", border: "#fef08a", color: "#854d0e" },
-			"AW-": { bg: "#dcfce7", border: "#bbf7d0", color: "#166534" },
-			default: { bg: "#f3f4f6", border: "#e5e7eb", color: "#374151" },
+			"GTM-": {
+				bg: "rgba(224, 242, 254, 0.6)",
+				border: "rgba(186, 230, 253, 0.8)",
+				color: "#0369a1",
+			},
+			"G-": {
+				bg: "rgba(254, 249, 195, 0.6)",
+				border: "rgba(254, 240, 138, 0.8)",
+				color: "#854d0e",
+			},
+			"AW-": {
+				bg: "rgba(220, 252, 231, 0.6)",
+				border: "rgba(187, 247, 208, 0.8)",
+				color: "#166534",
+			},
+			default: {
+				bg: "rgba(243, 244, 246, 0.6)",
+				border: "rgba(229, 231, 235, 0.8)",
+				color: "#374151",
+			},
 		};
+
+		static injectStyles() {
+			Utils.addStyle(
+				"tag-inspector-styles",
+				`
+				.ti-overlay { 
+					position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+					background-color: rgba(0, 0, 0, 0.55); 
+					z-index: 999999; display: flex; align-items: center; justify-content: center; 
+					font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif; 
+				}
+				.ti-modal { 
+					background-color: rgba(255, 255, 255, 0.85); 
+					backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+					border-radius: 20px; padding: 24px; width: 90%; max-width: 420px; max-height: 80vh; 
+					box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04); 
+					border: 1px solid rgba(255, 255, 255, 0.8); display: flex; flex-direction: column; gap: 16px; box-sizing: border-box; 
+				}
+				.ti-table-container { 
+					overflow-y: auto; max-height: 50vh; border-radius: 14px; 
+					background-color: rgba(255, 255, 255, 0.5); 
+					backdrop-filter: blur(10px);
+				}
+				.ti-table-container.has-border { border: 1px solid rgba(0, 0, 0, 0.06); }
+				.ti-row { border-bottom: 1px solid rgba(0, 0, 0, 0.04); transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+				.ti-row:last-child { border-bottom: none; }
+				.ti-row:hover { background-color: rgba(255, 255, 255, 0.8); }
+				.ti-tag-btn { 
+					font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; 
+					font-size: 12px; border-radius: 9999px; padding: 4px 12px; cursor: pointer; 
+					transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); 
+				}
+				.ti-tag-btn:hover { transform: scale(1.02); }
+				.ti-tag-btn:active { transform: scale(0.97); }
+				.ti-action-btn { 
+					padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; 
+					border-radius: 9999px; background-color: #0071E3; color: #ffffff; 
+					box-shadow: 0 2px 8px rgba(0, 113, 227, 0.2);
+					transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); 
+				}
+				.ti-action-btn:hover { background-color: #0077ED; box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3); transform: translateY(-1px); }
+				.ti-action-btn:active { transform: scale(0.96); }
+				.ti-btn-gear { 
+					padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; 
+					border-radius: 9999px; background-color: rgba(0, 0, 0, 0.05); color: #1D1D1F; 
+					transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); 
+				}
+				.ti-btn-gear:hover { background-color: rgba(0, 0, 0, 0.08); }
+				.ti-btn-gear:active { transform: scale(0.96); }
+				.ti-btn-close { 
+					padding: 8px 20px; font-size: 13px; font-weight: 500; cursor: pointer; 
+					border: 1px solid rgba(0, 0, 0, 0.1); border-radius: 9999px; background-color: #FFFFFF; color: #1D1D1F; 
+					transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+				}
+				.ti-btn-close:hover { background-color: #F5F5F7; border-color: rgba(0, 0, 0, 0.15); }
+				.ti-btn-close:active { transform: scale(0.96); }
+			`,
+			);
+		}
 
 		static scanTags() {
 			const tagSet = new Set();
@@ -181,192 +257,89 @@
 			return TagInspector.THEMES[key] || TagInspector.THEMES.default;
 		}
 
+		static getActionLabel(tag) {
+			if (tag.startsWith("G-")) return "GA4 ICS ↗";
+			if (tag.startsWith("GTM-")) return "GTM ICS ↗";
+			if (tag.startsWith("AW-")) return "ADS ICS ↗";
+			return "Open ↗";
+		}
+
 		static init() {
+			TagInspector.injectStyles();
 			const tags = this.scanTags();
 
 			Utils.$("#apple-gtag-overlay")?.remove();
 
 			const overlay = Utils.createEl("div", {
 				id: "apple-gtag-overlay",
+				className: "ti-overlay",
 				parent: document.body,
-				style: {
-					position: "fixed",
-					top: "0",
-					left: "0",
-					width: "100vw",
-					height: "100vh",
-					backgroundColor: "rgba(0, 0, 0, 0.25)",
-					backdropFilter: "blur(0.1px) saturate(180%)",
-					webkitBackdropFilter: "blur(0.1px) saturate(180%)",
-					zIndex: "999999",
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "center",
-					fontFamily:
-						'-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif',
-				},
 				onClick: (e) => {
 					if (e.target === overlay) overlay.remove();
 				},
 			});
 
 			const modal = Utils.createEl("div", {
+				className: "ti-modal",
 				parent: overlay,
-				style: {
-					backgroundColor: "rgba(255, 255, 255, 0.92)",
-					borderRadius: "20px",
-					padding: "24px",
-					width: "90%",
-					maxWidth: "400px",
-					maxHeight: "80vh",
-					boxShadow:
-						"0 20px 40px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.05)",
-					border: "1px solid rgba(255, 255, 255, 0.8)",
-					display: "flex",
-					flexDirection: "column",
-					gap: "16px",
-					boxSizing: "border-box",
-				},
 			});
 
-			// Header
-			Utils.createEl("div", {
-				parent: modal,
-				style: {
-					display: "flex",
-					justifyContent: "space-between",
-					alignItems: "center",
-					paddingBottom: "12px",
-					borderBottom: "1px solid #e5e5e7",
-				},
-				html: `
-                    <div>
-                        <h3 style="margin: 0; font-size: 18px; color: #1d1d1f; font-weight: 600; letter-spacing: -0.01em;">Google Tags</h3>
-                        <p style="margin: 2px 0 0 0; font-size: 13px; color: #86868b;">Tags detected on page</p>
-                    </div>
-                    <span style="font-size: 12px; background: #e8e8ed; color: #1d1d1f; padding: 4px 10px; border-radius: 9999px; font-weight: 600;">
-                        ${tags.length} ${tags.length === 1 ? "tag" : "tags"}
-                    </span>`,
-			});
-
-			// Body Container
 			const tableContainer = Utils.createEl("div", {
+				className: `ti-table-container ${tags.length > 0 ? "has-border" : ""}`,
 				parent: modal,
-				style: {
-					overflowY: "auto",
-					maxHeight: "50vh",
-					borderRadius: "12px",
-					border: tags.length > 0 ? "1px solid #e5e5e7" : "none",
-					backgroundColor: "#ffffff",
-				},
 			});
 
 			if (tags.length === 0) {
 				Utils.createEl("div", {
 					parent: tableContainer,
-					style: {
-						textAlign: "center",
-						color: "#86868b",
-						padding: "32px 16px",
-						fontSize: "14px",
-					},
+					style: "text-align: center; color: #86868B; padding: 32px 16px; font-size: 14px; font-weight: 400;",
 					text: "No Google Tags found on this page.",
 				});
 			} else {
 				const table = Utils.createEl("table", {
 					parent: tableContainer,
-					style: {
-						width: "100%",
-						borderCollapse: "collapse",
-						textAlign: "left",
-					},
+					style: "width: 100%; border-collapse: collapse; text-align: left;",
 					html: `
-                        <thead>
-                            <tr style="background-color: #fafafa; border-bottom: 1px solid #e5e5e7;">
-                                <th style="padding: 12px 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #86868b;">Tag ID</th>
-                                <th style="padding: 12px 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #86868b; text-align: right;">Action</th>
-                            </tr>
-                        </thead>`,
+                    <thead>
+                        <tr style="background-color: rgba(250, 250, 252, 0.6); border-bottom: 1px solid rgba(0,0,0,0.06);">
+                            <th style="padding: 12px 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #86868B;">Tag ID</th>
+                            <th style="padding: 12px 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #86868B; text-align: right;">Action</th>
+                        </tr>
+                    </thead>`,
 				});
 
 				const tbody = Utils.createEl("tbody", { parent: table });
 
-				tags.forEach((tag, idx) => {
+				tags.forEach((tag) => {
 					const theme = this.getTagTheme(tag);
 					const row = Utils.createEl("tr", {
+						className: "ti-row",
 						parent: tbody,
-						style: {
-							borderBottom:
-								idx === tags.length - 1
-									? "none"
-									: "1px solid #e5e5e7",
-							transition: "background-color 0.15s ease",
-						},
-						onmouseenter: (e) =>
-							(e.currentTarget.style.backgroundColor = "#fbfbfd"),
-						onmouseleave: (e) =>
-							(e.currentTarget.style.backgroundColor =
-								"transparent"),
 					});
 
-					// Tag Badge Button
 					const tdTag = Utils.createEl("td", {
 						parent: row,
-						style: { padding: "12px 16px" },
+						style: "padding: 12px 16px;",
 					});
+
 					const tagBtn = Utils.createEl("button", {
 						parent: tdTag,
+						className: "ti-tag-btn",
 						text: tag,
 						title: "Click to copy",
-						style: {
-							fontWeight: "600",
-							fontFamily:
-								"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-							fontSize: "13px",
-							color: theme.color,
-							backgroundColor: theme.bg,
-							border: `1px solid ${theme.border}`,
-							borderRadius: "9999px",
-							padding: "4px 12px",
-							cursor: "pointer",
-							transition:
-								"transform 0.15s ease, background-color 0.15s ease",
-						},
-						onmouseenter: (e) =>
-							(e.currentTarget.style.transform = "scale(1.03)"),
-						onmouseleave: (e) =>
-							(e.currentTarget.style.transform = "scale(1)"),
+						style: `color: ${theme.color}; background-color: ${theme.bg}; border: 1px solid ${theme.border};`,
 					});
 					Utils.setupCopy(tagBtn, tag);
 
-					// Open Link Button
 					const tdAction = Utils.createEl("td", {
 						parent: row,
-						style: { padding: "12px 16px", textAlign: "right" },
+						style: "padding: 12px 16px; text-align: right;",
 					});
+
 					Utils.createEl("button", {
 						parent: tdAction,
-						text: "Open ↗",
-						style: {
-							padding: "6px 14px",
-							fontSize: "12px",
-							fontWeight: "500",
-							cursor: "pointer",
-							border: "none",
-							borderRadius: "9999px",
-							backgroundColor: "#0071e3",
-							color: "#ffffff",
-							transition:
-								"background-color 0.15s ease, transform 0.1s ease",
-						},
-						onmouseenter: (e) =>
-							(e.currentTarget.style.backgroundColor = "#0077ed"),
-						onmouseleave: (e) =>
-							(e.currentTarget.style.backgroundColor = "#0071e3"),
-						onmousedown: (e) =>
-							(e.currentTarget.style.transform = "scale(0.96)"),
-						onmouseup: (e) =>
-							(e.currentTarget.style.transform = "scale(1)"),
+						className: "ti-action-btn",
+						text: TagInspector.getActionLabel(tag),
 						onClick: () => {
 							const url = tag.startsWith("AW-")
 								? `https://adwords.corp.google.com/aw_internalops/go?conversiontrackingid=${tag.replace("AW-", "")}`
@@ -377,35 +350,15 @@
 				});
 			}
 
-			// Footer
 			const footer = Utils.createEl("div", {
 				parent: modal,
-				style: {
-					display: "flex",
-					justifyContent: "space-between",
-					alignItems: "center",
-					paddingTop: "4px",
-				},
+				style: "display: flex; justify-content: space-between; align-items: center; padding-top: 4px;",
 			});
 
 			Utils.createEl("button", {
 				parent: footer,
+				className: "ti-btn-gear",
 				text: "Gearloose ↗",
-				style: {
-					padding: "8px 16px",
-					fontSize: "13px",
-					fontWeight: "500",
-					cursor: "pointer",
-					border: "none",
-					borderRadius: "9999px",
-					backgroundColor: "#b28787",
-					color: "#1d1d1f",
-					transition: "all 0.15s ease",
-				},
-				onmouseenter: (e) =>
-					(e.currentTarget.style.backgroundColor = "#e8e8ed"),
-				onmouseleave: (e) =>
-					(e.currentTarget.style.backgroundColor = "#b28787"),
 				onClick: () =>
 					window.open(
 						`https://gearloose.corp.google.com/#/search?q=${encodeURIComponent(location.host)}&tab=merchants`,
@@ -415,22 +368,8 @@
 
 			Utils.createEl("button", {
 				parent: footer,
+				className: "ti-btn-close",
 				text: "Close",
-				style: {
-					padding: "8px 20px",
-					fontSize: "13px",
-					fontWeight: "500",
-					cursor: "pointer",
-					border: "1px solid #d1d1d6",
-					borderRadius: "9999px",
-					backgroundColor: "#ffffff",
-					color: "#1d1d1f",
-					transition: "all 0.15s ease",
-				},
-				onmouseenter: (e) =>
-					(e.currentTarget.style.backgroundColor = "#f5f5f7"),
-				onmouseleave: (e) =>
-					(e.currentTarget.style.backgroundColor = "#ffffff"),
 				onClick: () => overlay.remove(),
 			});
 		}
@@ -482,67 +421,30 @@
 				let selectedTask = null;
 
 				const overlay = Utils.createEl("div", {
-					style: {
-						position: "fixed",
-						top: "0",
-						left: "0",
-						width: "100%",
-						height: "100%",
-						background: "rgba(15, 23, 42, 0.4)",
-						backdropFilter: "blur(2px)",
-						WebkitBackdropFilter: "blur(2px)",
-						zIndex: "99999",
-						display: "flex",
-						alignItems: "center",
-						justifyContent: "center",
-						fontFamily: "Inter, system-ui, sans-serif",
-						opacity: "0",
-						transition: "opacity 0.2s ease-out",
-					},
+					style: "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.55); z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif; opacity: 0; transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);",
 					parent: document.body,
 				});
-
 				const modal = Utils.createEl("div", {
-					style: {
-						background: "#ffffff",
-						padding: "16px",
-						borderRadius: "12px",
-						width: "90%",
-						maxWidth: "260px",
-						boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
-						transform: "translateY(8px) scale(0.97)",
-						transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-						display: "flex",
-						flexDirection: "column",
-						gap: "8px",
-						boxSizing: "border-box",
-					},
+					style: "background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); padding: 20px; border-radius: 20px; width: 90%; max-width: 280px; box-shadow: 0 16px 40px rgba(0,0,0,0.08); border: 1px solid rgba(255, 255, 255, 0.8); transform: translateY(12px) scale(0.96); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; gap: 10px; box-sizing: border-box;",
 					parent: overlay,
 				});
 
 				Utils.createEl("div", {
-					style: { marginBottom: "4px" },
+					style: "margin-bottom: 2px;",
 					html: `
-                        <h3 style="margin: 0; color: #111827; font-size: 15px; font-weight: 600;">Task Profile</h3>
-                        <div id="step-title" style="color: #6b7280; font-size: 12px; margin-top: 2px;"></div>
+                        <h3 style="margin: 0; color: #1D1D1F; font-size: 16px; font-weight: 600; letter-spacing: -0.2px;">Task Profile</h3>
+                        <div id="step-title" style="color: #86868B; font-size: 12px; font-weight: 500; margin-top: 2px;"></div>
                     `,
 					parent: modal,
 				});
 
 				const optionsContainer = Utils.createEl("div", {
-					style: {
-						display: "flex",
-						flexDirection: "column",
-						gap: "6px",
-						maxHeight: "55vh",
-						overflowY: "auto",
-						paddingRight: "2px",
-					},
+					style: "display: flex; flex-direction: column; gap: 6px; max-height: 55vh; overflow-y: auto; padding-right: 2px;",
 					parent: modal,
 				});
 
 				const navContainer = Utils.createEl("div", {
-					style: { display: "flex", gap: "6px", marginTop: "4px" },
+					style: "display: flex; gap: 6px; margin-top: 6px;",
 					parent: modal,
 				});
 
@@ -553,7 +455,7 @@
 
 				const closeDialog = (result) => {
 					overlay.style.opacity = "0";
-					modal.style.transform = "translateY(8px) scale(0.97)";
+					modal.style.transform = "translateY(12px) scale(0.96)";
 					setTimeout(() => {
 						overlay.remove();
 						resolve(result);
@@ -572,19 +474,7 @@
 						text,
 						parent,
 						onClick,
-						style: {
-							flex: "1",
-							padding: "8px 12px",
-							cursor: "pointer",
-							background: bg,
-							border: `1px solid ${bg === "transparent" ? "transparent" : "#e5e7eb"}`,
-							borderRadius: "8px",
-							color: textColor,
-							fontSize: "13px",
-							fontWeight: "500",
-							textAlign: bg === "transparent" ? "center" : "left",
-							transition: "all 0.15s ease",
-						},
+						style: `flex: 1; padding: 10px 14px; cursor: pointer; background: ${bg}; border: 1px solid ${bg === "transparent" ? "transparent" : "rgba(0,0,0,0.05)"}; border-radius: 12px; color: ${textColor}; font-size: 13px; font-weight: 500; text-align: ${bg === "transparent" ? "center" : "left"}; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);`,
 					});
 					btn.onmouseover = () => (btn.style.background = hoverBg);
 					btn.onmouseout = () => (btn.style.background = bg);
@@ -601,10 +491,10 @@
 						createBtn(
 							s.label,
 							optionsContainer,
-							"#f9fafb",
-							"#eff6ff",
-							"#374151",
-							() => {
+							"rgba(255, 255, 255, 0.6)",
+							"#0071E3",
+							"#1D1D1F",
+							function () {
 								selectedStatus = s;
 								showTasks();
 							},
@@ -615,8 +505,8 @@
 						"Cancel",
 						navContainer,
 						"transparent",
-						"#f3f4f6",
-						"#6b7280",
+						"rgba(0,0,0,0.04)",
+						"#86868B",
 						() => closeDialog(null),
 					);
 				};
@@ -633,9 +523,9 @@
 						createBtn(
 							task.label,
 							optionsContainer,
-							"#f9fafb",
-							"#eff6ff",
-							"#374151",
+							"rgba(255, 255, 255, 0.6)",
+							"rgba(0, 113, 227, 0.08)",
+							"#1D1D1F",
 							() => {
 								selectedTask = task;
 								if (
@@ -656,17 +546,17 @@
 					createBtn(
 						"Back",
 						navContainer,
-						"#f3f4f6",
-						"#e5e7eb",
-						"#4b5563",
+						"rgba(0, 0, 0, 0.04)",
+						"rgba(0, 0, 0, 0.08)",
+						"#1D1D1F",
 						showStatusOptions,
 					);
 					createBtn(
 						"Cancel",
 						navContainer,
 						"transparent",
-						"#f3f4f6",
-						"#6b7280",
+						"rgba(0, 0, 0, 0.04)",
+						"#86868B",
 						() => closeDialog(null),
 					);
 				};
@@ -681,9 +571,9 @@
 						createBtn(
 							subTask.label,
 							optionsContainer,
-							"#f9fafb",
-							"#eff6ff",
-							"#374151",
+							"rgba(255, 255, 255, 0.6)",
+							"rgba(0, 113, 227, 0.08)",
+							"#1D1D1F",
 							() => {
 								closeDialog({
 									status: selectedStatus,
@@ -697,17 +587,17 @@
 					createBtn(
 						"Back",
 						navContainer,
-						"#f3f4f6",
-						"#e5e7eb",
-						"#4b5563",
+						"rgba(0, 0, 0, 0.04)",
+						"rgba(0, 0, 0, 0.08)",
+						"#1D1D1F",
 						showTasks,
 					);
 					createBtn(
 						"Cancel",
 						navContainer,
 						"transparent",
-						"#f3f4f6",
-						"#6b7280",
+						"rgba(0, 0, 0, 0.04)",
+						"#86868B",
 						() => closeDialog(null),
 					);
 				};
@@ -931,9 +821,11 @@
 	// 4. FEATURE: CASEMON
 	// ==========================================
 	class CaseMon {
+		static isRunning = false;
+
 		static init() {
-			if (window.dashRun) return;
-			window.dashRun = true;
+			if (CaseMon.isRunning) return;
+			CaseMon.isRunning = true;
 			Utils.$('[aria-selected="false"]')?.click();
 
 			const iconBase = "https://cdn-icons-png.flaticon.com/512";
@@ -942,35 +834,43 @@
 				target: ".agent-table-container",
 				statusConfig: {
 					active: {
-						color: "#10B981",
-						track: "#D1FAE5",
+						color: "#34C759",
+						track: "rgba(52, 199, 89, 0.15)",
 						maxSecs: 3600,
 					},
 					phone: {
-						color: "#EF4444",
-						track: "#FFE4E6",
+						color: "#FF3B30",
+						track: "rgba(255, 59, 48, 0.15)",
 						maxSecs: 2700,
 					},
 					video: {
-						color: "#8B5CF6",
-						track: "#F3E8FF",
+						color: "#AF52DE",
+						track: "rgba(175, 82, 222, 0.15)",
 						maxSecs: 2700,
 					},
-					email: { color: "#0EA5E9", track: "#E0F2FE", maxSecs: 900 },
+					email: {
+						color: "#0071E3",
+						track: "rgba(0, 113, 227, 0.15)",
+						maxSecs: 900,
+					},
 					"coffee-break": {
-						color: "#F59E0B",
-						track: "#FFEDD5",
+						color: "#FF9500",
+						track: "rgba(255, 149, 0, 0.15)",
 						maxSecs: 900,
 					},
 					"lunch-break": {
-						color: "#EAB308",
-						track: "#FEF9C3",
+						color: "#FFCC00",
+						track: "rgba(255, 204, 0, 0.15)",
 						maxSecs: 3600,
 					},
-					break: { color: "#6B7280", track: "#F3F4F6", maxSecs: 900 },
+					break: {
+						color: "#8E8E93",
+						track: "rgba(142, 142, 147, 0.15)",
+						maxSecs: 900,
+					},
 					default: {
-						color: "#9CA3AF",
-						track: "#F3F4F6",
+						color: "#8E8E93",
+						track: "rgba(142, 142, 147, 0.15)",
 						maxSecs: 2700,
 					},
 				},
@@ -1016,7 +916,10 @@
 			};
 
 			const targetContainer = Utils.$(config.target);
-			if (!targetContainer) return (window.dashRun = false);
+			if (!targetContainer) {
+				CaseMon.isRunning = false;
+				return;
+			}
 
 			const currentUserName =
 				Utils.$("[alt='profile photo']")?.src?.match(
@@ -1026,32 +929,48 @@
 			Utils.addStyle(
 				"bento-dash-styles",
 				`
-            #bento_agent_ui { position: fixed; height: 100%; width: 100%; top: 0; right: 0; background-color: rgba(15, 17, 21, 0.12); z-index: 9999; display: flex; justify-content: flex-end; align-items: center; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; pointer-events: none; box-sizing: border-box; }
-            .bento-wrapper { position: relative; pointer-events: auto; width: 100%; max-width: 320px; background: #FFFFFF; border-radius: 20px; box-shadow: 0 12px 32px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04); padding: 20px; border: 1px solid #E5E7EB; color: #1F2937; transition: border-color 0.3s ease; }
-            .close-btn { position: absolute; top: -10px; right: -10px; background: #FFFFFF; border: 1px solid #E5E7EB; cursor: pointer; z-index: 20; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: all 0.2s ease; }
-            .close-btn:hover { background: #F3F4F6; transform: scale(1.1); }
-            .close-btn img { width: 11px; height: 11px; opacity: 0.7; }
+            #bento_agent_ui { 
+				position: fixed; height: 100%; width: 100%; top: 0; right: 0; 
+				background-color: rgba(0, 0, 0, 0.45);
+				z-index: 9999; display: flex; justify-content: flex-end; align-items: center; padding: 24px; 
+				font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif; 
+				pointer-events: none; box-sizing: border-box; 
+			}
+            .bento-wrapper { 
+				position: relative; pointer-events: auto; width: 100%; max-width: 320px; 
+				background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+				border-radius: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.02); 
+				padding: 20px; border: 1px solid rgba(255, 255, 255, 0.8); color: #1D1D1F; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
+			}
+            .close-btn { 
+				position: absolute; top: -10px; right: -10px; background: rgba(255, 255, 255, 0.9); 
+				backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.06); cursor: pointer; z-index: 20; 
+				border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; 
+				box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); 
+			}
+            .close-btn:hover { background: #FFFFFF; transform: scale(1.08); }
+            .close-btn img { width: 11px; height: 11px; opacity: 0.6; }
             .bento-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
             .bento-card { background: transparent; display: flex; flex-direction: column; }
             .agent-list-header { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
-            .agent-list-header h3 { margin: 0; font-size: 12px; color: #4B5563; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; display: flex; align-items: center; justify-content: space-between; }
+            .agent-list-header h3 { margin: 0; font-size: 11px; color: #86868B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; display: flex; align-items: center; justify-content: space-between; }
             .header-counters { display: flex; gap: 6px; justify-content: flex-start; width: 100%; }
-            .agent-count { font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 700; white-space: nowrap; }
-            .active-badge { background: #E6F4EA; color: #137333; border: 1px solid #CEEAD6; }
-            .phone-badge { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
-            .break-badge { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
-            .total-badge { background: #F1F3F4; color: #5F6368; border: 1px solid #E8EAED; }
-            .health-warning { animation: pulseHealth 2.5s infinite; border-color: #EF4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.15); }
-            @keyframes pulseHealth { 0%, 100% { border-color: #E5E7EB; } 50% { border-color: #EF4444; } }
-            .health-text { font-size: 10px; color: #DC2626; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-            .agent-list-container { max-height: 72vh; overflow-y: auto; padding: 2px; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid #F1F5F9; padding-top: 12px; }
+            .agent-count { font-size: 10px; padding: 3px 8px; border-radius: 9999px; font-weight: 600; white-space: nowrap; }
+            .active-badge { background: rgba(52, 199, 89, 0.12); color: #248A3D; border: 1px solid rgba(52, 199, 89, 0.2); }
+            .phone-badge { background: rgba(255, 59, 48, 0.12); color: #D70015; border: 1px solid rgba(255, 59, 48, 0.2); }
+            .break-badge { background: rgba(255, 149, 0, 0.12); color: #C77000; border: 1px solid rgba(255, 149, 0, 0.2); }
+            .total-badge { background: rgba(142, 142, 147, 0.12); color: #636366; border: 1px solid rgba(142, 142, 147, 0.2); }
+            .health-warning { animation: pulseHealth 2.5s infinite; border-color: rgba(255, 59, 48, 0.6); box-shadow: 0 0 20px rgba(255, 59, 48, 0.2); }
+            @keyframes pulseHealth { 0%, 100% { border-color: rgba(255, 255, 255, 0.8); } 50% { border-color: rgba(255, 59, 48, 0.6); } }
+            .health-text { font-size: 10px; color: #FF3B30; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+            .agent-list-container { max-height: 72vh; overflow-y: auto; padding: 2px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 12px; }
             .status-group-block { display: flex; width: 100%; gap: 10px; align-items: flex-start; }
-            .status-inline-label { width: 50px; min-width: 35px; text-align: left; font-size: 9px; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 4px; border-left: 2px solid #E2E8F0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
-            .status-inline-label.user-label { color: #2563EB; border-left-color: #2563EB; background: #EFF6FF; border-radius: 0 4px 4px 0; }
+            .status-inline-label { width: 50px; min-width: 35px; text-align: left; font-size: 9px; font-weight: 700; color: #86868B; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 4px; border-left: 2px solid rgba(0,0,0,0.1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+            .status-inline-label.user-label { color: #0071E3; border-left-color: #0071E3; background: rgba(0, 113, 227, 0.08); border-radius: 0 4px 4px 0; }
             .status-rows-stack { flex-grow: 1; display: flex; flex-direction: column; gap: 6px; }
-            .agent-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: 10px; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.02); position: relative; background-clip: padding-box; border: 2px solid transparent; z-index: 1; }
-            .agent-row:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
-            .agent-row::before { content: ''; position: absolute; inset: 0; border-radius: 10px; padding: 2px; margin: -2px; background: conic-gradient(var(--st-color) var(--progress), var(--st-track) var(--progress)); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; z-index: -1; }
+            .agent-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: 12px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 2px 6px rgba(0,0,0,0.02); position: relative; background-clip: padding-box; border: 1px solid rgba(255, 255, 255, 0.6); z-index: 1; }
+            .agent-row:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+            .agent-row::before { content: ''; position: absolute; inset: 0; border-radius: 12px; padding: 1.5px; margin: -1.5px; background: conic-gradient(var(--st-color) var(--progress), var(--st-track) var(--progress)); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; z-index: -1; }
             @keyframes pulseWarning { 0%, 100% { filter: drop-shadow(0 0 2px var(--st-color)); } 50% { filter: drop-shadow(0 0 8px var(--st-color)); } }
             .agent-row.over-time::before { animation: pulseWarning 1.5s infinite ease-in-out; }
             
@@ -1061,29 +980,29 @@
             .row-bg-icons img:nth-child(2) { animation-delay: 1.5s; }
             
             .agent-left { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 12px; }
-            .agent-avatar { width: 26px; height: 26px; border-radius: 6px; object-fit: cover; border: 1px solid rgba(0,0,0,0.04); }
+            .agent-avatar { width: 26px; height: 26px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(0,0,0,0.05); }
             .agent-right { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; text-align: right; }
             .agent-meta { display: flex; flex-direction: column; }
-            .time-state { font-size: 10px; font-weight: 500; opacity: 0.85; }
-            .status-text { font-size: 10px; font-weight: 700; letter-spacing: 0.2px; display: inline-block; margin-top: 1px; }
-            .agent-right > img { width: 18px; height: 18px; opacity: 0.8; }
+            .time-state { font-size: 10px; font-weight: 500; opacity: 0.8; }
+            .status-text { font-size: 10px; font-weight: 600; letter-spacing: 0.2px; display: inline-block; margin-top: 1px; }
+            .agent-right > img { width: 18px; height: 18px; opacity: 0.85; }
             
-            .stt-active { background: linear-gradient(135deg, #D1FAE5 0%, #FCE7F3 100%); color: #064E3B; } .stt-active .status-text { color: #047857; }
-            .stt-phone { background: linear-gradient(135deg, #FEE2E2 0%, #CCFBF1 100%); color: #7F1D1D; } .stt-phone .status-text { color: #B91C1C; }
-            .stt-video { background: linear-gradient(135deg, #F3E8FF 0%, #FEF9C3 100%); color: #4C1D95; } .stt-video .status-text { color: #6B21A8; }
-            .stt-email { background: linear-gradient(135deg, #E0F2FE 0%, #FFEDD5 100%); color: #0C4A6E; } .stt-email .status-text { color: #0284C7; }
-            .stt-coffee-break { background: linear-gradient(135deg, #FFEDD5 0%, #EDE9FE 100%); color: #78350F; } .stt-coffee-break .status-text { color: #B45309; }
-            .stt-lunch-break { background: linear-gradient(135deg, #FEF9C3 0%, #DBEAFE 100%); color: #713F12; } .stt-lunch-break .status-text { color: #A16207; }
-            .stt-break { background: linear-gradient(135deg, #F1F5F9 0%, #E7E5E4 100%); color: #374151; } .stt-break .status-text { color: #4B5563; }
+            .stt-active { background: rgba(230, 248, 236, 0.7); color: #064E3B; } .stt-active .status-text { color: #248A3D; }
+            .stt-phone { background: rgba(254, 238, 238, 0.7); color: #7F1D1D; } .stt-phone .status-text { color: #D70015; }
+            .stt-video { background: rgba(245, 235, 255, 0.7); color: #4C1D95; } .stt-video .status-text { color: #8944AB; }
+            .stt-email { background: rgba(230, 242, 255, 0.7); color: #0C4A6E; } .stt-email .status-text { color: #0071E3; }
+            .stt-coffee-break { background: rgba(255, 244, 230, 0.7); color: #78350F; } .stt-coffee-break .status-text { color: #C77000; }
+            .stt-lunch-break { background: rgba(255, 250, 230, 0.7); color: #713F12; } .stt-lunch-break .status-text { color: #A16207; }
+            .stt-break { background: rgba(242, 242, 247, 0.7); color: #374151; } .stt-break .status-text { color: #636366; }
             
             [animation="breathe"] { animation: breathe 2s infinite ease-in-out; }
-            @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.2); opacity: 1; } }
+            @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.15); opacity: 1; } }
             [animation="rock"] { animation: rock 3s infinite ease-in-out; transform-origin: bottom center; }
-            @keyframes rock { 0%, 100% { transform: rotate(-12deg); } 50% { transform: rotate(12deg); } }
+            @keyframes rock { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(10deg); } }
             [animation="bounce-y"] { animation: bounce-y 1.5s infinite ease-in-out; }
-            @keyframes bounce-y { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+            @keyframes bounce-y { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
             [animation="ring"] { animation: ring 2s infinite ease-in-out; }
-            @keyframes ring { 0%, 100% { transform: rotate(0); } 10%, 30%, 50% { transform: rotate(15deg); } 20%, 40%, 60% { transform: rotate(-15deg); } 70% { transform: rotate(0); } }
+            @keyframes ring { 0%, 100% { transform: rotate(0); } 10%, 30%, 50% { transform: rotate(12deg); } 20%, 40%, 60% { transform: rotate(-12deg); } 70% { transform: rotate(0); } }
             [animation="fly"] { animation: fly 2.5s infinite ease-in-out; }
             @keyframes fly { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(3px, -3px); } }
             [animation="fade-pulse"] { animation: fade-pulse 3s infinite ease-in-out; }
@@ -1326,7 +1245,7 @@
 			uiContainer.addEventListener("click", (e) => {
 				if (e.target.closest(".close-btn")) {
 					uiContainer.remove();
-					window.dashRun = 0;
+					CaseMon.isRunning = false;
 					observer.disconnect();
 				}
 			});
@@ -1339,19 +1258,37 @@
 	// 5. FEATURE: CASES CONNECT
 	// ==========================================
 	class CasesConnect {
+		static isRunning = false;
+		static clickerInterval = null;
+
 		static init() {
-			if (window.scrRun) return;
-			window.scrRun = true;
+			if (CasesConnect.isRunning) return;
+			CasesConnect.isRunning = true;
 
 			Utils.addStyle(
 				"cases-styles",
 				`
-                #panelQM { position: fixed; bottom: 20px; left: 20px; display: flex; gap: 10px; align-items: center; z-index: 9999; font-family: -apple-system, sans-serif; }
-                .qm-btn { z-index: 10; color: white; padding: 10px 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 12px rgba(26,29,35,0.06); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); font-size: 13px; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(0,0,0,0.03); }
-                .qm-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(26,29,35,0.12); }
-                #flup-days-input { position: absolute; top: 50%; transform: translateY(-50%); right: 6px; width: 28px; height: 24px; padding: 0; border: none; border-radius: 4px; background: rgba(255, 255, 255, 0.95); color: #1A1D23; font-weight: 700; font-size: 13px; text-align: center; box-shadow: inset 0 1px 2px rgba(0,0,0,0.08); transition: all 0.2s ease; -moz-appearance: textfield; }
-                #flup-days-input:focus { outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.08), 0 0 0 2px rgba(26, 29, 35, 0.2); }
-                .qm-badge { display: none; position: absolute; top: -4px; right: -4px; background: #D94138; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: 700; line-height: 1; border: 1px solid #ffffff; }
+                #panelQM { 
+					position: fixed; bottom: 20px; left: 20px; display: flex; gap: 8px; align-items: center; 
+					z-index: 9999; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif; 
+				}
+                .qm-btn { 
+					z-index: 10; color: #FFFFFF; padding: 10px 16px; border: none; border-radius: 12px; cursor: pointer; 
+					font-weight: 600; font-size: 13px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); 
+					backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+					transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); position: relative; display: flex; align-items: center; justify-content: center; 
+					border: 1px solid rgba(255, 255, 255, 0.3); 
+				}
+                .qm-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+				.qm-btn:active { transform: scale(0.96); }
+                #flup-days-input { 
+					position: absolute; top: 50%; transform: translateY(-50%); right: 6px; width: 28px; height: 24px; 
+					padding: 0; border: none; border-radius: 6px; background: rgba(255, 255, 255, 0.9); color: #1D1D1F; 
+					font-weight: 700; font-size: 12px; text-align: center; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06); 
+					transition: all 0.2s ease; -moz-appearance: textfield; 
+				}
+                #flup-days-input:focus { outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06), 0 0 0 2px #0071E3; }
+                .qm-badge { display: none; position: absolute; top: -4px; right: -4px; background: #FF3B30; border-radius: 9999px; padding: 2px 6px; font-size: 10px; font-weight: 700; line-height: 1; border: 1.5px solid #FFFFFF; }
                 .aw-sig-table { margin: 12px 0; }
             `,
 			);
@@ -1360,7 +1297,8 @@
 				id: "panelQM",
 				parent: document.body,
 			});
-			let clickerInterval = setInterval(
+
+			CasesConnect.clickerInterval = setInterval(
 				CasesConnect.autoClickTask,
 				16000,
 			);
@@ -1369,22 +1307,22 @@
 				textContent: "OFF",
 				title: "Auto Click",
 				className: "qm-btn",
-				style: { backgroundColor: "#D94138" },
+				style: { backgroundColor: "#FF3B30" },
 				parent: panel,
 				onClick: (e) => {
 					const btn = e.currentTarget;
-					if (clickerInterval) {
-						clearInterval(clickerInterval);
-						clickerInterval = null;
+					if (CasesConnect.clickerInterval) {
+						clearInterval(CasesConnect.clickerInterval);
+						CasesConnect.clickerInterval = null;
 						btn.textContent = "ON";
-						btn.style.backgroundColor = "#1E7F4E";
+						btn.style.backgroundColor = "#34C759";
 					} else {
-						clickerInterval = setInterval(
+						CasesConnect.clickerInterval = setInterval(
 							CasesConnect.autoClickTask,
 							16000,
 						);
 						btn.textContent = "OFF";
-						btn.style.backgroundColor = "#D94138";
+						btn.style.backgroundColor = "#FF3B30";
 					}
 				},
 			});
@@ -1406,7 +1344,7 @@
 				html: '<img src="https://cdn-icons-png.flaticon.com/512/1069/1069138.png" style="width: 16px; height: 16px; filter: invert(1);"><span id="flup-badge" class="qm-badge">+</span>',
 				title: "Click Follow-up Item",
 				className: "qm-btn",
-				style: { backgroundColor: "#3B72E6" },
+				style: { backgroundColor: "#0071E3" },
 				parent: panel,
 				onClick: async () => {
 					Utils.$('[debug-id="dock-item-home"]')?.click();
@@ -1443,7 +1381,7 @@
 				textContent: "FL Up:",
 				title: "Set Follow-up",
 				className: "qm-btn",
-				style: { backgroundColor: "#1A827A", paddingRight: "44px" },
+				style: { backgroundColor: "#30B0C7", paddingRight: "44px" },
 				parent: panel,
 				onClick: async (e) => {
 					if (e.target.id === "flup-days-input") return;
@@ -1537,7 +1475,7 @@
 				textContent: "Sign",
 				title: "Insert Signature at Cursor",
 				className: "qm-btn",
-				style: { backgroundColor: "#92400E", color: "#FFFFFF" },
+				style: { backgroundColor: "#8E8E93", color: "#FFFFFF" },
 				parent: panel,
 				onmousedown: (e) => e.preventDefault(),
 				onClick: () => {
@@ -1565,13 +1503,13 @@
                     <table class="aw-sig-table" style="width: 348px; padding: 0 30px;" data-sig-injected="true">
                         <tbody>
                             <tr align="left">
-                                <td style="width: 52px; vertical-align: top;"><img src="https://cdn-icons-png.flaticon.com/512/300/300221.png" width="52" height="52" style="display: block; border-radius: 8px;"></td>
+                                <td style="width: 52px; vertical-align: top;"><img src="https://cdn-icons-png.flaticon.com/512/300/300221.png" width="52" height="52" style="display: block; border-radius: 10px;"></td>
                                 <td style="width: 12px;"/>
                                 <td style="vertical-align: middle;">
-                                    <p style="font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; line-height: 1.4; color: #1A1D23;">
-                                        <strong style="font-size: 105%; color: #111111;">${Utils.escapeHtml(sigName)}</strong><br>
-                                        <span style="color: #5F6368;">Technical Solutions Team</span><br>
-                                        <span style="color: #5F6368; font-weight: 500;">TDCX, on behalf of Google</span>
+                                    <p style="font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; margin: 0; line-height: 1.4; color: #1D1D1F;">
+                                        <strong style="font-size: 105%; color: #1D1D1F;">${Utils.escapeHtml(sigName)}</strong><br>
+                                        <span style="color: #86868B;">Technical Solutions Team</span><br>
+                                        <span style="color: #86868B; font-weight: 500;">TDCX, on behalf of Google</span>
                                     </p>
                                 </td>
                             </tr>
@@ -1605,13 +1543,26 @@
 			Utils.addStyle(
 				"aw-styles",
 				`
-                .aw-ga4 { background-color: #FEF3D6; color: #B07505; border: 1px solid rgba(176,117,5,0.15); padding: 2px 6px; border-radius: 6px; font-weight: 600; cursor: pointer; user-select: none; }
-                .aw-ads { background-color: #E2F5E9; color: #1E7F4E; border: 1px solid rgba(30,127,78,0.15); padding: 2px 6px; border-radius: 6px; font-weight: 600; cursor: pointer; user-select: none; }
-                .aw-copied { background-color: #3B72E6 !important; color: white !important; border-color: transparent !important; }
-                #gpt-aw-container { position: fixed; bottom: 20px; left: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
-                .gpt-aw-badge { padding: 8px 14px; background: #161920; color: #F1F3F5; border: 1px solid #2D323F; border-radius: 8px; font-size: 12px; font-weight: 600; font-family: monospace; box-shadow: 0 4px 16px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s ease; user-select: none; }
-                .gpt-aw-badge:hover { background: #2D323F; }
-            `,
+            .aw-ga4 { background-color: rgba(255, 149, 0, 0.12); color: #C77000; border: 1px solid rgba(255, 149, 0, 0.2); padding: 3px 8px; border-radius: 8px; font-weight: 600; cursor: pointer; user-select: none; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+            .aw-ads { background-color: rgba(52, 199, 89, 0.12); color: #248A3D; border: 1px solid rgba(52, 199, 89, 0.2); padding: 3px 8px; border-radius: 8px; font-weight: 600; cursor: pointer; user-select: none; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+            .aw-copied { background-color: #0071E3 !important; color: #FFFFFF !important; border-color: transparent !important; }
+            #gpt-aw-container { position: fixed; bottom: 20px; left: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; }
+            .gpt-aw-row { display: flex; gap: 6px; align-items: center; }
+            .gpt-aw-badge { 
+				padding: 8px 14px; background: rgba(29, 29, 31, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); 
+				color: #F5F5F7; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; 
+				font-size: 12px; font-weight: 600; font-family: ui-monospace, SFMono-Regular, monospace; 
+				box-shadow: 0 4px 16px rgba(0,0,0,0.12); cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); user-select: none; 
+			}
+            .gpt-aw-badge:hover { background: rgba(29, 29, 31, 0.95); transform: translateY(-1px); }
+            .gpt-aw-btn { 
+				padding: 8px 14px; background: #0071E3; color: #ffffff; border: none; 
+				border-radius: 12px; font-size: 12px; font-weight: 600; 
+				box-shadow: 0 4px 16px rgba(0, 113, 227, 0.25); cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); user-select: none; 
+			}
+            .gpt-aw-btn:hover { background: #0077ED; box-shadow: 0 6px 20px rgba(0, 113, 227, 0.35); transform: translateY(-1px); }
+			.gpt-aw-btn:active { transform: scale(0.96); }
+        `,
 			);
 
 			const isDataReady = await Utils.pollForCondition(
@@ -1626,28 +1577,87 @@
 			}
 		}
 
+		static getSelectedConversionIds() {
+			const rows = Utils.$$(".particle-table-row");
+			const selectedIds = rows
+				.filter((row) => {
+					const checkbox = row.querySelector("mat-checkbox");
+					return (
+						row.classList.contains("particle-row-selected") ||
+						checkbox?.getAttribute("aria-checked") === "true" ||
+						checkbox?.hasAttribute("checked") ||
+						checkbox
+							?.querySelector(".mat-checkbox-container")
+							?.classList.contains("checked")
+					);
+				})
+				.map((row) => {
+					const cell = row.querySelector(
+						".conversion-name-cell .internal",
+					);
+					const link = row.querySelector("a.ess-cell-link");
+					const hrefCtId = link?.href?.match(/ctId=(\d+)/)?.[1];
+					const rawId =
+						cell?.dataset?.originalId ||
+						hrefCtId ||
+						cell?.innerText?.trim() ||
+						"";
+					const match = rawId.match(/\d+/);
+					return match ? match[0] : null;
+				})
+				.filter(Boolean);
+
+			return [...new Set(selectedIds)];
+		}
+
 		static processData(rawData) {
 			const matches = [...rawData.matchAll(/AW-(\d+)/g)];
 			const uniqueIds = [...new Set(matches.map((m) => m[1]))];
 
-			if (uniqueIds.length > 0) {
-				const container =
-					Utils.$("#gpt-aw-container") ||
-					Utils.createEl("div", {
-						id: "gpt-aw-container",
-						parent: document.body,
-					});
-				container.innerHTML = "";
-
-				uniqueIds.forEach((idStr) => {
-					const badge = Utils.createEl("div", {
-						className: "gpt-aw-badge",
-						text: `AW-${idStr}`,
-						parent: container,
-					});
-					Utils.setupCopy(badge, idStr, "Copied!");
+			const container =
+				Utils.$("#gpt-aw-container") ||
+				Utils.createEl("div", {
+					id: "gpt-aw-container",
+					parent: document.body,
 				});
-			}
+			container.innerHTML = "";
+
+			uniqueIds.forEach((idStr) => {
+				const row = Utils.createEl("div", {
+					className: "gpt-aw-row",
+					parent: container,
+				});
+
+				const badge = Utils.createEl("div", {
+					className: "gpt-aw-badge",
+					text: `AW-${idStr}`,
+					parent: row,
+				});
+				Utils.setupCopy(badge, idStr, "Copied!");
+			});
+
+			const btnRow = Utils.createEl("div", {
+				className: "gpt-aw-row",
+				parent: container,
+			});
+
+			Utils.createEl("button", {
+				className: "gpt-aw-btn",
+				text: "EC Dashboard ↗",
+				parent: btnRow,
+				onClick: () => {
+					const selectedIds = AdWords.getSelectedConversionIds();
+					if (selectedIds.length === 0) {
+						alert(
+							"Vui lòng tích chọn ít nhất 1 dòng chuyển đổi trên bảng!",
+						);
+						return;
+					}
+					const idListParam = selectedIds.join(",");
+					const url = `https://dashboards.corp.google.com/view/_0ded1099_6ef3_4bc9_bba0_2445840d1b69?f=conversion_type_l3j54n:in:${idListParam}`;
+					window.open(url, "_blank");
+				},
+			});
 
 			Utils.$$(".expand-more").forEach((el) => el.click());
 
@@ -1675,11 +1685,17 @@
 								return row.remove();
 							}
 
-							const mappedData = dataMap.get(cell.innerText);
+							const originalText = cell.innerText?.trim() || "";
+							const numericMatch = originalText.match(/\d+/);
+							if (numericMatch) {
+								cell.dataset.originalId = numericMatch[0];
+							}
+
+							const mappedData = dataMap.get(originalText);
 							if (!mappedData) return;
 
-							let type = null,
-								convId = null;
+							let type = null;
+							let convId = null;
 							if (mappedData[11] === 1) {
 								type = "aw-ads";
 								convId = mappedData[64]?.[2]?.[4]
@@ -1732,7 +1748,6 @@
 			if (matchedRoute) {
 				matchedRoute.run();
 			} else {
-				// Default fallback: Run Google Tag Inspector on general pages
 				TagInspector.init();
 			}
 		},

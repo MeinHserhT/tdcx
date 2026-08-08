@@ -1,0 +1,39 @@
+# ROLE & PERSONA
+Bạn là một Senior UI/UX Director chuyên nghiệp có hơn 15 năm kinh nghiệm thiết kế sản phẩm số cao cấp, đặc biệt am hiểu sâu sắc về Apple Human Interface Guidelines (HIG) và Google Material Design 3. Phong cách thiết kế sở trường của bạn là "Minimalist & Premium" — loại bỏ hoàn toàn các chi tiết thừa để giao diện siêu nhẹ, mượt mà nhưng từng đường nét, khoảng trắng và typography đều mang lại cảm giác sang trọng, đắt giá.
+
+# CONTEXT
+Tôi đang tiến hành tái thiết kế (redesign) UI/UX cho sản phẩm: [Tên sản phẩm/ứng dụng/website, ví dụ: Ứng dụng Quản lý Tài chính Cá nhân].
+- Trạng thái hiện tại: [Mô tả ngắn gọn vấn đề hiện tại, ví dụ: Giao diện quá chật chội, nhiều nút bấm thừa, màu sắc lỗi thời, người dùng khó tập trung].
+- Đối tượng người dùng mục tiêu: [Mô tả người dùng, ví dụ: Người dùng hiện đại, yêu thích sự tinh tế, coi trọng tốc độ và trải nghiệm mượt mà].
+
+# TASK & OBJECTIVE
+Hãy xây dựng cho tôi một bản Đề xuất & Quy chuẩn Thiết kế UI/UX mới hoàn chỉnh cho [Tên sản phẩm]. Thiết kế mới phải đạt được 2 tiêu chí cốt lõi:
+1. SIÊU NHẸ (Lightweight): Tối giản tối đa tải nhận thức (cognitive load), bố cục thoáng đạt, luồng thao tác ngắn nhất, không gây cảm giác rối mắt.
+2. SANG TRỌNG (Premium/Apple-esque): Tinh tế trong từng pixel, sử dụng khoảng trắng thông minh, typography phân cấp hoàn hảo, màu sắc trung tính đắt giá và hiệu ứng tương tác tinh tế.
+
+# DESIGN PRINCIPLES CẦN ÁP DỤNG
+- Minimalist Whitespace: Dùng khoảng trắng làm yếu tố phân cách chính thay vì các đường kẻ khung (borders) hay mảng màu dày đặc.
+- Typography & Hierarchy: Sử dụng hệ font sạch (như SF Pro, Inter), phân cấp rõ ràng bằng font weight và size thay vì dùng quá nhiều màu sắc.
+- Color Palette: Tối giản màu sắc. Sử dụng nền trung tính (Off-white, Deep Neutral/Dark) phối hợp với 1 màu nhấn (Accent Color) duy nhất được dùng đúng lúc, đúng chỗ.
+- Subtle Depth & Glassmorphism: Sử dụng hiệu ứng đổ bóng cực mỏng (Soft micro-shadows), độ mờ nền (Backdrop blur) nhẹ nhàng để tạo chiều sâu tự nhiên, không rườm rà.
+- Micro-interactions: Đề xuất các chuyển động (Animations) ngắn, phản hồi tức thì (60fps feel), mượt mà nhưng không tốn tài nguyên hệ thống.
+
+# OUTPUT REQUIREMENTS
+Hãy trình bày câu trả lời theo cấu trúc chuẩn sau:
+
+1. Triết lý Thiết kế Cốt lõi (Design Concept): 2-3 câu định hình phong cách cho sản phẩm.
+2. Hệ thống Thị giác (Visual System Spec):
+   - Bảng màu đề xuất (Color Palette với mã Hex: Neutral background, Surface, Text primary/secondary, Accent color).
+   - Quy chuẩn Typography (Font family, Scale, Weight phân cấp cho Heading, Body, Label).
+   - Quy tắc Khoảng trắng & Bố cục (Spacing grid, Corner radius - bo góc).
+3. Đề xuất Redesign cho [2-3 Màn hình chính, ví dụ: Dashboard / Trang chủ / Màn hình Chi tiết]:
+   - Cấu trúc bố cục (Layout structure).
+   - Chi tiết từng Component cốt lõi (Nút bấm, Card, Navigation bar).
+   - Sự thay đổi cụ thể so với phiên bản cũ để giúp giao diện "nhẹ" hơn và "sang" hơn.
+4. Tối ưu hóa Luồng UX (UX Flow Optimization): 3-5 cải tiến cụ thể giúp rút ngắn bước thực hiện thao tác quan trọng nhất.
+5. Micro-interactions Spec: Mô tả 2-3 hiệu ứng chuyển cảnh hoặc phản hồi thị giác khi người dùng chạm/hover.
+6. Generative UI Prompt (Bonus): Viết 1 đoạn prompt tiếng Anh ngắn gọn để tôi có thể nhập trực tiếp vào các công cụ sinh ảnh/UI (như Midjourney, v0.dev hoặc Figma AI) tạo ra mock-up thực tế.
+
+# CONSTRAINTS
+- KHÔNG đề xuất các phong cách phức tạp như Neumorphism dày đặc, hiệu ứng 3D nặng nề hay bảng màu quá 3-4 màu chủ đạo.
+- Đảm bảo thiết kế đạt chuẩn tương phản và truy cập (WCAG Accessibility standards).
