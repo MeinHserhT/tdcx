@@ -35,170 +35,170 @@ const highlightResults = (data) => {
 
 const json_de = {
 	quizEvaluation: {
-		name: "batches/5576226938595868288/quizEvaluations/132951719933785752",
-		batchName: "batches/5576226938595868288",
-		quizName: "quizzes/3331285089308264912",
+		name: "batches/3219625329927783944/quizEvaluations/8268374534351805072",
+		batchName: "batches/3219625329927783944",
+		quizName: "quizzes/5919822694599837256",
 		creator: "vongoc@google.com",
 		score: "110",
 		elementResponses: [
 			{
-				elementId: "9ea3ab48-b047-46c8-a02b-707f7135042f",
+				elementId: "95aea69f-d5f3-453c-bf27-9ace80732612",
 				questionResponse: {
-					questionId: "7fcb6445-b992-48b2-9a9c-8c6d70ffeea8",
+					questionId: "c11e0d08-b923-4dca-abe7-8581139f1f60",
 					score: "10",
-					sectionId: "7fcb6445-b992-48b2-9a9c-8c6d70ffeea8",
+					sectionId: "c11e0d08-b923-4dca-abe7-8581139f1f60",
 					radioResponse: {
 						selectedOption: {
-							optionId: "0fbb91b8-ce69-429f-8413-9a174e8bc810",
+							optionId: "0f230daa-f03f-4781-9c49-f756abfdf48d",
 						},
 					},
 				},
 			},
 			{
-				elementId: "241f60db-094f-4cf8-9ece-69d90dbf934b",
+				elementId: "c6c6c385-f923-4683-a2df-d560f74f0d60",
 				questionResponse: {
-					questionId: "be9df333-7f20-4041-92ea-fe4388482e86",
+					questionId: "436dc082-29a3-4939-a849-233e194ae9be",
 					score: "10",
-					sectionId: "be9df333-7f20-4041-92ea-fe4388482e86",
+					sectionId: "436dc082-29a3-4939-a849-233e194ae9be",
 					radioResponse: {
 						selectedOption: {
-							optionId: "03eec5a7-e857-4ad3-9c76-fa2ffeff368e",
+							optionId: "28705467-21c6-4880-b992-57d126cd6d08",
 						},
 					},
 				},
 			},
 			{
-				elementId: "4fb7b3aa-cbab-4c1d-a936-5c38b106867a",
+				elementId: "8e2d00cb-49d7-4d22-870c-53ebde86a8bb",
 				questionResponse: {
-					questionId: "63efecf6-5e6a-4f95-acce-d5374498aefa",
+					questionId: "a82ae032-8d3f-427c-952f-6b71a93a7c8a",
 					score: "10",
-					sectionId: "63efecf6-5e6a-4f95-acce-d5374498aefa",
+					sectionId: "a82ae032-8d3f-427c-952f-6b71a93a7c8a",
 					radioResponse: {
 						selectedOption: {
-							optionId: "32557115-a891-45d1-909d-58e4f21ca8c2",
+							optionId: "5cc44c46-01ed-4eff-bbed-300a61efef16",
 						},
 					},
 				},
 			},
 			{
-				elementId: "a79b4d5e-b046-47df-b5da-7550b5fe65ae",
+				elementId: "38fa6e67-26ad-4605-b39a-fbb027fbbb19",
 				questionResponse: {
-					questionId: "318999a7-ca23-419b-ba5d-154bccef4e6c",
+					questionId: "503e5268-d855-42a9-b679-c5605890690d",
 					score: "10",
-					sectionId: "318999a7-ca23-419b-ba5d-154bccef4e6c",
+					sectionId: "503e5268-d855-42a9-b679-c5605890690d",
 					radioResponse: {
 						selectedOption: {
-							optionId: "a7e94301-47df-4be6-8c83-9191980e427b",
+							optionId: "abce7be4-98fd-44d6-a9ff-1dca328e5504",
 						},
 					},
 				},
 			},
 			{
-				elementId: "ecbd8043-caa2-469a-8267-c2616abd2263",
+				elementId: "c5e8952d-f4f4-4f52-9abe-2b0f60727ae5",
 				questionResponse: {
-					questionId: "c60bdf32-4e03-4a08-9f8a-95943d439727",
+					questionId: "35dbeae7-6744-43fa-8361-d8c391d3c54d",
 					score: "10",
-					sectionId: "c60bdf32-4e03-4a08-9f8a-95943d439727",
+					sectionId: "35dbeae7-6744-43fa-8361-d8c391d3c54d",
 					radioResponse: {
 						selectedOption: {
-							optionId: "a237995f-e2f8-4437-acdf-8e3dffbba481",
+							optionId: "954e7a67-37df-4e27-b622-124f8bd5a06c",
 						},
 					},
 				},
 			},
 			{
-				elementId: "fb20db31-50f9-4ec8-babb-7fd8119b550f",
+				elementId: "5b977933-a644-42ae-a290-01bce1a811ae",
 				questionResponse: {
-					questionId: "a0331566-923a-49fb-a51b-d818cabb114e",
+					questionId: "7c6ea3bd-63b9-429d-85a1-433dbbaa81e4",
 					score: "10",
-					sectionId: "a0331566-923a-49fb-a51b-d818cabb114e",
+					sectionId: "7c6ea3bd-63b9-429d-85a1-433dbbaa81e4",
 					radioResponse: {
 						selectedOption: {
-							optionId: "c69322bc-d898-4257-8a1c-6d050264f4eb",
+							optionId: "40159ce8-e892-4f4d-aab7-da354771001d",
 						},
 					},
 				},
 			},
 			{
-				elementId: "4cfa4cbc-1522-42c8-abaf-6c4445d9e28e",
+				elementId: "cbc59a56-87d4-40ac-90c3-e8dec5f2f805",
 				questionResponse: {
-					questionId: "63f10a5d-6a99-474f-ab7e-d359849f9c46",
+					questionId: "160eae50-4e5c-468d-8f19-74cd7e53fd85",
 					score: "10",
-					sectionId: "63f10a5d-6a99-474f-ab7e-d359849f9c46",
+					sectionId: "160eae50-4e5c-468d-8f19-74cd7e53fd85",
 					radioResponse: {
 						selectedOption: {
-							optionId: "f8dce4ef-42e0-4be7-9d30-a2417f1af6f8",
+							optionId: "9faa3eaf-e0d0-45eb-9868-fd0b88727945",
 						},
 					},
 				},
 			},
 			{
-				elementId: "195437a0-0724-4252-8e08-dc5511f44f98",
+				elementId: "31060e3c-d575-4012-b5e8-9dddabc29ed5",
 				questionResponse: {
-					questionId: "76edc243-cf75-451d-b2e2-389c7a10bd0c",
-					score: "10",
-					sectionId: "76edc243-cf75-451d-b2e2-389c7a10bd0c",
+					questionId: "746cd4c1-b628-4cf9-a049-7e3a4a282f06",
+					sectionId: "746cd4c1-b628-4cf9-a049-7e3a4a282f06",
 					radioResponse: {
 						selectedOption: {
-							optionId: "0d9af10e-287d-46d6-85bb-36cb5cb24e4e",
+							optionId: "9ff3195d-8f11-4dcc-8519-d7554ea819d5",
 						},
 					},
 				},
 			},
 			{
-				elementId: "e6953944-56cd-4544-9632-30947a43bf46",
+				elementId: "b3f1bdbf-60c3-425a-9fa1-a45ec675fd11",
 				questionResponse: {
-					questionId: "81a2b0b0-2aff-4c08-b79c-16bf2954022a",
+					questionId: "0dcd6b14-2766-4298-8df8-700b2381eac4",
 					score: "10",
-					sectionId: "81a2b0b0-2aff-4c08-b79c-16bf2954022a",
+					sectionId: "0dcd6b14-2766-4298-8df8-700b2381eac4",
 					radioResponse: {
 						selectedOption: {
-							optionId: "642819b4-6083-4095-9763-3ab951b00db5",
+							optionId: "26947533-529e-404a-bb9b-e25e22439ca3",
 						},
 					},
 				},
 			},
 			{
-				elementId: "7b5326f7-0dd7-48d9-86fe-4167ef6bfe77",
+				elementId: "ca39282c-2d58-4136-8ba4-75474d9adfda",
 				questionResponse: {
-					questionId: "9fbcb117-37ad-4941-afdb-e86c338fbab8",
+					questionId: "0648494a-cb38-480a-be82-246e7105673b",
 					score: "10",
-					sectionId: "9fbcb117-37ad-4941-afdb-e86c338fbab8",
+					sectionId: "0648494a-cb38-480a-be82-246e7105673b",
 					radioResponse: {
 						selectedOption: {
-							optionId: "0b9c8ae8-8684-4aa5-9d82-c52865bf521f",
+							optionId: "553664c5-a47b-4142-ab9b-dca3c113d966",
 						},
 					},
 				},
 			},
 			{
-				elementId: "6214fd6d-3109-4f7b-81b7-08526df6662c",
+				elementId: "2402d079-4f2f-4d97-be95-629849c9348b",
 				questionResponse: {
-					questionId: "37be7c81-5d8c-46d0-af8a-69e3fc9c4ad3",
-					sectionId: "37be7c81-5d8c-46d0-af8a-69e3fc9c4ad3",
+					questionId: "0be37e6e-f1f5-40dd-bac9-9362036705ac",
+					score: "10",
+					sectionId: "0be37e6e-f1f5-40dd-bac9-9362036705ac",
 					radioResponse: {
 						selectedOption: {
-							optionId: "1c8ea0fd-7721-4297-8845-3c45da5373c4",
+							optionId: "e87ec943-fc7b-4a6f-8322-3389c78c3655",
 						},
 					},
 				},
 			},
 			{
-				elementId: "5eeb7b62-cc57-4683-9e73-22241fd67d40",
+				elementId: "06cea9c0-d28a-4a9b-aad0-3842b4d994b0",
 				questionResponse: {
-					questionId: "09dd9d1b-9571-4097-809f-86240763c00c",
+					questionId: "71f594af-8c30-4384-be85-6d60fe4131c0",
 					score: "10",
-					sectionId: "09dd9d1b-9571-4097-809f-86240763c00c",
+					sectionId: "71f594af-8c30-4384-be85-6d60fe4131c0",
 					radioResponse: {
 						selectedOption: {
-							optionId: "3dc62b5b-0bdf-4fd9-b1bd-832bbfcd28e4",
+							optionId: "30789217-1999-461b-8b95-ac9b3c6cfd55",
 						},
 					},
 				},
 			},
 		],
-		createTime: "2026-08-04T09:51:18.850407Z",
-		updateTime: "2026-08-04T09:54:33.677193Z",
+		createTime: "2026-08-17T02:10:41.424841Z",
+		updateTime: "2026-08-17T02:17:46.761243Z",
 		status: "COMPLETED",
 		result: "PASS",
 		attemptNumber: 1,

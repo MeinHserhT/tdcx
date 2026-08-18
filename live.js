@@ -30,7 +30,7 @@ function a() {
 // Value
 function a() {
 	var a = +document
-		.querySelector("#bankInfo > p:nth-child(4)")
+		.querySelector(".order-summary-pay")
 		.innerText.replace(/[^\d]/g, "");
 	return a;
 }
@@ -44,19 +44,17 @@ function a() {
 	return (
 		"+84" +
 		document
-			.querySelector('[name="your_mobile"]')
-			.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
+			.querySelector("div.order-address > div:nth-child(2)")
+			.innerText.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
 	);
 }
 
 function a() {
 	var p;
-	document
-		.querySelectorAll('[placeholder*="Điện thoại"]')
-		.forEach(function (e) {
-			e.value &&
-				(p = "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""));
-		});
+	document.querySelectorAll('[name="f_dienthoai"]').forEach(function (e) {
+		e.value &&
+			(p = "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""));
+	});
 	return p;
 }
 

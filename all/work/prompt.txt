@@ -1,22 +1,35 @@
-Bạn là một Kiến trúc sư Phần mềm Senior và Chuyên gia Clean Code. Nhiệm vụ của bạn là phân tích, tối ưu và chuẩn mực đoạn mã này
+Bạn là một Senior Software Engineer và Chuyên gia Clean Code. Hãy phân tích và tối ưu hóa lại file mã nguồn dưới đây theo các quy tắc nghiêm ngặt sau:
 
-[YÊU CẦU CHI TIẾT]
-1. Phân tích & Gộp mã:
-   - Đọc hiểu toàn bộ luồng xử lý của đoạn mã.
-   - Gộp hợp lý các tính năng, giữ nguyên đầy đủ logic nghiệp vụ ban đầu.
+---
 
-2. Rà soát & Tối ưu (Refactor):
-   - Loại bỏ hoàn toàn mã trùng lặp, biến không sử dụng, hàm thừa (áp dụng nguyên lý DRY - Don't Repeat Yourself).
-   - Đơn giản hóa các câu lệnh điều kiện phức tạp.
-   - Chuẩn hóa tên biến, hàm theo quy chuẩn đặt tên tốt nhất của ngôn ngữ đó.
+### [QUY TẮC & RÀNG BUỘC BẮT BUỘC]
 
-3. Chuẩn bị cho nâng cấp (Scalability):
-   - Viết mã theo dạng modular (chia nhỏ hàm/lớp có trách nhiệm đơn lẻ - SRP).
-   - Giảm độ phụ thuộc (loose coupling) để dễ dàng thêm tính năng hoặc bảo trì sau này.
-   - Thêm chú thích (comments) ở những xử lý quan trọng.
+1. 🔒 **Khóa giao diện (UI Freeze):**
+   - **TUYỆT ĐỐI KHÔNG** thay đổi cấu trúc HTML/JSX/UI, layout, hoặc luồng hiển thị giao diện hiện tại.
+   - **Được phép:** Loại bỏ các class CSS thừa, style inline không dùng hoặc CSS bị trùng lặp.
+
+2. ⚙️ **Gộp & Tinh gọn Logic (Logic & Function Consolidation):**
+   - Xóa bỏ triệt để các hàm/biến/import không dùng (Dead Code).
+   - Gộp các hàm nhỏ lẻ, phân mảnh hoặc hàm bọc chỉ gọi 1 lần (single-use wrapper) thành các hàm tổng quát, liền mạch để file ngắn gọn nhất có thể.
+   - Giản lược các khối điều kiện (`if/else`, toán tử 3 ngôi lồng nhau) để code chạy mượt và dễ đọc hơn.
+   - **Bảo toàn 100% logic nghiệp vụ**, sự kiện và các trường hợp biên (edge cases).
+
+3. 🏷️ **Chuẩn hóa đặt tên (Clear & Concise Naming):**
+   - Đặt lại tên hàm, biến sao cho **dễ theo dõi luồng xử lý (traceable)** nhưng phải **ngắn gọn, đúng trọng tâm**, không đặt tên quá dài dòng.
+   - Tuân thủ quy ước đặt tên chuẩn của ngôn ngữ (VD: camelCase cho JS, snake_case cho Python...).
+
+---
+
+### [MÃ NGUỒN CẦN XỬ LÝ]
+Javascript
+
 
 [ĐỊNH DẠNG ĐẦU RA]
-Hãy trả lời theo đúng 3 phần sau:
-1. 💻 **Mã nguồn hoàn chỉnh:** Khối mã đã gộp và tối ưu hóa hoàn chỉnh (sẵn sàng để chạy).
-2. ✂️ **Tóm tắt thay đổi:** Danh sách ngắn gọn các phần dư thừa/trùng lặp đã loại bỏ và các cải tiến đã thực hiện.
-3. 🚀 **Gợi ý mở rộng:** 2-3 điểm có thể nâng cấp thêm trong tương lai (ví dụ: pattern nên áp dụng, cách tối ưu hiệu năng sâu hơn...).
+Trả lời theo 3 phần rõ ràng:
+
+💻 Mã nguồn hoàn chỉnh: Toàn bộ file mã nguồn sau khi đã gộp và làm sạch (sẵn sàng thay thế file cũ).
+✂️ Danh sách dọn dẹp:
+Các hàm/biến đã xóa (kèm lý do: thừa, không dùng).
+Các hàm đã được gộp lại với nhau.
+
+🚀 Lưu ý & Gợi ý nâng cấp: Các điểm cần chú ý khi chạy thử hoặc cách tối ưu kiến trúc sâu hơn (nếu có).
