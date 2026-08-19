@@ -37,7 +37,9 @@ function a() {
 
 // JS Phone
 function a() {
-	return document.querySelector("#doneCode").innerText;
+	return document.querySelector(
+		"#mm-0 > div.wrap-home.py-5 > div > div > div > div:nth-child(2) > div > a"
+	).innerText;
 }
 
 function a() {

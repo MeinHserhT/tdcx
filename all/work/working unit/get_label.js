@@ -153,6 +153,7 @@
 				`
                 .aw-ga4 { background-color: #FEF3D6; color: #B07505; border: 1px solid rgba(176,117,5,0.15); padding: 2px 6px; border-radius: 6px; font-weight: 600; cursor: pointer; user-select: none; }
                 .aw-ads { background-color: #E2F5E9; color: #1E7F4E; border: 1px solid rgba(30,127,78,0.15); padding: 2px 6px; border-radius: 6px; font-weight: 600; cursor: pointer; user-select: none; }
+                .aw-ec-badge { background-color: #1E8E3E; color: #FFFFFF; padding: 2px 6px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px; display: inline-block; vertical-align: middle; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
                 .aw-copied { background-color: #3B72E6 !important; color: white !important; border-color: transparent !important; }
                 #gpt-aw-container { position: fixed; bottom: 20px; left: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
                 .gpt-aw-row { display: flex; gap: 6px; align-items: center; }
@@ -168,43 +169,37 @@
 				600,
 				5,
 			);
+			if (!isDataReady) return;
 
-			if (isDataReady) {
-				// Check if the Goals button has been clicked/selected
-				const navGoals = Utils.$('[id="navigation.goals"]');
-				const isSelected = navGoals?.querySelector(".selected");
+			const navGoals = Utils.$('[id="navigation.goals"]');
+			if (navGoals && !navGoals.querySelector(".selected")) {
+				Utils.$('[id="navigation.goals"] a')?.click();
+			}
 
-				if (navGoals && !isSelected) {
-					Utils.$('[id="navigation.goals"] a').click();
-				}
-
-				try {
-					// Wait for conversion-goal-card element to appear before proceeding
-					await Utils.waitForElement('[id*="diagnosticsHome"]');
-				} catch (err) {
-					console.warn(
-						"diagnosticsHome did not appear within timeout:",
-						err,
-					);
-				}
-
-				// Extract conversion ID and label
-				AdWords.processData(
-					window.conversions_data.SHARED_ALL_ENABLED_CONVERSIONS,
+			try {
+				await Utils.waitForElement('[id*="diagnosticsHome"]');
+			} catch (err) {
+				console.warn(
+					"diagnosticsHome did not appear within timeout:",
+					err,
 				);
 			}
+
+			AdWords.processData(
+				window.conversions_data.SHARED_ALL_ENABLED_CONVERSIONS,
+			);
 		}
 
 		static getSelectedConversionIds() {
 			const rows = Utils.$$(".particle-table-row");
 			const selectedIds = rows
 				.filter((row) => {
-					const checkbox = row.querySelector("mat-checkbox");
+					const cb = row.querySelector("mat-checkbox");
 					return (
 						row.classList.contains("particle-row-selected") ||
-						checkbox?.getAttribute("aria-checked") === "true" ||
-						checkbox?.hasAttribute("checked") ||
-						checkbox
+						cb?.getAttribute("aria-checked") === "true" ||
+						cb?.hasAttribute("checked") ||
+						cb
 							?.querySelector(".mat-checkbox-container")
 							?.classList.contains("checked")
 					);
@@ -220,8 +215,7 @@
 						hrefCtId ||
 						cell?.innerText?.trim() ||
 						"";
-					const match = rawId.match(/\d+/);
-					return match ? match[0] : null;
+					return rawId.match(/\d+/)?.[0];
 				})
 				.filter(Boolean);
 
@@ -238,14 +232,13 @@
 					id: "gpt-aw-container",
 					parent: document.body,
 				});
-			container.innerHTML = "";
+			container.textContent = "";
 
 			uniqueIds.forEach((idStr) => {
 				const row = Utils.createEl("div", {
 					className: "gpt-aw-row",
 					parent: container,
 				});
-
 				const badge = Utils.createEl("div", {
 					className: "gpt-aw-badge",
 					text: `AW-${idStr}`,
@@ -258,28 +251,23 @@
 				className: "gpt-aw-row",
 				parent: container,
 			});
-
 			Utils.createEl("button", {
 				className: "gpt-aw-btn",
 				text: "EC Dashboard ↗",
 				parent: btnRow,
 				onClick: () => {
 					const selectedIds = AdWords.getSelectedConversionIds();
-
 					let url;
 					if (selectedIds.length > 0) {
-						const idListParam = selectedIds.join(",");
-						url = `https://dashboards.corp.google.com/view/_0ded1099_6ef3_4bc9_bba0_2445840d1b69?f=conversion_type_l3j54n:in:${idListParam}`;
+						url = `https://dashboards.corp.google.com/view/_0ded1099_6ef3_4bc9_bba0_2445840d1b69?f=conversion_type_l3j54n:in:${selectedIds.join(",")}`;
 					} else if (uniqueIds.length > 0) {
-						const trackingIdsParam = uniqueIds.join(",");
-						url = `https://dashboards.corp.google.com/view/_0ded1099_6ef3_4bc9_bba0_2445840d1b69?f=conversion_tracking_id_5nuehn:in:${trackingIdsParam}`;
+						url = `https://dashboards.corp.google.com/view/_0ded1099_6ef3_4bc9_bba0_2445840d1b69?f=conversion_tracking_id_5nuehn:in:${uniqueIds.join(",")}`;
 					} else {
 						alert(
 							"No conversion rows selected and no AW tracking IDs found!",
 						);
 						return;
 					}
-
 					window.open(url, "_blank");
 				},
 			});
@@ -288,54 +276,98 @@
 
 			try {
 				const parsed = JSON.parse(rawData);
-				if (!parsed || !parsed[1]) return;
+				if (!parsed?.[1]) return;
 
 				const dataMap = new Map(
 					parsed[1].map((item) => [item[1], item]),
 				);
 
+				// Extract and stringify CONVERSION_DIAGNOSTICS data for searching conversion IDs
+				const diagData =
+					typeof window.conversions_data?.CONVERSION_DIAGNOSTICS ===
+					"string"
+						? window.conversions_data.CONVERSION_DIAGNOSTICS
+						: JSON.stringify(
+								window.conversions_data
+									?.CONVERSION_DIAGNOSTICS || "",
+							);
+
 				setTimeout(() => {
 					Utils.$$(".conversion-name-cell .internal").forEach(
 						(cell) => {
 							const row = cell.closest(".particle-table-row");
-							if (
-								row &&
-								!row
-									.querySelector(
-										'[essfield="aggregated_conversion_source"]',
-									)
-									?.innerText?.toLowerCase()
-									.includes("web")
-							) {
+							const sourceText = row
+								?.querySelector(
+									'[essfield="aggregated_conversion_source"]',
+								)
+								?.innerText?.toLowerCase();
+							if (row && !sourceText?.includes("web"))
 								return row.remove();
-							}
 
+							const link = row?.querySelector("a.ess-cell-link");
+							const hrefCtId =
+								link?.href?.match(/ctId=(\d+)/)?.[1];
 							const originalText = cell.innerText?.trim() || "";
 							const numericMatch = originalText.match(/\d+/);
-							if (numericMatch) {
+							if (numericMatch)
 								cell.dataset.originalId = numericMatch[0];
-							}
+
+							const convActionId =
+								cell.dataset.originalId ||
+								hrefCtId ||
+								numericMatch?.[0] ||
+								"";
 
 							const mappedData = dataMap.get(originalText);
 							if (!mappedData) return;
 
-							let type = null;
-							let convId = null;
-							if (mappedData[11] === 1) {
-								type = "aw-ads";
-								convId = mappedData[64]?.[2]?.[4]
-									?.split("'")?.[7]
-									?.split("/")?.[1];
-							} else if (mappedData[11] === 32) {
-								type = "aw-ga4";
-								convId =
-									mappedData[64]?.[1]?.[4]?.split("'")?.[3];
-							}
+							const [type, convId] =
+								mappedData[11] === 1
+									? [
+											"aw-ads",
+											mappedData[64]?.[2]?.[4]
+												?.split("'")?.[7]
+												?.split("/")?.[1],
+										]
+									: mappedData[11] === 32
+										? [
+												"aw-ga4",
+												mappedData[64]?.[1]?.[4]?.split(
+													"'",
+												)?.[3],
+											]
+										: [];
 
 							if (type && convId) {
 								cell.textContent = convId;
 								cell.classList.add(type);
 								Utils.setupCopy(cell, convId);
+							}
+
+							// Search for conversion ID inside CONVERSION_DIAGNOSTICS
+							const hasEC = Boolean(
+								diagData &&
+								((convActionId &&
+									new RegExp(`\\b${convActionId}\\b`).test(
+										diagData,
+									)) ||
+									(convId &&
+										new RegExp(`\\b${convId}\\b`).test(
+											diagData,
+										))),
+							);
+
+							// Append "EC" badge if found in CONVERSION_DIAGNOSTICS
+							if (
+								hasEC &&
+								!cell.parentNode?.querySelector(".aw-ec-badge")
+							) {
+								Utils.createEl("span", {
+									className: "aw-ec-badge",
+									text: "EC",
+									title: "Enhanced Conversions Enabled",
+									parent: cell.parentNode || cell,
+								});
 							}
 						},
 					);

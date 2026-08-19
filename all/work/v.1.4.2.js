@@ -5,6 +5,7 @@
 	// 1. SHARED UTILITIES
 	// ==========================================
 	let safePolicy;
+
 	const Utils = {
 		sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 
@@ -127,11 +128,11 @@
 					element.dataset.origText =
 						element.dataset.origText || element.textContent;
 					element.textContent = successMsg;
-					element.classList.add("aw-copied");
+					element.classList.add("is-copied");
 					clearTimeout(timer);
 					timer = setTimeout(() => {
 						element.textContent = element.dataset.origText;
-						element.classList.remove("aw-copied");
+						element.classList.remove("is-copied");
 					}, 1500);
 				} catch (err) {
 					console.error("Copy failed", err);
@@ -189,27 +190,27 @@
 
 		static injectStyles() {
 			Utils.addStyle(
-				"tag-inspector-styles",
+				"ti-styles",
 				`
-				.ti-overlay { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background-color: rgba(0, 0, 0, 0.55) !important; z-index: 999999 !important; display: flex !important; align-items: center !important; justify-content: center !important; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif !important; }
+				.ti-mask { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background-color: rgba(0, 0, 0, 0.55) !important; z-index: 999999 !important; display: flex !important; align-items: center !important; justify-content: center !important; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif !important; }
 				.ti-modal { background-color: rgba(255, 255, 255, 0.85) !important; backdrop-filter: blur(25px) !important; -webkit-backdrop-filter: blur(25px) !important; border-radius: 20px !important; padding: 24px !important; width: 90% !important; max-width: 420px !important; max-height: 80vh !important; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04) !important; border: none !important; display: flex !important; flex-direction: column !important; gap: 16px !important; box-sizing: border-box !important; }
-				.ti-table-container { overflow-y: auto !important; max-height: 50vh !important; border-radius: 14px !important; background-color: rgba(255, 255, 255, 0.5) !important; backdrop-filter: blur(10px) !important; border: none !important; box-shadow: none !important; }
+				.ti-body { overflow-y: auto !important; max-height: 50vh !important; border-radius: 14px !important; background-color: rgba(255, 255, 255, 0.5) !important; backdrop-filter: blur(10px) !important; border: none !important; box-shadow: none !important; }
 				.ti-modal table, .ti-modal thead, .ti-modal tbody, .ti-modal tr, .ti-modal th, .ti-modal td { border: none !important; outline: none !important; box-shadow: none !important; background-image: none !important; }
 				.ti-modal table { width: 100% !important; border-collapse: collapse !important; border-spacing: 0 !important; margin: 0 !important; padding: 0 !important; }
 				.ti-row { transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important; }
 				.ti-row:hover { background-color: rgba(255, 255, 255, 0.8) !important; }
-				.ti-tag-btn { font-weight: 600 !important; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; font-size: 12px !important; border-radius: 9999px !important; padding: 4px 12px !important; cursor: pointer !important; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important; white-space: nowrap !important; display: inline-block !important; line-height: 1.4 !important; box-sizing: border-box !important; }
-				.ti-tag-btn:hover { transform: scale(1.02) !important; }
-				.ti-tag-btn:active { transform: scale(0.97) !important; }
-				.ti-action-btn { display: inline-flex !important; align-items: center !important; justify-content: center !important; width: 92px !important; min-width: 92px !important; max-width: 92px !important; height: 28px !important; min-height: 28px !important; max-height: 28px !important; padding: 0 !important; margin: 0 !important; font-size: 11px !important; font-weight: 600 !important; line-height: 1 !important; white-space: nowrap !important; cursor: pointer !important; border: none !important; border-radius: 9999px !important; background-color: #0071E3 !important; color: #ffffff !important; box-shadow: 0 2px 8px rgba(0, 113, 227, 0.2) !important; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important; box-sizing: border-box !important; text-transform: none !important; letter-spacing: normal !important; }
-				.ti-action-btn:hover { background-color: #0077ED !important; box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3) !important; transform: translateY(-1px) !important; }
-				.ti-action-btn:active { transform: scale(0.96) !important; }
-				.ti-btn-gear { padding: 8px 16px !important; font-size: 13px !important; font-weight: 500 !important; cursor: pointer !important; border: none !important; border-radius: 9999px !important; background-color: rgba(0, 0, 0, 0.05) !important; color: #1D1D1F !important; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important; box-sizing: border-box !important; white-space: nowrap !important; }
-				.ti-btn-gear:hover { background-color: rgba(0, 0, 0, 0.08) !important; }
-				.ti-btn-gear:active { transform: scale(0.96) !important; }
-				.ti-btn-close { padding: 8px 20px !important; font-size: 13px !important; font-weight: 500 !important; cursor: pointer !important; border: 1px solid rgba(0, 0, 0, 0.1) !important; border-radius: 9999px !important; background-color: #FFFFFF !important; color: #1D1D1F !important; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important; box-shadow: 0 2px 6px rgba(0,0,0,0.02) !important; box-sizing: border-box !important; white-space: nowrap !important; }
-				.ti-btn-close:hover { background-color: #F5F5F7 !important; border-color: rgba(0, 0, 0, 0.15) !important; }
-				.ti-btn-close:active { transform: scale(0.96) !important; }
+				.ti-tag { font-weight: 600 !important; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; font-size: 12px !important; border-radius: 9999px !important; padding: 4px 12px !important; cursor: pointer !important; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important; white-space: nowrap !important; display: inline-block !important; line-height: 1.4 !important; box-sizing: border-box !important; }
+				.ti-tag:hover { transform: scale(1.02) !important; }
+				.ti-tag:active { transform: scale(0.97) !important; }
+				.ti-btn { display: inline-flex !important; align-items: center !important; justify-content: center !important; width: 92px !important; min-width: 92px !important; max-width: 92px !important; height: 28px !important; min-height: 28px !important; max-height: 28px !important; padding: 0 !important; margin: 0 !important; font-size: 11px !important; font-weight: 600 !important; line-height: 1 !important; white-space: nowrap !important; cursor: pointer !important; border: none !important; border-radius: 9999px !important; background-color: #0071E3 !important; color: #ffffff !important; box-shadow: 0 2px 8px rgba(0, 113, 227, 0.2) !important; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important; box-sizing: border-box !important; text-transform: none !important; letter-spacing: normal !important; }
+				.ti-btn:hover { background-color: #0077ED !important; box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3) !important; transform: translateY(-1px) !important; }
+				.ti-btn:active { transform: scale(0.96) !important; }
+				.ti-gear { padding: 8px 16px !important; font-size: 13px !important; font-weight: 500 !important; cursor: pointer !important; border: none !important; border-radius: 9999px !important; background-color: rgba(0, 0, 0, 0.05) !important; color: #1D1D1F !important; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important; box-sizing: border-box !important; white-space: nowrap !important; }
+				.ti-gear:hover { background-color: rgba(0, 0, 0, 0.08) !important; }
+				.ti-gear:active { transform: scale(0.96) !important; }
+				.ti-close { padding: 8px 20px !important; font-size: 13px !important; font-weight: 500 !important; cursor: pointer !important; border: 1px solid rgba(0, 0, 0, 0.1) !important; border-radius: 9999px !important; background-color: #FFFFFF !important; color: #1D1D1F !important; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important; box-shadow: 0 2px 6px rgba(0,0,0,0.02) !important; box-sizing: border-box !important; white-space: nowrap !important; }
+				.ti-close:hover { background-color: #F5F5F7 !important; border-color: rgba(0, 0, 0, 0.15) !important; }
+				.ti-close:active { transform: scale(0.96) !important; }
 			`,
 			);
 		}
@@ -250,7 +251,7 @@
 
 			const overlay = Utils.createEl("div", {
 				id: "apple-gtag-overlay",
-				className: "ti-overlay",
+				className: "ti-mask",
 				parent: document.body,
 				onClick: (e) => e.target === overlay && overlay.remove(),
 			});
@@ -260,7 +261,7 @@
 				parent: overlay,
 			});
 			const container = Utils.createEl("div", {
-				className: "ti-table-container",
+				className: "ti-body",
 				parent: modal,
 			});
 
@@ -276,7 +277,7 @@
 					style: "width: 100%; border-collapse: collapse; text-align: left;",
 					html: `
                     <thead>
-                        <tr style="background-color: rgba(250, 250, 252, 0.6);">
+                        <tr style="background-color: rgba(250, 250, 250, 0.6);">
                             <th style="padding: 12px 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #86868B;">Tag ID</th>
                             <th style="padding: 12px 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #86868B; text-align: right;">Action</th>
                         </tr>
@@ -298,7 +299,7 @@
 
 					const tagBtn = Utils.createEl("button", {
 						parent: tdTag,
-						className: "ti-tag-btn",
+						className: "ti-tag",
 						text: tag,
 						title: "Click to copy",
 						style: `color: ${theme.color}; background-color: ${theme.bg}; border: 1px solid ${theme.border} !important;`,
@@ -315,7 +316,7 @@
 
 					Utils.createEl("button", {
 						parent: tdAction,
-						className: "ti-action-btn",
+						className: "ti-btn",
 						text: TagInspector.LABELS[actionPrefix] || "Open ↗",
 						onClick: () => {
 							const url = tag.startsWith("AW-")
@@ -334,7 +335,7 @@
 
 			Utils.createEl("button", {
 				parent: footer,
-				className: "ti-btn-gear",
+				className: "ti-gear",
 				text: "Gearloose ↗",
 				onClick: () =>
 					window.open(
@@ -345,7 +346,7 @@
 
 			Utils.createEl("button", {
 				parent: footer,
-				className: "ti-btn-close",
+				className: "ti-close",
 				text: "Close",
 				onClick: () => overlay.remove(),
 			});
@@ -359,7 +360,7 @@
 		static SELECTORS = {
 			questionContainer: ".question-container",
 			questionText: ".question-text",
-			label: "label.mdc-label",
+			label: "label.mdc-label, label, .mat-radio-label, .mat-mdc-radio-button, mat-radio-button, mat-checkbox",
 			textarea: 'textarea[formcontrolname="selectedText"]',
 			autoSuggestion: "span.auto-suggestion-text",
 			radioParent: "mat-radio-button",
@@ -663,37 +664,55 @@
 						.toLowerCase()
 						.includes(options.title.toLowerCase());
 				});
-				if (!context)
-					return console.warn(
+				if (!context) {
+					console.warn(
 						`Question container matching "${options.title}" not found.`,
 					);
+					return false;
+				}
 			}
 
 			const targetChoices = Array.isArray(choices) ? choices : [choices];
 			const isCheckbox = Boolean(options.isCheckbox);
+			let found = false;
 
-			Utils.$$(QPlusAutomator.SELECTORS.label, context).forEach(
-				(label) => {
-					if (targetChoices.includes(label.textContent.trim())) {
-						let input = document.getElementById(
-							label.getAttribute("for"),
-						);
-						if (!input) {
-							const parent = label.closest(
-								isCheckbox
-									? QPlusAutomator.SELECTORS.checkboxParent
-									: QPlusAutomator.SELECTORS.radioParent,
-							);
-							input = parent?.querySelector(
-								QPlusAutomator.SELECTORS.input,
-							);
-						}
-						if (input && (!isCheckbox || !input.checked)) {
+			Utils.$$(QPlusAutomator.SELECTORS.label, context).forEach((el) => {
+				const text = el.textContent.trim().replace(/\s+/g, " ");
+				const isMatch = targetChoices.some(
+					(target) => text === target || text.startsWith(target),
+				);
+
+				if (isMatch) {
+					const parent =
+						el.closest(
+							isCheckbox
+								? QPlusAutomator.SELECTORS.checkboxParent
+								: QPlusAutomator.SELECTORS.radioParent,
+						) || el;
+					const input =
+						parent.querySelector(QPlusAutomator.SELECTORS.input) ||
+						(el.getAttribute?.("for")
+							? document.getElementById(el.getAttribute("for"))
+							: null);
+
+					if (!isCheckbox || (input && !input.checked)) {
+						if (parent && parent !== el) parent.click();
+						el.click();
+						if (input) {
 							input.click();
+							input.dispatchEvent(
+								new Event("change", { bubbles: true }),
+							);
+							input.dispatchEvent(
+								new Event("input", { bubbles: true }),
+							);
 						}
+						found = true;
 					}
-				},
-			);
+				}
+			});
+
+			return found;
 		}
 
 		static async run() {
@@ -715,10 +734,26 @@
 				);
 
 				QPlusAutomator.selectOptions(config.status);
-				await Utils.sleep(200);
+				await Utils.sleep(400);
 
-				QPlusAutomator.selectOptions(config.subStatus);
-				await Utils.sleep(200);
+				if (config.subStatus) {
+					await Utils.pollForCondition(
+						() => {
+							return Utils.$$(
+								QPlusAutomator.SELECTORS.label,
+							).some((l) =>
+								l.textContent.includes(
+									config.subStatus.split(" - ")[0],
+								),
+							);
+						},
+						150,
+						15,
+					);
+
+					QPlusAutomator.selectOptions(config.subStatus);
+					await Utils.sleep(300);
+				}
 
 				const textareas = Utils.$$(QPlusAutomator.SELECTORS.textarea);
 				[config.ldap, config.date].forEach((val, idx) => {
@@ -755,6 +790,8 @@
 	class CaseMon {
 		static isRunning = false;
 		static observer = null;
+		static currentLayout = "full";
+		static updateFn = null;
 
 		static init() {
 			if (CaseMon.isRunning) return;
@@ -763,7 +800,7 @@
 
 			const iconBase = "https://cdn-icons-png.flaticon.com/512";
 			const config = {
-				uiId: "bento_agent_ui",
+				uiId: "cm-root",
 				target: ".agent-table-container",
 				statusConfig: {
 					active: {
@@ -860,82 +897,111 @@
 					/photos\/([^/?]+)/,
 				)?.[1] ?? "Unknown";
 
-			// Nạp CSS Stylesheet
+			// Permission Check: only vongoc has admin layout toggle privileges
+			const isAdmin = currentUserName.toLowerCase() === "vongoc";
+			CaseMon.currentLayout = isAdmin ? "simplicity" : "full";
+
 			Utils.addStyle(
-				"bento-dash-styles",
+				"cm-styles",
 				`
-			#bento_agent_ui { position: fixed; height: 100%; width: 100%; top: 0; right: 0; background-color: rgba(0, 0, 0, 0.45); z-index: 9999; display: flex; justify-content: flex-end; align-items: center; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif; pointer-events: none; box-sizing: border-box; }
-			.bento-wrapper { position: relative; pointer-events: auto; width: 100%; max-width: 320px; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.02); padding: 20px; border: 1px solid rgba(255, 255, 255, 0.8); color: #1D1D1F; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-			.close-btn { position: absolute; top: -10px; right: -10px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.06); cursor: pointer; z-index: 20; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
-			.close-btn:hover { background: #FFFFFF; transform: scale(1.08); }
-			.close-btn img { width: 11px; height: 11px; opacity: 0.6; }
-			.bento-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-			.bento-card { background: transparent; display: flex; flex-direction: column; }
-			.agent-list-header { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
-			.agent-list-header h3 { margin: 0; font-size: 11px; color: #86868B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; display: flex; align-items: center; justify-content: space-between; }
-			.header-counters { display: flex; gap: 6px; justify-content: flex-start; width: 100%; }
-			.agent-count { font-size: 10px; padding: 3px 8px; border-radius: 9999px; font-weight: 600; white-space: nowrap; }
-			.active-badge { background: rgba(52, 199, 89, 0.12); color: #248A3D; border: 1px solid rgba(52, 199, 89, 0.2); }
-			.phone-badge { background: rgba(255, 59, 48, 0.12); color: #D70015; border: 1px solid rgba(255, 59, 48, 0.2); }
-			.break-badge { background: rgba(255, 149, 0, 0.12); color: #C77000; border: 1px solid rgba(255, 149, 0, 0.2); }
-			.total-badge { background: rgba(142, 142, 147, 0.12); color: #636366; border: 1px solid rgba(142, 142, 147, 0.2); }
-			.health-warning { animation: pulseHealth 2.5s infinite; border-color: rgba(255, 59, 48, 0.6); box-shadow: 0 0 20px rgba(255, 59, 48, 0.2); }
-			@keyframes pulseHealth { 0%, 100% { border-color: rgba(255, 255, 255, 0.8); } 50% { border-color: rgba(255, 59, 48, 0.6); } }
-			.health-text { font-size: 10px; color: #FF3B30; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-			.agent-list-container { max-height: 72vh; overflow-y: auto; padding: 2px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 12px; }
-			.status-group-block { display: flex; width: 100%; gap: 10px; align-items: flex-start; }
-			.status-inline-label { width: 50px; min-width: 35px; text-align: left; font-size: 9px; font-weight: 700; color: #86868B; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 4px; border-left: 2px solid rgba(0,0,0,0.1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
-			.status-inline-label.user-label { color: #0071E3; border-left-color: #0071E3; background: rgba(0, 113, 227, 0.08); border-radius: 0 4px 4px 0; }
-			.status-rows-stack { flex-grow: 1; display: flex; flex-direction: column; gap: 6px; }
-			.agent-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: 12px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 2px 6px rgba(0,0,0,0.02); position: relative; background-clip: padding-box; border: 1px solid rgba(255, 255, 255, 0.6); z-index: 1; }
-			.agent-row:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-			.agent-row::before { content: ''; position: absolute; inset: 0; border-radius: 12px; padding: 1.5px; margin: -1.5px; background: conic-gradient(var(--st-color) var(--progress), var(--st-track) var(--progress)); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; z-index: -1; }
-			@keyframes pulseWarning { 0%, 100% { filter: drop-shadow(0 0 2px var(--st-color)); } 50% { filter: drop-shadow(0 0 8px var(--st-color)); } }
-			.agent-row.over-time::before { animation: pulseWarning 1.5s infinite ease-in-out; }
-			@keyframes bgIconFloat { 0%, 100% { transform: translateY(0) scale(1); opacity: 0.15; } 50% { transform: translateY(-2px) scale(1.1); opacity: 0.3; } }
-			.row-bg-icons { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; gap: 8px; pointer-events: none; z-index: 0; }
-			.row-bg-icons img { width: 22px; height: 22px; object-fit: contain; opacity: 0.15; animation: bgIconFloat 3s infinite ease-in-out; }
-			.row-bg-icons img:nth-child(2) { animation-delay: 1.5s; }
-			.agent-left { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; }
-			.agent-left span { font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.25px; color: #1D1D1F; }
-			.agent-avatar { width: 26px; height: 26px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(0,0,0,0.05); }
-			.agent-right { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; text-align: right; }
-			.agent-meta { display: flex; flex-direction: column; }
-			.time-state { font-family: "SF Mono", "Roboto Mono", "Consolas", "Menlo", "Courier New", monospace; font-size: 10px; font-weight: 500; opacity: 0.85; font-variant-numeric: tabular-nums; letter-spacing: -0.2px; }
-			.time-in-state { display: inline; }
-			.status-text { font-family: "SF Pro Display", "Trebuchet MS", "Avenir Next", system-ui, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.35px; display: inline-block; margin-top: 1px; }
-			.agent-right > img { width: 18px; height: 18px; opacity: 0.85; }
-			.stt-active { background: rgba(230, 248, 236, 0.7); color: #064E3B; } .stt-active .status-text { color: #248A3D; }
-			.stt-phone { background: rgba(254, 238, 238, 0.7); color: #7F1D1D; } .stt-phone .status-text { color: #D70015; }
-			.stt-video { background: rgba(245, 235, 255, 0.7); color: #4C1D95; } .stt-video .status-text { color: #8944AB; }
-			.stt-email { background: rgba(230, 242, 255, 0.7); color: #0C4A6E; } .stt-email .status-text { color: #0071E3; }
-			.stt-coffee-break { background: rgba(255, 244, 230, 0.7); color: #78350F; } .stt-coffee-break .status-text { color: #C77000; }
-			.stt-lunch-break { background: rgba(255, 250, 230, 0.7); color: #713F12; } .stt-lunch-break .status-text { color: #A16207; }
-			.stt-break { background: rgba(242, 242, 247, 0.7); color: #374151; } .stt-break .status-text { color: #636366; }
-			[animation="breathe"] { animation: breathe 2s infinite ease-in-out; }
-			@keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.15); opacity: 1; } }
-			[animation="rock"] { animation: rock 3s infinite ease-in-out; transform-origin: bottom center; }
-			@keyframes rock { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(10deg); } }
-			[animation="bounce-y"] { animation: bounce-y 1.5s infinite ease-in-out; }
-			@keyframes bounce-y { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-			[animation="ring"] { animation: ring 2s infinite ease-in-out; }
-			@keyframes ring { 0%, 100% { transform: rotate(0); } 10%, 30%, 50% { transform: rotate(12deg); } 20%, 40%, 60% { transform: rotate(-12deg); } 70% { transform: rotate(0); } }
-			[animation="fly"] { animation: fly 2.5s infinite ease-in-out; }
-			@keyframes fly { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(3px, -3px); } }
-			[animation="fade-pulse"] { animation: fade-pulse 3s infinite ease-in-out; }
-			@keyframes fade-pulse { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.05); } }
-			.agent-list-container::-webkit-scrollbar { width: 4px; }
-			.agent-list-container::-webkit-scrollbar-track { background: transparent; }
-			.agent-list-container::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.1); border-radius: 10px; }
-			@media screen and (max-width: 380px) { .status-inline-label { display: none !important; } }
-			@media screen and (max-width: 320px) { .header-counters { display: none !important; } .agent-list-header h3 { margin-bottom: 0; } }
-			@media screen and (max-width: 280px) { .agent-avatar { display: none !important; } }
-			@media screen and (max-width: 240px) { .agent-right > img { display: none !important; } }
-			@media screen and (max-width: 220px) { .time-in-state { display: none !important; } }
-			`,
+	@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap');
+	#cm-root, #cm-root * { box-sizing: border-box; font-family: "Lexend", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+	#cm-root { position: fixed; height: 100%; width: 100%; top: 0; right: 0; background-color: rgba(0, 0, 0, 0.45); z-index: 9999; display: flex; justify-content: flex-end; align-items: center; padding: 20px; pointer-events: none; }
+	#cm-root .cm-wrap { position: relative; pointer-events: auto; width: 100%; max-width: 320px; background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.02); padding: 16px; border: 1px solid rgba(255, 255, 255, 0.8); color: #1D1D1F; transition: max-width 0.25s cubic-bezier(0.16, 1, 0.3, 1), all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+	#cm-root .cm-wrap.cm-full { max-width: 400px; }
+	#cm-root .cm-close { position: absolute; top: -10px; right: -10px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.06); cursor: pointer; z-index: 20; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+	#cm-root .cm-close:hover { background: #FFFFFF; transform: scale(1.08); }
+	#cm-root .cm-close img { width: 11px; height: 11px; opacity: 0.6; }
+	#cm-root .cm-grid, #cm-root .cm-card { display: flex; flex-direction: column; width: 100%; }
+	#cm-root .cm-head { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; width: 100%; }
+	#cm-root .cm-head-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
+	#cm-root .cm-head h3 { margin: 0; font-size: 11px; color: #86868B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; display: flex; align-items: center; gap: 6px; }
+	#cm-root .cm-toggle { padding: 3px 9px; font-size: 10px; font-weight: 600; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); border-radius: 9999px; background: rgba(255, 255, 255, 0.85); color: #1D1D1F; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 1px 3px rgba(0,0,0,0.04); white-space: nowrap; }
+	#cm-root .cm-toggle:hover { background: #FFFFFF; transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+	#cm-root .cm-toggle:active { transform: scale(0.96); }
+	#cm-root .cm-stats { display: flex; gap: 5px; justify-content: flex-start; align-items: center; width: 100%; }
+	#cm-root .cm-pill { font-size: 9.5px; padding: 2px 7px; border-radius: 9999px; font-weight: 600; white-space: nowrap; }
+	#cm-root .badge-act { background: rgba(52, 199, 89, 0.12); color: #248A3D; border: 1px solid rgba(52, 199, 89, 0.2); }
+	#cm-root .badge-phn { background: rgba(255, 59, 48, 0.12); color: #D70015; border: 1px solid rgba(255, 59, 48, 0.2); }
+	#cm-root .badge-brk { background: rgba(255, 149, 0, 0.12); color: #C77000; border: 1px solid rgba(255, 149, 0, 0.2); }
+	#cm-root .badge-tot { background: rgba(142, 142, 147, 0.12); color: #636366; border: 1px solid rgba(142, 142, 147, 0.2); }
+	#cm-root .cm-warn { animation: pulseHealth 2.5s infinite; border-color: rgba(255, 59, 48, 0.6); box-shadow: 0 0 20px rgba(255, 59, 48, 0.2); }
+	@keyframes pulseHealth { 0%, 100% { border-color: rgba(255, 255, 255, 0.8); } 50% { border-color: rgba(255, 59, 48, 0.6); } }
+	#cm-root .cm-warn-txt { font-size: 9.5px; color: #FF3B30; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+	#cm-root .cm-cols { display: flex; width: 100%; gap: 8px; align-items: center; padding: 0 2px 4px 2px; box-sizing: border-box; }
+	#cm-root .col-spacer { width: 54px; min-width: 54px; flex-shrink: 0; }
+	#cm-root .col-grid { flex-grow: 1; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(56px, auto) minmax(56px, auto) minmax(20px, auto); gap: 6px; padding: 0 10px; font-size: 8.5px; font-weight: 700; color: #86868B; text-transform: uppercase; letter-spacing: 0.4px; }
+	#cm-root .col-grid span { text-align: center; display: flex; align-items: center; justify-content: center; }
+
+	#cm-root .cm-list { max-height: 72vh; overflow-y: auto; overflow-x: hidden; padding: 2px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 10px; width: 100%; }
+	#cm-root .cm-group { display: flex; width: 100%; gap: 8px; align-items: flex-start; }
+	#cm-root .grp-lbl { flex-shrink: 0; width: 54px; text-align: left; font-size: 8.5px; font-weight: 700; color: #86868B; text-transform: uppercase; letter-spacing: 0.3px; padding: 5px 2px; border-left: 2px solid rgba(0,0,0,0.1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+	#cm-root .grp-lbl.is-me { color: #0071E3; border-left-color: #0071E3; background: rgba(0, 113, 227, 0.08); border-radius: 0 3px 3px 0; }
+	#cm-root .grp-stack { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+	#cm-root .cm-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-radius: 12px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 2px 6px rgba(0,0,0,0.02); position: relative; background-clip: padding-box; border: 1px solid rgba(255, 255, 255, 0.6); z-index: 1; width: 100%; min-width: 0; }
+	#cm-root .cm-row.is-full { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(56px, auto) minmax(56px, auto) minmax(20px, auto); gap: 6px; padding: 6px 10px; }
+	#cm-root .cm-row:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+	#cm-root .cm-row::before { content: ''; position: absolute; inset: 0; border-radius: 12px; padding: 1.5px; margin: -1.5px; background: conic-gradient(var(--st-color) var(--progress), var(--st-track) var(--progress)); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; z-index: -1; }
+	@keyframes pulseWarning { 0%, 100% { filter: drop-shadow(0 0 2px var(--st-color)); } 50% { filter: drop-shadow(0 0 8px var(--st-color)); } }
+	#cm-root .cm-row.is-over::before { animation: pulseWarning 1.5s infinite ease-in-out; }
+	
+	#cm-root .row-left { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; min-width: 0; flex-shrink: 1; }
+	#cm-root .row-left span, #cm-root .row-left .row-name { font-size: 11.5px; font-weight: 600; letter-spacing: 0.2px; color: #1D1D1F; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+	#cm-root .row-info { display: flex; flex-direction: column; min-width: 0; overflow: hidden; justify-content: center; }
+	#cm-root .row-avatar { width: 24px; height: 24px; min-width: 24px; border-radius: 7px; object-fit: cover; border: 1px solid rgba(0,0,0,0.05); flex-shrink: 0; }
+	#cm-root .row-right { position: relative; z-index: 1; display: flex; align-items: center; gap: 6px; text-align: right; flex-shrink: 0; }
+	#cm-root .row-meta { display: flex; flex-direction: column; text-align: right; }
+	#cm-root .row-col { position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: center; text-align: center; min-width: 0; }
+	
+	#cm-root .row-time { font-size: 11px; font-weight: 600; color: #1D1D1F; opacity: 0.95; font-variant-numeric: tabular-nums; letter-spacing: -0.2px; line-height: 1.2; white-space: nowrap; }
+	#cm-root .row-subtime { display: inline; }
+	
+	/* Status text explicitly rendered with Inter */
+	#cm-root .row-status,
+	#cm-root .row-info .row-status {
+		font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+		font-size: 9.5px;
+		font-weight: 700;
+		letter-spacing: 0.25px;
+		display: inline-block;
+		margin-top: 1px;
+		line-height: 1.2;
+	}
+	#cm-root .row-info .row-status { font-size: 9px; margin-top: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	
+	#cm-root .row-right img, #cm-root .row-ico img { width: 16px; height: 16px; min-width: 16px; max-width: 16px; max-height: 16px; object-fit: contain; opacity: 0.85; display: block; flex-shrink: 0; }
+	#cm-root .row-ico { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 4px; min-width: 20px; flex-shrink: 0; }
+	#cm-root .st-active { background: rgba(230, 248, 236, 0.7); color: #064E3B; } #cm-root .st-active .row-status { color: #248A3D; }
+	#cm-root .st-phone { background: rgba(254, 238, 238, 0.7); color: #7F1D1D; } #cm-root .st-phone .row-status { color: #D70015; }
+	#cm-root .st-video { background: rgba(245, 235, 255, 0.7); color: #4C1D95; } #cm-root .st-video .row-status { color: #8944AB; }
+	#cm-root .st-email { background: rgba(230, 242, 255, 0.7); color: #0C4A6E; } #cm-root .st-email .row-status { color: #0071E3; }
+	#cm-root .st-coffee-break { background: rgba(255, 244, 230, 0.7); color: #78350F; } #cm-root .st-coffee-break .row-status { color: #C77000; }
+	#cm-root .st-lunch-break { background: rgba(255, 250, 230, 0.7); color: #713F12; } #cm-root .st-lunch-break .row-status { color: #A16207; }
+	#cm-root .st-break { background: rgba(242, 242, 247, 0.7); color: #374151; } #cm-root .st-break .row-status { color: #636366; }
+	[animation="breathe"] { animation: breathe 2s infinite ease-in-out; }
+	@keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.15); opacity: 1; } }
+	[animation="rock"] { animation: rock 3s infinite ease-in-out; transform-origin: bottom center; }
+	@keyframes rock { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(10deg); } }
+	[animation="bounce-y"] { animation: bounce-y 1.5s infinite ease-in-out; }
+	@keyframes bounce-y { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+	[animation="ring"] { animation: ring 2s infinite ease-in-out; }
+	@keyframes ring { 0%, 100% { transform: rotate(0); } 10%, 30%, 50% { transform: rotate(12deg); } 20%, 40%, 60% { transform: rotate(-12deg); } 70% { transform: rotate(0); } }
+	[animation="fly"] { animation: fly 2.5s infinite ease-in-out; }
+	@keyframes fly { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(3px, -3px); } }
+	[animation="fade-pulse"] { animation: fade-pulse 3s infinite ease-in-out; }
+	@keyframes fade-pulse { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.05); } }
+	#cm-root .cm-list::-webkit-scrollbar { width: 4px; }
+	#cm-root .cm-list::-webkit-scrollbar-track { background: transparent; }
+	#cm-root .cm-list::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.1); border-radius: 10px; }
+	@media screen and (max-width: 380px) { #cm-root .grp-lbl { display: none !important; } }
+	@media screen and (max-width: 320px) { #cm-root .cm-stats { display: none !important; } #cm-root .cm-head h3 { margin-bottom: 0; } }
+	@media screen and (max-width: 280px) { #cm-root .row-info { display: none !important; } }
+	@media screen and (max-width: 240px) { #cm-root .row-right img, #cm-root .row-ico img { display: none !important; } }
+	@media screen and (max-width: 220px) { #cm-root .row-subtime { display: none !important; } }
+	`,
 			);
 
-			// Dựng DOM Container duy nhất 1 lần
 			const uiContainer =
 				Utils.$(`#${config.uiId}`) ||
 				Utils.createEl("div", {
@@ -943,29 +1009,38 @@
 					parent: document.body,
 				});
 
-			// Dựng Static Skeleton 1 lần duy nhất
-			if (!uiContainer.querySelector(".bento-wrapper")) {
+			if (!uiContainer.querySelector(".cm-wrap")) {
+				const isFull = CaseMon.currentLayout === "full";
+				const toggleBtnHtml = isAdmin
+					? `<button class="cm-toggle" id="cm-layout-toggle" title="Switch layout">
+                        ${isFull ? "Layout: Full" : "Layout: Simple"}
+                    </button>`
+					: "";
+
 				const skeletonHtml = `
-				<div class="bento-wrapper" id="bento-wrapper-shell">
-					<button class="close-btn" title="Close"><img src="${config.icons.close}" alt="Close"/></button>
-					<div class="bento-grid">
-						<div class="bento-card">
-							<div class="agent-list-header">
-								<h3>
-									<span>Team Status</span>
-									<span class="health-text" id="cm-health-warn" style="display:none;">⚠️ Low Availability</span>
-								</h3>
-								<div class="header-counters">
-									<span class="agent-count active-badge" id="cnt-act" title="Active">Act: 0</span> +
-									<span class="agent-count phone-badge" id="cnt-phn" title="On Phone">Phn: 0</span> +
-									<span class="agent-count break-badge" id="cnt-brk" title="On Break">Brk: 0</span> =
-									<span class="agent-count total-badge" id="cnt-tot" title="Total">Tot: 0</span>
-								</div>
-							</div>
-							<div class="agent-list-container" id="cm-list-root"></div>
-						</div>
-					</div>
-				</div>`;
+        <div class="cm-wrap ${isFull ? "cm-full" : ""}" id="cm-wrap-shell">
+            <button class="cm-close" title="Close"><img src="${config.icons.close}" alt="Close"/></button>
+            <div class="cm-grid">
+                <div class="cm-card">
+                    <div class="cm-head">
+                        <div class="cm-head-top">
+                            <h3>
+                                <span>Team Status</span>
+                                <span class="cm-warn-txt" id="cm-health-warn" style="display:none;">⚠️ Low Availability</span>
+                            </h3>
+                            ${toggleBtnHtml}
+                        </div>
+                        <div class="cm-stats">
+                            <span class="cm-pill badge-act" id="cnt-act" title="Active">Actv: 0</span> +
+                            <span class="cm-pill badge-phn" id="cnt-phn" title="On Phone">Phn: 0</span> +
+                            <span class="cm-pill badge-brk" id="cnt-brk" title="On Break">Brk: 0</span> =
+                            <span class="cm-pill badge-tot" id="cnt-tot" title="Total">Tot: 0</span>
+                        </div>
+                    </div>
+                    <div class="cm-list" id="cm-list-root"></div>
+                </div>
+            </div>
+        </div>`;
 				uiContainer.innerHTML = Utils.toSafeHTML(skeletonHtml);
 				uiContainer.style.display = "flex";
 			}
@@ -973,6 +1048,12 @@
 			const textRegex = /[a-zA-Z\s]+/;
 			const timeRegex = /\d+[hms]/g;
 			const timeMultipliers = { h: 3600, m: 60, s: 1 };
+
+			const formatTime = (str) =>
+				String(str || "")
+					.replace(/(\d+)\s*([hms])/gi, "$1 $2")
+					.replace(/\s+/g, " ")
+					.trim();
 
 			const parseDuration = (timeStr) =>
 				(timeStr.match(timeRegex) || []).reduce(
@@ -989,7 +1070,6 @@
 					.toLowerCase()
 					.replace(/\s+/g, "-");
 
-			// Hàm reconcile & đồng bộ DOM trực tiếp
 			const updateDashboard = () => {
 				try {
 					const parsedAgents = Array.from(
@@ -1027,11 +1107,15 @@
 							return {
 								img: row.querySelector("img")?.src || "",
 								ldap: cells[1]?.innerText.trim() || "",
-								timeInState: cells[4]?.innerText.trim() || "",
-								lastChangeRaw: cells[9]?.innerText.trim() || "",
+								timeInState: formatTime(
+									cells[4]?.innerText.trim() || "",
+								),
+								lastChangeRaw: formatTime(
+									cells[9]?.innerText.trim() || "",
+								),
 								displayStatus,
 								statusKey,
-								cssClass: `stt-${statusKey}`,
+								cssClass: `st-${statusKey}`,
 								durationSeconds: parseDuration(
 									cells[9]?.innerText || "",
 								),
@@ -1061,7 +1145,6 @@
 							return b.durationSeconds - a.durationSeconds;
 						});
 
-					// Cập nhật Counters trực tiếp vào Text Nodes (Không render lại HTML)
 					const activeCount = parsedAgents.filter(
 						(a) => a.statusKey === "active",
 					).length;
@@ -1076,16 +1159,16 @@
 					const isLowAvailability =
 						totalCount > 0 && activeCount / totalCount < 0.2;
 
-					Utils.$("#cnt-act").textContent = `Act: ${activeCount}`;
+					Utils.$("#cnt-act").textContent = `Actv: ${activeCount}`;
 					Utils.$("#cnt-phn").textContent = `Phn: ${callCount}`;
 					Utils.$("#cnt-brk").textContent = `Brk: ${breakCount}`;
 					Utils.$("#cnt-tot").textContent = `Tot: ${totalCount}`;
 
-					const wrapperShell = Utils.$("#bento-wrapper-shell");
+					const wrapperShell = Utils.$("#cm-wrap-shell");
 					const healthWarn = Utils.$("#cm-health-warn");
 					if (wrapperShell && healthWarn) {
 						wrapperShell.classList.toggle(
-							"health-warning",
+							"cm-warn",
 							isLowAvailability,
 						);
 						healthWarn.style.display = isLowAvailability
@@ -1093,7 +1176,6 @@
 							: "none";
 					}
 
-					// Gom nhóm dữ liệu
 					const groups = [];
 					let currentGroup = null;
 
@@ -1118,24 +1200,41 @@
 						currentGroup.rows.push(agent);
 					});
 
-					// Reconcile HTML bằng DocumentFragment để ghi DOM 1 lần duy nhất
 					const listRoot = Utils.$("#cm-list-root");
 					if (!listRoot) return;
 
 					const fragment = document.createDocumentFragment();
+					const isFullLayout = CaseMon.currentLayout === "full";
+
+					// Top column title header row in Full Layout
+					if (isFullLayout) {
+						Utils.createEl("div", {
+							className: "cm-cols",
+							html: `
+                                <div class="col-spacer"></div>
+                                <div class="col-grid">
+                                    <span>Agent</span>
+                                    <span>Last Change</span>
+                                    <span>In State</span>
+                                    <span></span>
+                                </div>
+                            `,
+							parent: fragment,
+						});
+					}
 
 					groups.forEach((group) => {
 						const groupBlock = Utils.createEl("div", {
-							className: "status-group-block",
+							className: "cm-group",
 						});
 						Utils.createEl("div", {
-							className: `status-inline-label ${group.isUser ? "user-label" : ""}`,
+							className: `grp-lbl ${group.isUser ? "is-me" : ""}`,
 							text: group.label,
 							parent: groupBlock,
 						});
 
 						const stack = Utils.createEl("div", {
-							className: "status-rows-stack",
+							className: "grp-stack",
 							parent: groupBlock,
 						});
 
@@ -1160,31 +1259,59 @@
 								agent.rawStatus2 === "busy" && isActive
 									? `<img src="${config.icons.non_video}" alt="non_video" loading="lazy" />`
 									: "";
-							const bgIconsContainer =
-								nonPhoneImg || nonVideoImg
-									? `<div class="row-bg-icons">${nonPhoneImg}${nonVideoImg}</div>`
-									: "";
+
+							const statusIconHtml = icon
+								? `<img src="${icon.src}" animation="${icon.animation}" alt="${agent.statusKey} icon" loading="lazy" />`
+								: "";
+							const iconsHtml = `${statusIconHtml}${nonPhoneImg}${nonVideoImg}`;
+
 							const poolText = agent.poolDisplay
 								? ` (${Utils.escapeHtml(agent.poolDisplay)})`
 								: "";
 
+							let rowInnerHtml = "";
+
+							if (isFullLayout) {
+								// Layout 2: Full Version
+								rowInnerHtml = `
+                        <div class="row-left">
+                            <img class="row-avatar" src="${Utils.escapeHtml(agent.img)}" alt="${Utils.escapeHtml(agent.ldap)}" loading="lazy" />
+                            <div class="row-info">
+                                <span class="row-name">${Utils.escapeHtml(agent.ldap)}</span>
+                                <span class="row-status">${Utils.escapeHtml(agent.displayStatus)}${poolText}</span>
+                            </div>
+                        </div>
+                        <div class="row-col">
+                            <span class="row-time">${Utils.escapeHtml(agent.lastChangeRaw || "-")}</span>
+                        </div>
+                        <div class="row-col">
+                            <span class="row-time">${Utils.escapeHtml(agent.timeInState || "-")}</span>
+                        </div>
+                        <div class="row-ico">
+                            ${iconsHtml}
+                        </div>
+                        `;
+							} else {
+								// Layout 1: Simple Version
+								rowInnerHtml = `
+                        <div class="row-left">
+                            <img class="row-avatar" src="${Utils.escapeHtml(agent.img)}" alt="${Utils.escapeHtml(agent.ldap)}" loading="lazy" />
+                            <span>${Utils.escapeHtml(agent.ldap)}</span>
+                        </div>
+                        <div class="row-right">
+                            <div class="row-meta">
+                                <span class="row-time">${Utils.escapeHtml(agent.lastChangeRaw)} <span class="row-subtime">(${Utils.escapeHtml(agent.timeInState)})</span></span>
+                                <span class="row-status">${Utils.escapeHtml(agent.displayStatus)}${poolText}</span>
+                            </div>
+                            ${iconsHtml}
+                        </div>
+                        `;
+							}
+
 							const rowEl = Utils.createEl("div", {
-								className: `agent-row ${agent.cssClass} ${isOverTime ? "over-time" : ""}`,
+								className: `cm-row ${agent.cssClass} ${isOverTime ? "is-over" : ""} ${isFullLayout ? "is-full" : ""}`,
 								style: `--progress: ${progressPct}%; --st-color: ${stConf.color}; --st-track: ${stConf.track};`,
-								html: `
-								${bgIconsContainer}
-								<div class="agent-left">
-									<img class="agent-avatar" src="${Utils.escapeHtml(agent.img)}" alt="${Utils.escapeHtml(agent.ldap)}" loading="lazy" />
-									<span>${Utils.escapeHtml(agent.ldap)}</span>
-								</div>
-								<div class="agent-right">
-									<div class="agent-meta">
-										<span class="time-state">${Utils.escapeHtml(agent.lastChangeRaw)} <span class="time-in-state">(${Utils.escapeHtml(agent.timeInState)})</span></span>
-										<span class="status-text">${Utils.escapeHtml(agent.displayStatus)}${poolText}</span>
-									</div>
-									${icon ? `<img src="${icon.src}" animation="${icon.animation}" alt="${agent.statusKey} icon" loading="lazy" />` : ""}
-								</div>
-							`,
+								html: rowInnerHtml,
 								parent: stack,
 							});
 							rowEl.dataset.ldap = agent.ldap;
@@ -1193,7 +1320,6 @@
 						fragment.appendChild(groupBlock);
 					});
 
-					// Cập nhật DOM atomic qua DocumentFragment (Zero layout flicker)
 					listRoot.textContent = "";
 					listRoot.appendChild(fragment);
 				} catch (err) {
@@ -1201,7 +1327,8 @@
 				}
 			};
 
-			// Lắng nghe MutationObserver mượt mà với Debounce
+			CaseMon.updateFn = updateDashboard;
+
 			CaseMon.observer = new MutationObserver(
 				Utils.debounce(updateDashboard, 150),
 			);
@@ -1213,10 +1340,30 @@
 			});
 
 			uiContainer.addEventListener("click", (e) => {
-				if (e.target.closest(".close-btn")) {
+				if (e.target.closest(".cm-close")) {
 					uiContainer.remove();
 					CaseMon.isRunning = false;
 					CaseMon.observer?.disconnect();
+				} else if (isAdmin && e.target.closest("#cm-layout-toggle")) {
+					CaseMon.currentLayout =
+						CaseMon.currentLayout === "simplicity"
+							? "full"
+							: "simplicity";
+					const isFull = CaseMon.currentLayout === "full";
+					const wrapperShell = Utils.$("#cm-wrap-shell");
+					const toggleBtn = Utils.$("#cm-layout-toggle");
+
+					if (wrapperShell) {
+						wrapperShell.classList.toggle("cm-full", isFull);
+					}
+					if (toggleBtn) {
+						toggleBtn.textContent = isFull
+							? "Layout: Full"
+							: "Layout: Simple";
+					}
+					if (CaseMon.updateFn) {
+						CaseMon.updateFn();
+					}
 				}
 			});
 
@@ -1236,21 +1383,21 @@
 			CasesConnect.isRunning = true;
 
 			Utils.addStyle(
-				"cases-styles",
+				"qm-styles",
 				`
-                #panelQM { position: fixed; bottom: 20px; left: 20px; display: flex; gap: 8px; align-items: center; z-index: 9999; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif; }
+                #qm-panel { position: fixed; bottom: 20px; left: 20px; display: flex; gap: 8px; align-items: center; z-index: 9999; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif; }
                 .qm-btn { z-index: 10; color: #FFFFFF; padding: 10px 16px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 13px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.3); }
                 .qm-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
 				.qm-btn:active { transform: scale(0.96); }
-                #flup-days-input { position: absolute; top: 50%; transform: translateY(-50%); right: 6px; width: 28px; height: 24px; padding: 0; border: none; border-radius: 6px; background: rgba(255, 255, 255, 0.9); color: #1D1D1F; font-weight: 700; font-size: 12px; text-align: center; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06); transition: all 0.2s ease; -moz-appearance: textfield; }
-                #flup-days-input:focus { outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06), 0 0 0 2px #0071E3; }
+                #qm-flup-in { position: absolute; top: 50%; transform: translateY(-50%); right: 6px; width: 28px; height: 24px; padding: 0; border: none; border-radius: 6px; background: rgba(255, 255, 255, 0.9); color: #1D1D1F; font-weight: 700; font-size: 12px; text-align: center; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06); transition: all 0.2s ease; -moz-appearance: textfield; }
+                #qm-flup-in:focus { outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06), 0 0 0 2px #0071E3; }
                 .qm-badge { display: none; position: absolute; top: -4px; right: -4px; background: #FF3B30; border-radius: 9999px; padding: 2px 6px; font-size: 10px; font-weight: 700; line-height: 1; border: 1.5px solid #FFFFFF; }
-                .aw-sig-table { margin: 12px 0; }
+                .qm-sig { margin: 12px 0; }
             `,
 			);
 
 			const panel = Utils.createEl("div", {
-				id: "panelQM",
+				id: "qm-panel",
 				parent: document.body,
 			});
 			CasesConnect.clickerInterval = setInterval(
@@ -1339,13 +1486,12 @@
 				style: { backgroundColor: "#30B0C7", paddingRight: "44px" },
 				parent: panel,
 				onClick: async (e) => {
-					if (e.target.id === "flup-days-input") return;
+					if (e.target.id === "qm-flup-in") return;
 					try {
 						flupBtn.style.opacity = "0.6";
 						flupBtn.style.pointerEvents = "none";
 						const daysOffset =
-							parseInt(Utils.$("#flup-days-input").value, 10) ||
-							0;
+							parseInt(Utils.$("#qm-flup-in").value, 10) || 0;
 
 						const apptEl = Utils.$(
 							'[data-infocase="appointment_time"]',
@@ -1412,7 +1558,7 @@
 			});
 
 			Utils.createEl("input", {
-				id: "flup-days-input",
+				id: "qm-flup-in",
 				type: "text",
 				value: "2",
 				parent: flupBtn,
@@ -1448,7 +1594,7 @@
 						);
 					}
 
-					Utils.$$(".aw-sig-table").forEach((el) => el.remove());
+					Utils.$$(".qm-sig").forEach((el) => el.remove());
 
 					let sigName = localStorage.getItem("__signature_name");
 					if (!sigName) {
@@ -1457,7 +1603,7 @@
 					}
 
 					const htmlString = `
-                    <table class="aw-sig-table" style="width: 348px; padding: 0 30px;" data-sig-injected="true">
+                    <table class="qm-sig" style="width: 348px; padding: 0 30px;" data-sig-injected="true">
                         <tbody>
                             <tr align="left">
                                 <td style="width: 52px; vertical-align: top;"><img src="https://cdn-icons-png.flaticon.com/512/300/300221.png" width="52" height="52" style="display: block; border-radius: 10px;"></td>
@@ -1493,13 +1639,14 @@
 				`
                 .aw-ga4 { background-color: #FEF3D6; color: #B07505; border: 1px solid rgba(176,117,5,0.15); padding: 2px 6px; border-radius: 6px; font-weight: 600; cursor: pointer; user-select: none; }
                 .aw-ads { background-color: #E2F5E9; color: #1E7F4E; border: 1px solid rgba(30,127,78,0.15); padding: 2px 6px; border-radius: 6px; font-weight: 600; cursor: pointer; user-select: none; }
-                .aw-copied { background-color: #3B72E6 !important; color: white !important; border-color: transparent !important; }
-                #gpt-aw-container { position: fixed; bottom: 20px; left: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
-                .gpt-aw-row { display: flex; gap: 6px; align-items: center; }
-                .gpt-aw-badge { padding: 8px 14px; background: #161920; color: #F1F3F5; border: 1px solid #2D323F; border-radius: 8px; font-size: 12px; font-weight: 600; font-family: monospace; box-shadow: 0 4px 16px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s ease; user-select: none; }
-                .gpt-aw-badge:hover { background: #2D323F; }
-                .gpt-aw-btn { padding: 8px 12px; background: #0071e3; color: #ffffff; border: 1px solid #0071e3; border-radius: 8px; font-size: 12px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, sans-serif; box-shadow: 0 4px 16px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s ease; user-select: none; }
-                .gpt-aw-btn:hover { background: #0077ed; }
+                .aw-ec { background-color: #1E8E3E; color: #FFFFFF; padding: 2px 6px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-left: 6px; display: inline-block; vertical-align: middle; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+                .is-copied { background-color: #3B72E6 !important; color: white !important; border-color: transparent !important; }
+                #aw-panel { position: fixed; bottom: 20px; left: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+                .aw-row { display: flex; gap: 6px; align-items: center; }
+                .aw-badge { padding: 8px 14px; background: #161920; color: #F1F3F5; border: 1px solid #2D323F; border-radius: 8px; font-size: 12px; font-weight: 600; font-family: monospace; box-shadow: 0 4px 16px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s ease; user-select: none; }
+                .aw-badge:hover { background: #2D323F; }
+                .aw-btn { padding: 8px 12px; background: #0071e3; color: #ffffff; border: 1px solid #0071e3; border-radius: 8px; font-size: 12px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, sans-serif; box-shadow: 0 4px 16px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s ease; user-select: none; }
+                .aw-btn:hover { background: #0077ed; }
             `,
 			);
 
@@ -1566,20 +1713,20 @@
 			const uniqueIds = [...new Set(matches.map((m) => m[1]))];
 
 			const container =
-				Utils.$("#gpt-aw-container") ||
+				Utils.$("#aw-panel") ||
 				Utils.createEl("div", {
-					id: "gpt-aw-container",
+					id: "aw-panel",
 					parent: document.body,
 				});
 			container.textContent = "";
 
 			uniqueIds.forEach((idStr) => {
 				const row = Utils.createEl("div", {
-					className: "gpt-aw-row",
+					className: "aw-row",
 					parent: container,
 				});
 				const badge = Utils.createEl("div", {
-					className: "gpt-aw-badge",
+					className: "aw-badge",
 					text: `AW-${idStr}`,
 					parent: row,
 				});
@@ -1587,11 +1734,11 @@
 			});
 
 			const btnRow = Utils.createEl("div", {
-				className: "gpt-aw-row",
+				className: "aw-row",
 				parent: container,
 			});
 			Utils.createEl("button", {
-				className: "gpt-aw-btn",
+				className: "aw-btn",
 				text: "EC Dashboard ↗",
 				parent: btnRow,
 				onClick: () => {
@@ -1620,6 +1767,14 @@
 				const dataMap = new Map(
 					parsed[1].map((item) => [item[1], item]),
 				);
+				const diagData =
+					typeof window.conversions_data?.CONVERSION_DIAGNOSTICS ===
+					"string"
+						? window.conversions_data.CONVERSION_DIAGNOSTICS
+						: JSON.stringify(
+								window.conversions_data
+									?.CONVERSION_DIAGNOSTICS || "",
+							);
 
 				setTimeout(() => {
 					Utils.$$(".conversion-name-cell .internal").forEach(
@@ -1633,11 +1788,19 @@
 							if (row && !sourceText?.includes("web"))
 								return row.remove();
 
+							const link = row?.querySelector("a.ess-cell-link");
+							const hrefCtId =
+								link?.href?.match(/ctId=(\d+)/)?.[1];
 							const originalText = cell.innerText?.trim() || "";
 							const numericMatch = originalText.match(/\d+/);
 							if (numericMatch)
 								cell.dataset.originalId = numericMatch[0];
 
+							const convActionId =
+								cell.dataset.originalId ||
+								hrefCtId ||
+								numericMatch?.[0] ||
+								"";
 							const mappedData = dataMap.get(originalText);
 							if (!mappedData) return;
 
@@ -1658,10 +1821,34 @@
 											]
 										: [];
 
+							const hasEC = Boolean(
+								diagData &&
+								((convActionId &&
+									new RegExp(`\\b${convActionId}\\b`).test(
+										diagData,
+									)) ||
+									(convId &&
+										new RegExp(`\\b${convId}\\b`).test(
+											diagData,
+										))),
+							);
+
 							if (type && convId) {
 								cell.textContent = convId;
 								cell.classList.add(type);
 								Utils.setupCopy(cell, convId);
+							}
+
+							if (
+								hasEC &&
+								!cell.parentNode?.querySelector(".aw-ec")
+							) {
+								Utils.createEl("span", {
+									className: "aw-ec",
+									text: "EC",
+									title: "Enhanced Conversions Enabled",
+									parent: cell.parentNode || cell,
+								});
 							}
 						},
 					);
