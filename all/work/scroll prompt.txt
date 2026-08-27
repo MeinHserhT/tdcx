@@ -1,0 +1,26 @@
+Implement a custom JavaScript/React section-by-section smooth scroll and snap engine that replaces rigid CSS scroll-snap with deliberate gesture-based transitions:
+
+1. End-of-Section Snap Only:
+   - Allow free and natural scrolling within the full height of each section.
+   - Do NOT snap to the next section immediately on mousewheel or touch swipe. Snapping to the next section should ONLY trigger once the user has scrolled to the very bottom/end of the current section.
+   - Snapping back to the previous section should ONLY trigger once the user has scrolled all the way to the top boundary of the current section.
+
+2. Deliberate Gesture Threshold & Peek Preview:
+   - Track wheel delta (`deltaY`) and touch delta with a deliberate threshold (~110px for wheel, ~80px for touch swipe).
+   - If the user scrolls at a boundary below the threshold, apply a subtle peek displacement (up to 75px) into the adjacent section.
+   - If scrolling pauses without reaching the threshold, smoothly spring back to the current section's top/bottom anchor (~500ms ease-out).
+   - Once the threshold is met at the section boundary, smoothly transition to the target section.
+
+3. Graceful Ease-in-Out Animation:
+   - Use a custom `requestAnimationFrame` animation loop with a smooth cubic ease-in-out curve (`t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2`).
+   - Set the duration to ~1050ms for a relaxed, high-end deceleration into the target section.
+   - Automatically account for floating/fixed sticky headers (e.g. 50px offset) so section tops align flush beneath the navigation bar.
+
+4. Keyboard & Edge Handling:
+   - Support `ArrowDown`, `ArrowUp`, `PageDown`, `PageUp`, `Home`, and `End` keys mapped to the same smooth section glide.
+   - For the final section, ensure the scroll boundary extends to the bottom of the page to permit natural scrolling into any footer before boundary snapping occurs.
+   - Allow unhindered scrolling inside nested scrollable elements (`overflow-y-auto`, dropdowns, textareas).
+
+5. Clean UI & Scrollbar Hiding:
+   - Hide native browser scrollbars globally across `html`, `body`, and all elements (`scrollbar-width: none; -ms-overflow-style: none; ::-webkit-scrollbar { display: none !important; }`).
+   - Maintain full gesture functionality across mouse, trackpad, touchscreen, and keyboard.

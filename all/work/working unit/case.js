@@ -155,38 +155,23 @@
 			CasesConnect.isRunning = true;
 
 			Utils.addStyle(
-				"cases-styles",
+				"qm-styles",
 				`
-                #panelQM { 
-					position: fixed; bottom: 20px; left: 20px; display: flex; gap: 8px; align-items: center; 
-					z-index: 9999; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif; 
-				}
-                .qm-btn { 
-					z-index: 10; color: #FFFFFF; padding: 10px 16px; border: none; border-radius: 12px; cursor: pointer; 
-					font-weight: 600; font-size: 13px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); 
-					backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-					transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); position: relative; display: flex; align-items: center; justify-content: center; 
-					border: 1px solid rgba(255, 255, 255, 0.3); 
-				}
+                #qm-panel { position: fixed; bottom: 20px; left: 20px; display: flex; gap: 8px; align-items: center; z-index: 9999; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif; }
+                .qm-btn { z-index: 10; color: #FFFFFF; padding: 10px 16px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 13px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.3); }
                 .qm-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
 				.qm-btn:active { transform: scale(0.96); }
-                #flup-days-input { 
-					position: absolute; top: 50%; transform: translateY(-50%); right: 6px; width: 28px; height: 24px; 
-					padding: 0; border: none; border-radius: 6px; background: rgba(255, 255, 255, 0.9); color: #1D1D1F; 
-					font-weight: 700; font-size: 12px; text-align: center; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06); 
-					transition: all 0.2s ease; -moz-appearance: textfield; 
-				}
-                #flup-days-input:focus { outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06), 0 0 0 2px #0071E3; }
+                #qm-flup-in { position: absolute; top: 50%; transform: translateY(-50%); right: 6px; width: 28px; height: 24px; padding: 0; border: none; border-radius: 6px; background: rgba(255, 255, 255, 0.9); color: #1D1D1F; font-weight: 700; font-size: 12px; text-align: center; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06); transition: all 0.2s ease; -moz-appearance: textfield; }
+                #qm-flup-in:focus { outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06), 0 0 0 2px #0071E3; }
                 .qm-badge { display: none; position: absolute; top: -4px; right: -4px; background: #FF3B30; border-radius: 9999px; padding: 2px 6px; font-size: 10px; font-weight: 700; line-height: 1; border: 1.5px solid #FFFFFF; }
-                .aw-sig-table { margin: 12px 0; }
+                .qm-sig { margin: 12px 0; }
             `,
 			);
 
 			const panel = Utils.createEl("div", {
-				id: "panelQM",
+				id: "qm-panel",
 				parent: document.body,
 			});
-
 			CasesConnect.clickerInterval = setInterval(
 				CasesConnect.autoClickTask,
 				16000,
@@ -264,7 +249,7 @@
 					});
 					updateBadge();
 				})
-				.catch(() => {});
+				.catch(() => { });
 
 			const flupBtn = Utils.createEl("button", {
 				textContent: "FL Up:",
@@ -273,13 +258,13 @@
 				style: { backgroundColor: "#30B0C7", paddingRight: "44px" },
 				parent: panel,
 				onClick: async (e) => {
-					if (e.target.id === "flup-days-input") return;
+					if (e.target.id === "qm-flup-in") return;
 					try {
 						flupBtn.style.opacity = "0.6";
 						flupBtn.style.pointerEvents = "none";
+
 						const daysOffset =
-							parseInt(Utils.$("#flup-days-input").value, 10) ||
-							0;
+							parseInt(Utils.$("#qm-flup-in").value, 10) || 0;
 
 						const apptEl = Utils.$(
 							'[data-infocase="appointment_time"]',
@@ -303,8 +288,8 @@
 						}
 
 						if (daysOffset > 0) {
-							let targetDate = new Date();
-							for (let counter = 0; counter < daysOffset; ) {
+							const targetDate = new Date();
+							for (let counter = 0; counter < daysOffset;) {
 								targetDate.setDate(targetDate.getDate() + 1);
 								if (targetDate.getDay() % 6 !== 0) counter++;
 							}
@@ -335,7 +320,59 @@
 						const typeEl = await Utils.waitForElement(
 							"[data-type=follow_up_time]",
 						);
-						if (typeEl) typeEl.click();
+						if (typeEl) {
+							typeEl.click();
+							await Utils.sleep(200);
+						}
+
+						// --- INJECT / REPLACE NOTE CASE AFTER TIME IS CONFIGURED ---
+						const noteID = "noteCaseUI";
+						const followUpVal =
+							Utils.$('[data-infocase="follow_up_time"]')
+								?.dataset?.valchoice || "NA";
+						const caseNoteTarget = Utils.$(
+							'[aria-label="Case Note"]',
+						);
+						const existingTemplate = Utils.$("#" + noteID);
+
+						const templateHTML = `
+                            <div id="${noteID}" class="cdtx__uioncall">
+                                <div class="cdtx__uioncall_control">
+                                    <span class="cdtx__uioncall_control-load" data-text="Split &amp; Transfer" data-btnclk="oncall_templ_lt_template">&nbsp;</span>
+                                    <span class="cdtx__uioncall_control-load" data-text="List" data-btnclk="oncall_templ_act_load">&nbsp;</span>
+                                    <span class="cdtx__uioncall_control-save" data-text="Save" data-btnclk="oncall_templ_act_save" data-btntooltip="Save template Reuse">&nbsp;</span>
+                                    <span class="cdtx__uioncall_control-remove" data-text="Remove" data-btnclk="oncall_templ_act_remove">&nbsp;</span>
+                                </div>
+                                <article class="cdtx__uioncall_outer">
+                                    <p dir="auto"><b>Sub-status:&nbsp;&nbsp;<span class="_sub_i" data-btnclk="choice_status_list" data-infocase="status_case">Click Choice</span></b> </p>
+                                    <p dir="auto"><b>Verify GA4/GTM:</b>&nbsp;&nbsp; </p>
+                                    <p dir="auto"><b>Sub-status Reason:</b><span class="cdtx__uioncall-oct_test"></span>&nbsp;&nbsp; </p>
+                                    <p dir="auto"><b data-btnclk="oncall_templ_act_flchoice" data-dateformat="d/m/Y">FL:&nbsp;&nbsp;</b><span data-text="oncall_templ_act_flchoice-text">${Utils.escapeHtml(followUpVal)}</span></p>
+                                    <p dir="auto"><b>On Call Comments:&nbsp;&nbsp; </b></p>
+                                    <p dir="auto"><p dir="auto"><ul dir="auto"><li><b></b></li></ul></p></p>
+                                    <p dir="auto"><b>Next Course of Action:&nbsp;&nbsp; </b></p>
+                                    <p dir="auto"><b data-btnclk="oncall_templ_act_taskchoice">Tags Implemented:&nbsp;&nbsp;</b><span data-text="oncall_templ_act_taskchoice-text"></span></p>
+                                    <p dir="auto"><b><span>Screenshots: Attach</span></b></p>
+                                    <p dir="auto"><p dir="auto"><ul dir="auto"><li><b></b></li></ul></p></p>
+                                    <p dir="auto"><b>Multiple CIDs:&nbsp;&nbsp;</b>NA</p>
+                                    <p dir="auto"><b><span>On Call Screenshot: Attach</span></b></p>
+                                </article>
+                            </div>`.trim();
+
+						if (existingTemplate) {
+							existingTemplate.outerHTML = templateHTML;
+							caseNoteTarget?.dispatchEvent(
+								new Event("input", { bubbles: true }),
+							);
+						} else if (caseNoteTarget) {
+							caseNoteTarget.insertAdjacentHTML(
+								"beforeend",
+								templateHTML,
+							);
+							caseNoteTarget.dispatchEvent(
+								new Event("input", { bubbles: true }),
+							);
+						}
 					} catch (err) {
 						console.error("Follow up script failed", err);
 					} finally {
@@ -346,16 +383,16 @@
 			});
 
 			Utils.createEl("input", {
-				id: "flup-days-input",
+				id: "qm-flup-in",
 				type: "text",
 				value: "2",
 				parent: flupBtn,
 				onClick: (e) => e.stopPropagation(),
 				onfocus: (e) => e.target.select(),
 				oninput: (e) =>
-					(e.target.value = e.target.value
-						.replace(/\D/g, "")
-						.slice(0, 1)),
+				(e.target.value = e.target.value
+					.replace(/\D/g, "")
+					.slice(0, 1)),
 			});
 		}
 
@@ -369,18 +406,20 @@
 				onmousedown: (e) => e.preventDefault(),
 				onClick: () => {
 					const sel = window.getSelection();
-					if (!sel.rangeCount)
+					if (!sel?.rangeCount) {
 						return alert(
 							"Please click inside the email body to place your cursor first.",
 						);
+					}
 
 					const node = sel.getRangeAt(0).startContainer.parentNode;
-					if (!node || !node.closest("[contenteditable]"))
+					if (!node?.closest("[contenteditable]")) {
 						return alert(
 							"Please place your cursor inside the text area where you want the signature.",
 						);
+					}
 
-					Utils.$$(".aw-sig-table").forEach((el) => el.remove());
+					Utils.$$(".qm-sig").forEach((el) => el.remove());
 
 					let sigName = localStorage.getItem("__signature_name");
 					if (!sigName) {
@@ -389,7 +428,7 @@
 					}
 
 					const htmlString = `
-                    <table class="aw-sig-table" style="width: 348px; padding: 0 30px;" data-sig-injected="true">
+                    <table class="qm-sig" style="width: 348px; padding: 0 30px;" data-sig-injected="true">
                         <tbody>
                             <tr align="left">
                                 <td style="width: 52px; vertical-align: top;"><img src="https://cdn-icons-png.flaticon.com/512/300/300221.png" width="52" height="52" style="display: block; border-radius: 10px;"></td>
@@ -408,16 +447,7 @@
 					document.execCommand(
 						"insertHTML",
 						false,
-						((html) => {
-							if (window.trustedTypes?.createPolicy) {
-								const policy = trustedTypes.createPolicy(
-									"sig-inject",
-									{ createHTML: (str) => str },
-								);
-								return policy.createHTML(html);
-							}
-							return html;
-						})(htmlString),
+						Utils.toSafeHTML(htmlString),
 					);
 				},
 			});

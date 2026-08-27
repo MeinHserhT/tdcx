@@ -34,10 +34,11 @@ document.addEventListener("wpcf7mailsent", function (e) {
             email: a.value,
         });
 });
+
 // -----------------------------------------------------------------------------
 document.addEventListener("wpcf7mailsent", function (e) {
     var b = e.detail.inputs.find(function (n) {
-        return n.name.includes("number");
+        return n.name.includes("so-dien-thoai");
     });
     b.value &&
         dataLayer.push({
