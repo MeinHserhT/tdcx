@@ -5,6 +5,7 @@
 	// 1. SHARED UTILITIES
 	// ==========================================
 	let safePolicy;
+
 	const Utils = {
 		sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 
@@ -16,11 +17,7 @@
 			};
 		},
 
-		pollForCondition: async (
-			predicate,
-			interval = 500,
-			maxAttempts = 10,
-		) => {
+		pollForCondition: async (predicate, interval = 500, maxAttempts = 10) => {
 			for (let i = 0; i < maxAttempts; i++) {
 				if (predicate()) return true;
 				await Utils.sleep(interval);
@@ -29,57 +26,35 @@
 		},
 
 		$: (selector, parent = document) => parent.querySelector(selector),
-		$$: (selector, parent = document) =>
-			Array.from(parent.querySelectorAll(selector)),
+		$$: (selector, parent = document) => Array.from(parent.querySelectorAll(selector)),
 
 		toSafeHTML: (str) => {
 			if (!safePolicy) {
-				if (window.trustedTypes?.createPolicy) {
-					try {
-						safePolicy = window.trustedTypes.createPolicy(
-							"default",
-							{ createHTML: (s) => s },
-						);
-					} catch {
-						safePolicy = window.trustedTypes.defaultPolicy || {
-							createHTML: (s) => s,
-						};
-					}
-				} else {
-					safePolicy = { createHTML: (s) => s };
-				}
+				const tt = window.trustedTypes;
+				safePolicy = tt?.createPolicy
+					? (() => {
+						try { return tt.createPolicy("default", { createHTML: (s) => s }); }
+						catch { return tt.defaultPolicy || { createHTML: (s) => s }; }
+					})()
+					: { createHTML: (s) => s };
 			}
-			return safePolicy ? safePolicy.createHTML(str) : str;
+			return safePolicy.createHTML(str);
 		},
 
-		createEl: (
-			tag,
-			{
-				parent,
-				onClick,
-				style,
-				text,
-				html,
-				className,
-				id,
-				...props
-			} = {},
-		) => {
+		createEl: (tag, { parent, onClick, style, text, html, className, id, ...props } = {}) => {
 			const el = document.createElement(tag);
 			if (id) el.id = id;
 			if (className) el.className = className;
 			if (text !== undefined) el.textContent = text;
 			if (html !== undefined) el.innerHTML = Utils.toSafeHTML(html);
+
 			if (style) {
-				typeof style === "string"
-					? (el.style.cssText = style)
-					: Object.assign(el.style, style);
+				typeof style === "string" ? (el.style.cssText = style) : Object.assign(el.style, style);
 			}
 			if (onClick) el.addEventListener("click", onClick);
 
 			Object.entries(props).forEach(([key, value]) => {
-				if (key.startsWith("on") && typeof value === "function")
-					el[key] = value;
+				if (key.startsWith("on") && typeof value === "function") el[key] = value;
 				else if (key.startsWith("data-")) el.setAttribute(key, value);
 				else el[key] = value;
 			});
@@ -89,7 +64,7 @@
 		},
 
 		addStyle: (id, cssText) => {
-			if (document.getElementById(id)) return;
+			document.getElementById(id)?.remove();
 			const styleEl = document.createElement("style");
 			styleEl.id = id;
 			styleEl.textContent = Utils.toSafeHTML(cssText);
@@ -109,10 +84,7 @@
 					}
 				});
 
-				observer.observe(document.body, {
-					childList: true,
-					subtree: true,
-				});
+				observer.observe(document.body, { childList: true, subtree: true });
 				setTimeout(() => {
 					observer.disconnect();
 					reject(new Error(`Timeout waiting for: ${selector}`));
@@ -124,14 +96,13 @@
 			element.addEventListener("click", async () => {
 				try {
 					await navigator.clipboard.writeText(text);
-					element.dataset.origText =
-						element.dataset.origText || element.textContent;
+					element.dataset.origText = element.dataset.origText || element.textContent;
 					element.textContent = successMsg;
-					element.classList.add("aw-copied");
+					element.classList.add("is-copied");
 					clearTimeout(timer);
 					timer = setTimeout(() => {
 						element.textContent = element.dataset.origText;
-						element.classList.remove("aw-copied");
+						element.classList.remove("is-copied");
 					}, 1500);
 				} catch (err) {
 					console.error("Copy failed", err);
@@ -140,24 +111,17 @@
 		},
 
 		escapeHtml: (str) =>
-			String(str || "").replace(
+			String(str ?? "").replace(
 				/[&<>"']/g,
-				(ch) =>
-					({
-						"&": "&amp;",
-						"<": "&lt;",
-						">": "&gt;",
-						'"': "&quot;",
-						"'": "&#039;",
-					})[ch],
+				(ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[ch],
 			),
 	};
-
+	
 	// ==========================================
 	// 3. FEATURE: QPLUS AUTOMATOR
 	// ==========================================
-	class QPlusAutomator {
-		static SELECTORS = {
+	const QPlusAutomator = {
+		SELECTORS: {
 			questionContainer: ".question-container",
 			questionText: ".question-text",
 			label: "label.mdc-label, label, .mat-radio-label, .mat-mdc-radio-button, mat-radio-button, mat-checkbox",
@@ -167,35 +131,17 @@
 			checkboxParent: "mat-checkbox",
 			input: "input",
 			takeCase: '[aria-label="Take the task"]',
-		};
+		},
 
-		static TASK_METRICS = {
+		TASK_METRICS: {
 			CT: { taskType: ["Ads Conversion Tracking"] },
-			EC: {
-				taskType: ["Enhanced Conversions for Web (ECW)"],
-				ecFeasible: "No",
-				ecOption: "Manual",
-			},
-			GA4: {
-				taskType: ["GA4 Setup (no Analytics in place yet)"],
-				ga4Features: ["Tagging"],
-			},
-			GA4_UPD: {
-				taskType: ["Enhanced Conversions - GA4 User Provided Data"],
-				ga4Features: ["Other Conversions"],
-				ecFeasible: "No",
-				ecOption: "Manual",
-			},
-			AUD: {
-				taskType: [
-					"Ads Standard Remarketing",
-					"GA4 Standard Remarketing",
-				],
-				ga4Features: ["Standard Audiences"],
-			},
-		};
+			EC: { taskType: ["Enhanced Conversions for Web (ECW)"], ecFeasible: "No", ecOption: "Manual" },
+			GA4: { taskType: ["GA4 Setup (no Analytics in place yet)"], ga4Features: ["Tagging"] },
+			GA4_UPD: { taskType: ["Enhanced Conversions - GA4 User Provided Data"], ga4Features: ["Other Conversions"], ecFeasible: "No", ecOption: "Manual" },
+			AUD: { taskType: ["Ads Standard Remarketing", "GA4 Standard Remarketing"], ga4Features: ["Standard Audiences"] },
+		},
 
-		static async promptUser() {
+		async promptUser() {
 			return new Promise((resolve) => {
 				const statusOptions = [
 					{ id: "SO", label: "Solution Offered" },
@@ -237,9 +183,9 @@
 				Utils.createEl("div", {
 					style: "margin-bottom: 2px;",
 					html: `
-                    <h3 style="margin: 0; color: #1D1D1F; font-size: 16px; font-weight: 600; letter-spacing: -0.2px;">Task Profile</h3>
-                    <div id="step-title" style="color: #86868B; font-size: 12px; font-weight: 500; margin-top: 2px;"></div>
-                `,
+						<h3 style="margin: 0; color: #1D1D1F; font-size: 16px; font-weight: 600; letter-spacing: -0.2px;">Task Profile</h3>
+						<div id="step-title" style="color: #86868B; font-size: 12px; font-weight: 500; margin-top: 2px;"></div>
+					`,
 					parent: modal,
 				});
 
@@ -267,14 +213,7 @@
 					}, 200);
 				};
 
-				const createBtn = (
-					text,
-					parent,
-					bg,
-					hoverBg,
-					textColor,
-					onClick,
-				) => {
+				const createBtn = (text, parent, bg, hoverBg, textColor, onClick) => {
 					const btn = Utils.createEl("button", {
 						text,
 						parent,
@@ -303,34 +242,16 @@
 					});
 
 					if (onBack) {
-						createBtn(
-							"Back",
-							navContainer,
-							"rgba(0, 0, 0, 0.04)",
-							"rgba(0, 0, 0, 0.08)",
-							"#1D1D1F",
-							onBack,
-						);
+						createBtn("Back", navContainer, "rgba(0, 0, 0, 0.04)", "rgba(0, 0, 0, 0.08)", "#1D1D1F", onBack);
 					}
-					createBtn(
-						"Cancel",
-						navContainer,
-						"transparent",
-						"rgba(0, 0, 0, 0.04)",
-						"#86868B",
-						() => closeDialog(null),
-					);
+					createBtn("Cancel", navContainer, "transparent", "rgba(0, 0, 0, 0.04)", "#86868B", () => closeDialog(null));
 				};
 
 				const showStatusStep = () =>
-					renderStep(
-						"Step 1: Select Status",
-						statusOptions,
-						(status) => {
-							selectedStatus = status;
-							showTaskStep();
-						},
-					);
+					renderStep("Step 1: Select Status", statusOptions, (status) => {
+						selectedStatus = status;
+						showTaskStep();
+					});
 
 				const showTaskStep = () =>
 					renderStep(
@@ -338,16 +259,10 @@
 						tasksByStatus[selectedStatus.id] || [],
 						(task) => {
 							selectedTask = task;
-							if (
-								selectedStatus.id === "NI" &&
-								task.id === "WAIT_VALIDATION"
-							) {
+							if (selectedStatus.id === "NI" && task.id === "WAIT_VALIDATION") {
 								showSubTaskStep();
 							} else {
-								closeDialog({
-									status: selectedStatus,
-									task: selectedTask,
-								});
+								closeDialog({ status: selectedStatus, task: selectedTask });
 							}
 						},
 						showStatusStep,
@@ -357,119 +272,81 @@
 					renderStep(
 						"Step 3: Select Validation Task",
 						validationSubTasks,
-						(subTask) =>
-							closeDialog({
-								status: selectedStatus,
-								task: selectedTask,
-								subTask,
-							}),
+						(subTask) => closeDialog({ status: selectedStatus, task: selectedTask, subTask }),
 						showTaskStep,
 					);
 
 				showStatusStep();
 			});
-		}
+		},
 
-		static buildConfig(options) {
-			const { status, task, subTask } = options;
-			let mappedStatus = "";
-			let mappedSubStatus = "";
-			let fillExtraOptions = false;
-			let targetTaskId = null;
-
-			if (status.id === "SO") {
-				mappedStatus = "Implemented";
-				mappedSubStatus = "SO - Implementation only";
-				fillExtraOptions = true;
-				targetTaskId = task.id;
-			} else if (status.id === "NI") {
-				mappedStatus = "In Progress";
-				const subStatusMap = {
-					WAIT_INPUT: "NI - Awaiting Inputs",
-					WAIT_VALIDATION: "NI - Awaiting Validation",
-					IN_CONSULT: "NI - In Consult",
-				};
-				mappedSubStatus = subStatusMap[task.id] || "";
-				if (task.id === "WAIT_VALIDATION") {
-					fillExtraOptions = true;
-					targetTaskId = subTask?.id;
-				}
-			} else if (status.id === "IN") {
-				mappedStatus = "Inactive";
-				mappedSubStatus = "Inactive - Unreachable";
-			}
-
-			const taskMeta =
-				(targetTaskId && QPlusAutomator.TASK_METRICS[targetTaskId]) ||
-				{};
-			const config = {
-				ldap: "",
-				date: "",
-				status: mappedStatus,
-				subStatus: mappedSubStatus,
-				radioQs: [],
-				checkboxQs: [],
+		buildConfig({ status, task, subTask }) {
+			const statusMappings = {
+				SO: {
+					status: "Implemented",
+					subStatus: "SO - Implementation only",
+					fillExtra: true,
+					targetTaskId: task.id,
+				},
+				NI: {
+					status: "In Progress",
+					subStatus: {
+						WAIT_INPUT: "NI - Awaiting Inputs",
+						WAIT_VALIDATION: "NI - Awaiting Validation",
+						IN_CONSULT: "NI - In Consult",
+					}[task.id] || "",
+					fillExtra: task.id === "WAIT_VALIDATION",
+					targetTaskId: task.id === "WAIT_VALIDATION" ? subTask?.id : null,
+				},
+				IN: {
+					status: "Inactive",
+					subStatus: "Inactive - Unreachable",
+					fillExtra: false,
+					targetTaskId: null,
+				},
 			};
 
-			if (fillExtraOptions) {
-				config.radioQs = [
-					{
-						title: "If task type was EC",
-						choice: taskMeta.ecFeasible || "Not Applicable (N/A)",
-					},
-					{
-						title: "what option was used",
-						choice: taskMeta.ecOption || "Not Applicable (N/A)",
-					},
-					{ title: "Was it a GTM implementation", choice: "Yes" },
-					{
-						title: "If COMO task was implemented",
-						choice: "Not Applicable (N/A)",
-					},
-					{ title: "If Customer Match", choice: "None" },
-					{ title: "CMS / Platform", choice: "Didn't check" },
-				];
+			const mapped = statusMappings[status.id] || { status: "", subStatus: "", fillExtra: false, targetTaskId: null };
+			const taskMeta = (mapped.targetTaskId && QPlusAutomator.TASK_METRICS[mapped.targetTaskId]) || {};
 
-				config.checkboxQs = [
-					{ title: "Task Type", choices: taskMeta.taskType || [] },
-					{
-						title: "For GA4 Cases, what exact features",
-						choices: taskMeta.ga4Features || [
-							"Not Applicable (N/A)",
-						],
-					},
-				];
-			}
+			return {
+				ldap: "",
+				date: "",
+				status: mapped.status,
+				subStatus: mapped.subStatus,
+				radioQs: mapped.fillExtra
+					? [
+						{ title: "If task type was EC", choice: taskMeta.ecFeasible || "Not Applicable (N/A)" },
+						{ title: "what option was used", choice: taskMeta.ecOption || "Not Applicable (N/A)" },
+						{ title: "Was it a GTM implementation", choice: "Yes" },
+						{ title: "If COMO task was implemented", choice: "Not Applicable (N/A)" },
+						{ title: "If Customer Match", choice: "None" },
+						{ title: "CMS / Platform", choice: "Didn't check" },
+					]
+					: [],
+				checkboxQs: mapped.fillExtra
+					? [
+						{ title: "Task Type", choices: taskMeta.taskType || [] },
+						{ title: "For GA4 Cases, what exact features", choices: taskMeta.ga4Features || ["Not Applicable (N/A)"] },
+					]
+					: [],
+			};
+		},
 
-			return config;
-		}
-
-		static dispatchAngularEvents(element) {
-			["input", "change"].forEach((ev) =>
-				element.dispatchEvent(new Event(ev, { bubbles: true })),
-			);
+		dispatchAngularEvents(element) {
+			element.dispatchEvent(new Event("input", { bubbles: true }));
+			element.dispatchEvent(new Event("change", { bubbles: true }));
 			element.blur();
-		}
+		},
 
-		static selectOptions(choices, options = {}) {
+		selectOptions(choices, options = {}) {
 			let context = document;
 			if (options.title) {
-				context = Utils.$$(
-					QPlusAutomator.SELECTORS.questionContainer,
-				).find((c) => {
-					const textEl = c.querySelector(
-						QPlusAutomator.SELECTORS.questionText,
-					);
-					return textEl?.textContent
-						.toLowerCase()
-						.includes(options.title.toLowerCase());
-				});
-				if (!context) {
-					console.warn(
-						`Question container matching "${options.title}" not found.`,
-					);
-					return false;
-				}
+				const titleLower = options.title.toLowerCase();
+				context = Utils.$$(QPlusAutomator.SELECTORS.questionContainer).find((c) =>
+					c.querySelector(QPlusAutomator.SELECTORS.questionText)?.textContent.toLowerCase().includes(titleLower),
+				);
+				if (!context) return false;
 			}
 
 			const targetChoices = Array.isArray(choices) ? choices : [choices];
@@ -478,36 +355,19 @@
 
 			Utils.$$(QPlusAutomator.SELECTORS.label, context).forEach((el) => {
 				const text = el.textContent.trim().replace(/\s+/g, " ");
-				const isMatch = targetChoices.some(
-					(target) => text === target || text.startsWith(target),
-				);
+				const isMatch = targetChoices.some((target) => text === target || text.startsWith(target));
 
 				if (isMatch) {
-					const parent =
-						el.closest(
-							isCheckbox
-								? QPlusAutomator.SELECTORS.checkboxParent
-								: QPlusAutomator.SELECTORS.radioParent,
-						) || el;
-
-					const input =
-						parent.querySelector(QPlusAutomator.SELECTORS.input) ||
-						(el.getAttribute?.("for")
-							? document.getElementById(el.getAttribute("for"))
-							: null);
+					const parent = el.closest(isCheckbox ? QPlusAutomator.SELECTORS.checkboxParent : QPlusAutomator.SELECTORS.radioParent) || el;
+					const input = parent.querySelector(QPlusAutomator.SELECTORS.input) || (el.getAttribute?.("for") ? document.getElementById(el.getAttribute("for")) : null);
 
 					if (!isCheckbox || (input && !input.checked)) {
-						// Click visual components first, then input
-						if (parent && parent !== el) parent.click();
+						if (parent !== el) parent.click();
 						el.click();
 						if (input) {
 							input.click();
-							input.dispatchEvent(
-								new Event("change", { bubbles: true }),
-							);
-							input.dispatchEvent(
-								new Event("input", { bubbles: true }),
-							);
+							input.dispatchEvent(new Event("change", { bubbles: true }));
+							input.dispatchEvent(new Event("input", { bubbles: true }));
 						}
 						found = true;
 					}
@@ -515,71 +375,47 @@
 			});
 
 			return found;
-		}
+		},
 
-		static async run() {
+		async run() {
 			const options = await QPlusAutomator.promptUser();
-			if (!options)
-				return console.log("🛑 Form automation cancelled by user.");
+			if (!options) return console.log("🛑 Form automation cancelled by user.");
 
 			const config = QPlusAutomator.buildConfig(options);
 			try {
-				console.log("Starting automation sequence...");
 				Utils.$(QPlusAutomator.SELECTORS.takeCase)?.click();
 				await Utils.sleep(300);
 
-				Utils.$(
-					`.footer ${QPlusAutomator.SELECTORS.takeCase}`,
-				)?.click();
-				await Utils.waitForElement(
-					QPlusAutomator.SELECTORS.questionContainer,
-				);
+				Utils.$(`.footer ${QPlusAutomator.SELECTORS.takeCase}`)?.click();
+				await Utils.waitForElement(QPlusAutomator.SELECTORS.questionContainer);
 
-				// 1. Select Status
 				QPlusAutomator.selectOptions(config.status);
 				await Utils.sleep(400);
 
-				// 2. Wait for dynamic sub-status questions to render in DOM
 				if (config.subStatus) {
+					const prefix = config.subStatus.split(" - ")[0];
 					await Utils.pollForCondition(
-						() => {
-							return Utils.$$(
-								QPlusAutomator.SELECTORS.label,
-							).some((l) =>
-								l.textContent.includes(
-									config.subStatus.split(" - ")[0],
-								),
-							);
-						},
+						() => Utils.$$(QPlusAutomator.SELECTORS.label).some((l) => l.textContent.includes(prefix)),
 						150,
 						15,
 					);
-
 					QPlusAutomator.selectOptions(config.subStatus);
 					await Utils.sleep(300);
 				}
 
-				// 3. Fill text fields
 				const textareas = Utils.$$(QPlusAutomator.SELECTORS.textarea);
 				[config.ldap, config.date].forEach((val, idx) => {
-					if (textareas[idx]) {
-						textareas[idx].focus();
-						textareas[idx].click();
-						textareas[idx].value = val;
-						QPlusAutomator.dispatchAngularEvents(textareas[idx]);
+					const target = textareas[idx];
+					if (target) {
+						target.focus();
+						target.click();
+						target.value = val;
+						QPlusAutomator.dispatchAngularEvents(target);
 					}
 				});
 
-				// 4. Populate dynamic radios & checkboxes
-				config.radioQs.forEach((q) =>
-					QPlusAutomator.selectOptions(q.choice, { title: q.title }),
-				);
-				config.checkboxQs.forEach((q) =>
-					QPlusAutomator.selectOptions(q.choices, {
-						title: q.title,
-						isCheckbox: true,
-					}),
-				);
+				config.radioQs.forEach((q) => QPlusAutomator.selectOptions(q.choice, { title: q.title }));
+				config.checkboxQs.forEach((q) => QPlusAutomator.selectOptions(q.choices, { title: q.title, isCheckbox: true }));
 
 				await Utils.sleep(200);
 				Utils.$(QPlusAutomator.SELECTORS.autoSuggestion)?.click();
@@ -587,25 +423,23 @@
 			} catch (error) {
 				console.error("❌ Error during form automation:", error);
 			}
-		}
-	}
+		},
+	};
 
 	// ==========================================
 	// 7. ROUTER & INITIALIZATION
 	// ==========================================
 	const AppRouter = {
 		routes: [
-			{ pattern: "casemon2.corp", run: () => CaseMon.init() },
+			{ pattern: "casemon2.corp", run: () => Dash.init() },
 			{ pattern: "cases.connect", run: () => CasesConnect.init() },
 			{ pattern: "adwords.corp", run: () => AdWords.init() },
 			{ pattern: "chrome-extension://", run: () => QPlusAutomator.run() },
 		],
 
 		init() {
-			const matched = this.routes.find((r) =>
-				window.location.href.includes(r.pattern),
-			);
-			matched ? matched.run() : TagInspector.init();
+			const target = this.routes.find((r) => window.location.href.includes(r.pattern));
+			target ? target.run() : TagInspector.init();
 		},
 	};
 
