@@ -165,6 +165,15 @@
 						...CasesConnect.BASE_COMMENTS,
 					],
 				},
+				GA4_LINK: {
+					subStatus: "SO - Implementation Only",
+					subStatusReason: "Implement GA4",
+					tagsImplemented: "",
+					comments: [
+						"Implemented GA4 tag via GTM",
+						...CasesConnect.GA4_COMMENTS,
+					],
+				},
 				WAITING_INPUT: {
 					subStatus: "Waiting Input",
 					subStatusReason: "waiting for Adv to setup GTM",
@@ -249,7 +258,7 @@
 						width: "320px",
 						boxShadow: "0 16px 36px rgba(0,0,0,0.12)",
 						textAlign: "center",
-						fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+						fontFamily: '"Eczar", serif',
 						border: "1px solid rgba(0,0,0,0.05)",
 					},
 				});
@@ -265,13 +274,13 @@
 					Utils.createEl("div", {
 						text: title,
 						parent: modal,
-						style: "font-size: 16px; font-weight: 700; color: #1D1D1F; margin-bottom: 4px;",
+						style: "font-size: 18px; font-weight: 700; color: #1D1D1F; margin-bottom: 4px;",
 					});
 
 					Utils.createEl("div", {
 						text: subtitle,
 						parent: modal,
-						style: "font-size: 12px; color: #86868B; margin-bottom: 18px;",
+						style: "font-size: 14px; color: #86868B; margin-bottom: 18px;",
 					});
 
 					const actions = Utils.createEl("div", {
@@ -287,7 +296,7 @@
 								padding: "10px 14px",
 								borderRadius: "10px",
 								border: "none",
-								fontSize: "13px",
+								fontSize: "16px",
 								fontWeight: "600",
 								cursor: "pointer",
 								backgroundColor: bg,
@@ -300,6 +309,15 @@
 						});
 					});
 				};
+
+				if (daysOffset === 0) {
+					renderStep("Select Same-Day Task", "Appointment is today. Choose case type:", [
+						["Ads CT", "#A5D8FF", "#183B56", () => close("CONVERSION_TRACKING")],
+						["GA4 Link", "#B2F2BB", "#1E5E2A", () => close("GA4_LINK")],
+						["Skip / Keep Default", "#F1F3F5", "#495057", () => close(null)],
+					]);
+					return;
+				}
 
 				const showValidationStep = () => {
 					renderStep("Validation Scope", "Select the task validated on call:", [
@@ -322,7 +340,13 @@
 		},
 
 		autoClickTask() {
-			Utils.$("#cdtx__uioncall--btn")?.click();
+			const caseNoteTarget = Utils.$('[aria-label="Case Note"]');
+			if (caseNoteTarget) {
+				const followUpVal = Utils.$('[data-infocase="follow_up_time"]')?.dataset?.valchoice || "NA";
+				const templateHTML = CasesConnect.buildNoteTemplateHTML(null, followUpVal);
+				caseNoteTarget.insertAdjacentHTML("beforeend", templateHTML);
+				caseNoteTarget.dispatchEvent(new Event("input", { bubbles: true }));
+			}
 			setTimeout(() => Utils.$(".cdtx__uioncall_control-remove")?.click(), 6000);
 		},
 
@@ -362,6 +386,10 @@
 
 		async executeFollowUp(flupBtn) {
 			try {
+				if (!Utils.$("._connectcase_info--outer")) {
+					Utils.$('[data-btnclk="_connectcase_info-act_recrawl"]')?.click();
+				}
+
 				Utils.$('[aria-label="Overview"]')?.click();
 				await Utils.sleep(300);
 
@@ -389,7 +417,7 @@
 				if (daysOffset === 5) {
 					selectedTemplateKey = "EC";
 				} else if (daysOffset === 0 && isApptToday) {
-					selectedTemplateKey = "CONVERSION_TRACKING";
+					selectedTemplateKey = await CasesConnect.promptCaseType(0);
 				} else if (daysOffset === 2 || daysOffset === 3) {
 					selectedTemplateKey = await CasesConnect.promptCaseType(daysOffset);
 				}
@@ -457,11 +485,13 @@
 			Utils.addStyle(
 				"qm-styles",
 				`
-				#qm-panel { position: fixed; bottom: 20px; left: 20px; display: flex; gap: 8px; align-items: center; z-index: 99999; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif; }
-				.qm-btn { z-index: 10; color: #1D1D1F; padding: 10px 16px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.6); }
+				@import url('https://fonts.googleapis.com/css2?family=Eczar:wght@400;600;700&display=swap');
+				#qm-panel, #qm-panel *, #qm-modal-overlay, #qm-modal-overlay * { font-family: "Eczar", serif !important; }
+				#qm-panel { position: fixed; bottom: 20px; left: 20px; display: flex; gap: 8px; align-items: center; z-index: 99999; font-size: 14px; }
+				.qm-btn { z-index: 10; color: #1D1D1F; padding: 10px 16px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.6); }
 				.qm-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); filter: brightness(0.97); }
 				.qm-btn:active { transform: scale(0.96); }
-				#qm-flup-in { position: absolute; top: 50%; transform: translateY(-50%); right: 6px; width: 28px; height: 24px; padding: 0; border: none; border-radius: 6px; background: rgba(255, 255, 255, 0.95); color: #1D1D1F; font-weight: 700; font-size: 12px; text-align: center; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06); transition: all 0.2s ease; -moz-appearance: textfield; }
+				#qm-flup-in { position: absolute; top: 50%; transform: translateY(-50%); right: 6px; width: 28px; height: 24px; padding: 0; border: none; border-radius: 6px; background: rgba(255, 255, 255, 0.95); color: #1D1D1F; font-weight: 700; font-size: 14px; text-align: center; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06); transition: all 0.2s ease; -moz-appearance: textfield; }
 				#qm-flup-in:focus { outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06), 0 0 0 2px #74B9FF; }
 				.qm-badge { display: none; position: absolute; top: -4px; right: -4px; background: #FF8787; border-radius: 9999px; padding: 2px 6px; font-size: 10px; font-weight: 700; line-height: 1; border: 1.5px solid #FFFFFF; color: #FFFFFF; }
 				.qm-sig { margin: 12px 0; }
@@ -496,7 +526,7 @@
 			});
 
 			Utils.createEl("button", {
-				html: '<img src="https://cdn-icons-png.flaticon.com/512/1069/1069138.png" style="width: 16px; height: 16px; filter: brightness(0.2);"><span id="flup-badge" class="qm-badge">+</span>',
+				html: '<img src="https://cdn-icons-png.flaticon.com/512/1069/1069138.png" style="width: 20px; height: 20px; filter: brightness(0.2);"><span id="flup-badge" class="qm-badge">+</span>',
 				title: "Click Follow-up Item",
 				className: "qm-btn",
 				style: { backgroundColor: "#A5D8FF" },
@@ -521,7 +551,7 @@
 					new MutationObserver(updateBadge).observe(el, { attributes: true, attributeFilter: ["data-attr"] });
 					updateBadge();
 				})
-				.catch(() => {});
+				.catch(() => { });
 
 			const flupBtn = Utils.createEl("button", {
 				textContent: "FL Up:",

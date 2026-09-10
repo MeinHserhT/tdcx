@@ -1207,7 +1207,13 @@
 		},
 
 		autoClickTask() {
-			Utils.$("#cdtx__uioncall--btn")?.click();
+			const caseNoteTarget = Utils.$('[aria-label="Case Note"]');
+			if (caseNoteTarget) {
+				const followUpVal = Utils.$('[data-infocase="follow_up_time"]')?.dataset?.valchoice || "NA";
+				const templateHTML = CasesConnect.buildNoteTemplateHTML(null, followUpVal);
+				caseNoteTarget.insertAdjacentHTML("beforeend", templateHTML);
+				caseNoteTarget.dispatchEvent(new Event("input", { bubbles: true }));
+			}
 			setTimeout(() => Utils.$(".cdtx__uioncall_control-remove")?.click(), 6000);
 		},
 
