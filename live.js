@@ -30,7 +30,7 @@ function a() {
 // Value
 function a() {
 	var a = +document
-		.querySelector(".order-summary-pay")
+		.querySelector("main > div:nth-child(2) > div > div:nth-child(4) > span")
 		.innerText.replace(/[^\d]/g, "");
 	return a;
 }
@@ -91,6 +91,12 @@ document.querySelectorAll("[type=email]").forEach(function (e) {
 			email: e.value,
 		});
 });
+document.querySelectorAll("[id=email]").forEach(function (e) {
+	if (e.value)
+		dataLayer.push({
+			email: e.value,
+		});
+});
 
 // JS Email
 function a() {
@@ -145,3 +151,5 @@ function a() {
 			.innerText.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
 	);
 }
+
+

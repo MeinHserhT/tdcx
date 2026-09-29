@@ -25,8 +25,7 @@
 			return false;
 		},
 
-		$: (selector, parent = document) => parent.querySelector(selector),
-		$$: (selector, parent = document) => Array.from(parent.querySelectorAll(selector)),
+		$: (selector, parent = document) => parent.querySelector(selector),$$: (selector, parent = document) => Array.from(parent.querySelectorAll(selector)),
 
 		toSafeHTML: (str) => {
 			if (!safePolicy) {
@@ -145,7 +144,7 @@
 
 		POOL_RANKS: { LM: 1, BAU: 2 },
 
-        init() {
+		init() {
 			if (Dash.isRunning) return;
 			Dash.isRunning = true;
 			Utils.$('[aria-selected="false"]')?.click();
@@ -166,13 +165,15 @@
 				@import url('https://fonts.googleapis.com/css2?family=Alegreya:wght@700&family=Cookie&family=Lexend:wght@700&family=Viga&display=swap');
 				#cm-root, #cm-root * { box-sizing: border-box; font-family: "Lexend", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-weight: 700 !important; }
 				#cm-root { position: fixed; height: 100%; width: 100%; top: 0; right: 0; background-color: rgba(0, 0, 0, 0.45); z-index: 9999; display: flex; justify-content: flex-end; align-items: center; padding: 20px; pointer-events: none; }
-				#cm-root .cm-wrap { position: relative; pointer-events: auto; width: 100%; max-width: 320px; background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.02); padding: 16px; border: 1px solid rgba(255, 255, 255, 0.8); color: #1D1D1F; transition: max-width 0.25s cubic-bezier(0.16, 1, 0.3, 1), all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+				#cm-root .cm-wrap { position: relative; pointer-events: auto; width: 100%; max-width: 320px; height: 90vh; background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.02); padding: 16px; border: 1px solid rgba(255, 255, 255, 0.8); color: #1D1D1F; transition: max-width 0.25s cubic-bezier(0.16, 1, 0.3, 1), all 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; gap: 12px; }
 				#cm-root .cm-wrap.cm-full { max-width: 400px; }
-				#cm-root .cm-close { position: absolute; top: -10px; right: -10px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.06); cursor: pointer; z-index: 20; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+				#cm-root .cm-close { position: absolute; top: 10px; right: 10px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.06); cursor: pointer; z-index: 20; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
 				#cm-root .cm-close:hover { background: #FFFFFF; transform: scale(1.08); }
 				#cm-root .cm-close img { width: 11px; height: 11px; opacity: 0.6; }
-				#cm-root .cm-grid, #cm-root .cm-card { display: flex; flex-direction: column; width: 100%; }
-				#cm-root .cm-head { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; width: 100%; }
+				#cm-root .cm-card { display: flex; flex-direction: column; width: 100%; background: rgba(255, 255, 255, 0.5); border-radius: 14px; padding: 10px; border: 1px solid rgba(0,0,0,0.05); min-height: 0; }
+				#cm-root #cm-card-bau { flex: 1 1 30%; }
+				#cm-root #cm-card-lm { flex: 1 1 70%; }
+				#cm-root .cm-head { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; width: 100%; flex-shrink: 0; }
 				#cm-root .cm-head-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
 				#cm-root .cm-head h3 { margin: 0; font-size: 11px; color: #86868B; text-transform: uppercase; letter-spacing: 0.8px; display: flex; align-items: center; gap: 6px; }
 				#cm-root .cm-toggle { padding: 3px 9px; font-size: 10px; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); border-radius: 9999px; background: rgba(255, 255, 255, 0.85); color: #1D1D1F; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 1px 3px rgba(0,0,0,0.04); white-space: nowrap; }
@@ -184,16 +185,16 @@
 				#cm-root .badge-phn { background: rgba(255, 59, 48, 0.12); color: #D70015; border: 1px solid rgba(255, 59, 48, 0.2); }
 				#cm-root .badge-brk { background: rgba(255, 149, 0, 0.12); color: #C77000; border: 1px solid rgba(255, 149, 0, 0.2); }
 				#cm-root .badge-tot { background: rgba(142, 142, 147, 0.12); color: #636366; border: 1px solid rgba(142, 142, 147, 0.2); }
-				#cm-root .cm-warn { animation: pulseHealth 2.5s infinite; border-color: rgba(255, 59, 48, 0.6); box-shadow: 0 0 20px rgba(255, 59, 48, 0.2); }
-				@keyframes pulseHealth { 0%, 100% { border-color: rgba(255, 255, 255, 0.8); } 50% { border-color: rgba(255, 59, 48, 0.6); } }
+				#cm-root .cm-card.cm-warn { animation: pulseHealth 2.5s infinite; border-color: rgba(255, 59, 48, 0.6); box-shadow: 0 0 20px rgba(255, 59, 48, 0.2); }
+				@keyframes pulseHealth { 0%, 100% { border-color: rgba(0, 0, 0, 0.05); } 50% { border-color: rgba(255, 59, 48, 0.6); } }
 				#cm-root .cm-warn-txt { font-size: 9.5px; color: #FF3B30; text-transform: uppercase; letter-spacing: 0.5px; }
 
-				#cm-root .cm-cols { display: flex; width: 100%; gap: 8px; align-items: center; padding: 0 2px 4px 2px; box-sizing: border-box; }
+				#cm-root .cm-cols { display: flex; width: 100%; gap: 8px; align-items: center; padding: 0 2px 4px 2px; box-sizing: border-box; flex-shrink: 0; }
 				#cm-root .col-spacer { width: 54px; min-width: 54px; flex-shrink: 0; }
 				#cm-root .col-grid { flex-grow: 1; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(56px, auto) minmax(56px, auto) minmax(20px, auto); gap: 6px; padding: 0 10px; font-size: 8.5px; color: #86868B; text-transform: uppercase; letter-spacing: 0.4px; }
 				#cm-root .col-grid span { text-align: center; display: flex; align-items: center; justify-content: center; }
 
-				#cm-root .cm-list { max-height: 72vh; overflow-y: auto; overflow-x: hidden; padding: 2px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 10px; width: 100%; }
+				#cm-root .cm-list { flex-grow: 1; overflow-y: auto; overflow-x: hidden; padding: 2px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 10px; width: 100%; min-height: 0; }
 				#cm-root .cm-group { display: flex; width: 100%; gap: 8px; align-items: flex-start; }
 				#cm-root .grp-lbl { flex-shrink: 0; width: 54px; text-align: left; font-size: 15px !important; font-family: "Cookie", cursive !important; color: #86868B; letter-spacing: 0.3px; padding: 5px 2px; border-left: 2px solid rgba(0,0,0,0.1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; text-transform: none; }
 				#cm-root .grp-lbl.is-me { color: #0071E3; border-left-color: #0071E3; background: rgba(0, 113, 227, 0.08); border-radius: 0 3px 3px 0; }
@@ -273,26 +274,48 @@
 				const skeletonHtml = `
 				<div class="cm-wrap ${isFull ? "cm-full" : ""}" id="cm-wrap-shell">
 					<button class="cm-close" title="Close"><img src="${Dash.ICONS.close}" alt="Close"/></button>
-					<div class="cm-grid">
-						<div class="cm-card">
-							<div class="cm-head">
-								<div class="cm-head-top">
-									<h3>
-										<span>Team Status</span>
-										<span class="cm-warn-txt" id="cm-health-warn" style="display:none;">⚠️ Low Availability</span>
-									</h3>
-									${toggleBtnHtml}
-								</div>
-								<div class="cm-stats">
-									<span class="cm-pill badge-act" id="cnt-act" title="Active">Actv: 0</span> +
-									<span class="cm-pill badge-phn" id="cnt-phn" title="On Phone">Phn: 0</span> +
-									<span class="cm-pill badge-brk" id="cnt-brk" title="On Break">Brk: 0</span> =
-									<span class="cm-pill badge-tot" id="cnt-tot" title="Total">Tot: 0</span>
-								</div>
+					
+					<!-- LM Agent Dashboard Card -->
+					<div class="cm-card" id="cm-card-lm">
+						
+						<div class="cm-head">
+							<div class="cm-head-top">
+								<h3>
+									<span>LM Team Status</span>
+									<span class="cm-warn-txt" id="cm-health-warn-lm" style="display:none;">⚠️ Low Availability</span>
+								</h3>
+								${toggleBtnHtml}
 							</div>
-							<div class="cm-list" id="cm-list-root"></div>
+							<div class="cm-stats">
+								<span class="cm-pill badge-act" id="cnt-act-lm" title="Active">Actv: 0</span> +
+								<span class="cm-pill badge-phn" id="cnt-phn-lm" title="On Phone">Phn: 0</span> +
+								<span class="cm-pill badge-brk" id="cnt-brk-lm" title="On Break">Brk: 0</span> =
+								<span class="cm-pill badge-tot" id="cnt-tot-lm" title="Total">Tot: 0</span>
+							</div>
 						</div>
+						<div class="cm-list" id="cm-list-lm"></div>
 					</div>
+
+					<!-- BAU Agent Dashboard Card -->
+					<div class="cm-card" id="cm-card-bau">
+						<div class="cm-head">
+							<div class="cm-head-top">
+								<h3>
+									<span>BAU Team Status</span>
+									<span class="cm-warn-txt" id="cm-health-warn-bau" style="display:none;">⚠️ Low Availability</span>
+								</h3>
+
+							</div>
+							<div class="cm-stats">
+								<span class="cm-pill badge-act" id="cnt-act-bau" title="Active">Actv: 0</span> +
+								<span class="cm-pill badge-phn" id="cnt-phn-bau" title="On Phone">Phn: 0</span> +
+								<span class="cm-pill badge-brk" id="cnt-brk-bau" title="On Break">Brk: 0</span> =
+								<span class="cm-pill badge-tot" id="cnt-tot-bau" title="Total">Tot: 0</span>
+							</div>
+						</div>
+						<div class="cm-list" id="cm-list-bau"></div>
+					</div>
+
 				</div>`;
 				uiContainer.innerHTML = Utils.toSafeHTML(skeletonHtml);
 				uiContainer.style.display = "flex";
@@ -305,6 +328,142 @@
 					0,
 				);
 			const extractState = (cell) => (cell?.innerText.match(/[a-zA-Z\s]+/)?.[0] || "").trim().toLowerCase().replace(/\s+/g, "-");
+
+			const renderDashboardSection = (agents, type) => {
+				const activeCount = agents.filter((a) => a.statusKey === "active").length;
+				const callCount = agents.filter((a) => ["phone", "video"].includes(a.statusKey)).length;
+				const breakCount = agents.filter((a) => !["phone", "video", "active"].includes(a.statusKey)).length;
+				const totalCount = agents.length;
+				const isLowAvailability = totalCount > 0 && activeCount / totalCount < 0.2;
+
+				const suffix = type.toLowerCase();
+				Utils.$(`#cnt-act-${suffix}`).textContent = `Actv: ${activeCount}`;
+				Utils.$(`#cnt-phn-${suffix}`).textContent = `Phn: ${callCount}`;
+				Utils.$(`#cnt-brk-${suffix}`).textContent = `Brk: ${breakCount}`;
+				Utils.$(`#cnt-tot-${suffix}`).textContent = `Tot: ${totalCount}`;
+
+				const cardEl = Utils.$(`#cm-card-${suffix}`);
+				const healthWarn = Utils.$(`#cm-health-warn-${suffix}`);
+				if (cardEl && healthWarn) {
+					cardEl.classList.toggle("cm-warn", isLowAvailability);
+					healthWarn.style.display = isLowAvailability ? "inline" : "none";
+				}
+
+				const groups = [];
+				let currentGroup = null;
+
+				agents.forEach((agent) => {
+					const isUser = agent.ldap === currentUserName;
+					let label = isUser ? "You" : agent.displayStatus;
+
+					if (!isUser) {
+						if (agent.statusKey === "phone" || agent.statusKey === "video") label = "On Call";
+						else if (agent.statusKey.includes("break")) label = agent.statusKey.split("-")[0];
+					}
+
+					if (!currentGroup || currentGroup.label !== label) {
+						currentGroup = { label, isUser, rows: [] };
+						groups.push(currentGroup);
+					}
+					currentGroup.rows.push(agent);
+				});
+
+				const listRoot = Utils.$(`#cm-list-${suffix}`);
+				if (!listRoot) return;
+
+				const fragment = document.createDocumentFragment();
+				const isFullLayout = Dash.currentLayout === "full";
+
+				if (isFullLayout) {
+					Utils.createEl("div", {
+						className: "cm-cols",
+						html: `
+							<div class="col-spacer"></div>
+							<div class="col-grid">
+								<span>Agent</span>
+								<span>Last Change</span>
+								<span>In State</span>
+								<span></span>
+							</div>
+						`,
+						parent: fragment,
+					});
+				}
+
+				groups.forEach((group) => {
+					const groupBlock = Utils.createEl("div", { className: "cm-group" });
+					Utils.createEl("div", {
+						className: `grp-lbl ${group.isUser ? "is-me" : ""}`,
+						text: group.label,
+						parent: groupBlock,
+					});
+
+					const stack = Utils.createEl("div", { className: "grp-stack", parent: groupBlock });
+
+					group.rows.forEach((agent) => {
+						const stConf = Dash.STATUS_MAP[agent.statusKey] || Dash.STATUS_MAP.default;
+						const maxSecs = stConf.maxSecs;
+						const progressPct = Math.min((agent.durationSeconds / maxSecs) * 100, 100).toFixed(1);
+						const isOverTime = agent.durationSeconds >= maxSecs;
+						const isActive = agent.statusKey === "active";
+
+						const nonPhoneImg = agent.rawStatus1 === "busy" && isActive
+							? `<img src="${Dash.ICONS.non_phone}" alt="non_phone" loading="lazy" />` : "";
+						const nonVideoImg = agent.rawStatus2 === "busy" && isActive
+							? `<img src="${Dash.ICONS.non_video}" alt="non_video" loading="lazy" />` : "";
+						const statusIconHtml = stConf.ico
+							? `<img src="https://cdn-icons-png.flaticon.com/512/${stConf.ico}.png" animation="${stConf.anim}" alt="${agent.statusKey} icon" loading="lazy" />` : "";
+						const iconsHtml = `${statusIconHtml}${nonPhoneImg}${nonVideoImg}`;
+						const poolText = agent.poolDisplay ? ` (${Utils.escapeHtml(agent.poolDisplay)})` : "";
+
+						const rowInnerHtml = isFullLayout
+							? `
+							<div class="row-left">
+								<img class="row-avatar" src="${Utils.escapeHtml(agent.img)}" alt="${Utils.escapeHtml(agent.ldap)}" loading="lazy" />
+								<div class="row-info">
+									<span class="row-name">${Utils.escapeHtml(agent.ldap)}</span>
+									<span class="row-status">${Utils.escapeHtml(agent.displayStatus)}${poolText}</span>
+								</div>
+							</div>
+							<div class="row-col">
+								<span class="row-time">${Utils.escapeHtml(agent.lastChangeRaw || "-")}</span>
+							</div>
+							<div class="row-col">
+								<span class="row-time">${Utils.escapeHtml(agent.timeInState || "-")}</span>
+							</div>
+							<div class="row-ico">
+								${iconsHtml}
+							</div>
+							`
+							: `
+							<div class="row-left">
+								<img class="row-avatar" src="${Utils.escapeHtml(agent.img)}" alt="${Utils.escapeHtml(agent.ldap)}" loading="lazy" />
+								<span class="row-name">${Utils.escapeHtml(agent.ldap)}</span>
+							</div>
+							<div class="row-right">
+								<div class="row-meta">
+									<span class="row-time">${Utils.escapeHtml(agent.lastChangeRaw)} <span class="row-subtime">(${Utils.escapeHtml(agent.timeInState)})</span></span>
+									<span class="row-status">${Utils.escapeHtml(agent.displayStatus)}${poolText}</span>
+								</div>
+								${iconsHtml}
+							</div>
+							`;
+
+						const rowEl = Utils.createEl("div", {
+							className: `cm-row ${agent.cssClass} ${isOverTime ? "is-over" : ""} ${isFullLayout ? "is-full" : ""}`,
+							style: `--progress: ${progressPct}%; --st-color: ${stConf.color}; --st-track: ${stConf.track};`,
+							html: rowInnerHtml,
+							parent: stack,
+						});
+						rowEl.dataset.ldap = agent.ldap;
+					});
+
+					fragment.appendChild(groupBlock);
+				});
+
+				listRoot.textContent = "";
+				listRoot.appendChild(fragment);
+			};
 
 			const updateDashboard = () => {
 				try {
@@ -361,138 +520,11 @@
 							return b.durationSeconds - a.durationSeconds;
 						});
 
-					const activeCount = parsedAgents.filter((a) => a.statusKey === "active").length;
-					const callCount = parsedAgents.filter((a) => ["phone", "video"].includes(a.statusKey)).length;
-					const breakCount = parsedAgents.filter((a) => !["phone", "video", "active"].includes(a.statusKey)).length;
-					const totalCount = parsedAgents.length;
-					const isLowAvailability = totalCount > 0 && activeCount / totalCount < 0.2;
+					const bauAgents = parsedAgents.filter((a) => a.poolDisplay === "BAU");
+					const lmAgents = parsedAgents.filter((a) => a.poolDisplay === "LM");
 
-					Utils.$("#cnt-act").textContent = `Actv: ${activeCount}`;
-					Utils.$("#cnt-phn").textContent = `Phn: ${callCount}`;
-					Utils.$("#cnt-brk").textContent = `Brk: ${breakCount}`;
-					Utils.$("#cnt-tot").textContent = `Tot: ${totalCount}`;
-
-					const wrapperShell = Utils.$("#cm-wrap-shell");
-					const healthWarn = Utils.$("#cm-health-warn");
-					if (wrapperShell && healthWarn) {
-						wrapperShell.classList.toggle("cm-warn", isLowAvailability);
-						healthWarn.style.display = isLowAvailability ? "inline" : "none";
-					}
-
-					const groups = [];
-					let currentGroup = null;
-
-					parsedAgents.forEach((agent) => {
-						const isUser = agent.ldap === currentUserName;
-						let label = isUser ? "You" : agent.displayStatus;
-
-						if (!isUser) {
-							if (agent.statusKey === "phone" || agent.statusKey === "video") label = "On Call";
-							else if (agent.statusKey.includes("break")) label = agent.statusKey.split("-")[0];
-						}
-
-						if (!currentGroup || currentGroup.label !== label) {
-							currentGroup = { label, isUser, rows: [] };
-							groups.push(currentGroup);
-						}
-						currentGroup.rows.push(agent);
-					});
-
-					const listRoot = Utils.$("#cm-list-root");
-					if (!listRoot) return;
-
-					const fragment = document.createDocumentFragment();
-					const isFullLayout = Dash.currentLayout === "full";
-
-					if (isFullLayout) {
-						Utils.createEl("div", {
-							className: "cm-cols",
-							html: `
-								<div class="col-spacer"></div>
-								<div class="col-grid">
-									<span>Agent</span>
-									<span>Last Change</span>
-									<span>In State</span>
-									<span></span>
-								</div>
-							`,
-							parent: fragment,
-						});
-					}
-
-					groups.forEach((group) => {
-						const groupBlock = Utils.createEl("div", { className: "cm-group" });
-						Utils.createEl("div", {
-							className: `grp-lbl ${group.isUser ? "is-me" : ""}`,
-							text: group.label,
-							parent: groupBlock,
-						});
-
-						const stack = Utils.createEl("div", { className: "grp-stack", parent: groupBlock });
-
-						group.rows.forEach((agent) => {
-							const stConf = Dash.STATUS_MAP[agent.statusKey] || Dash.STATUS_MAP.default;
-							const maxSecs = stConf.maxSecs;
-							const progressPct = Math.min((agent.durationSeconds / maxSecs) * 100, 100).toFixed(1);
-							const isOverTime = agent.durationSeconds >= maxSecs;
-							const isActive = agent.statusKey === "active";
-
-							const nonPhoneImg = agent.rawStatus1 === "busy" && isActive
-								? `<img src="${Dash.ICONS.non_phone}" alt="non_phone" loading="lazy" />` : "";
-							const nonVideoImg = agent.rawStatus2 === "busy" && isActive
-								? `<img src="${Dash.ICONS.non_video}" alt="non_video" loading="lazy" />` : "";
-							const statusIconHtml = stConf.ico
-								? `<img src="https://cdn-icons-png.flaticon.com/512/${stConf.ico}.png" animation="${stConf.anim}" alt="${agent.statusKey} icon" loading="lazy" />` : "";
-							const iconsHtml = `${statusIconHtml}${nonPhoneImg}${nonVideoImg}`;
-							const poolText = agent.poolDisplay ? ` (${Utils.escapeHtml(agent.poolDisplay)})` : "";
-
-							const rowInnerHtml = isFullLayout
-								? `
-								<div class="row-left">
-									<img class="row-avatar" src="${Utils.escapeHtml(agent.img)}" alt="${Utils.escapeHtml(agent.ldap)}" loading="lazy" />
-									<div class="row-info">
-										<span class="row-name">${Utils.escapeHtml(agent.ldap)}</span>
-										<span class="row-status">${Utils.escapeHtml(agent.displayStatus)}${poolText}</span>
-									</div>
-								</div>
-								<div class="row-col">
-									<span class="row-time">${Utils.escapeHtml(agent.lastChangeRaw || "-")}</span>
-								</div>
-								<div class="row-col">
-									<span class="row-time">${Utils.escapeHtml(agent.timeInState || "-")}</span>
-								</div>
-								<div class="row-ico">
-									${iconsHtml}
-								</div>
-								`
-								: `
-								<div class="row-left">
-									<img class="row-avatar" src="${Utils.escapeHtml(agent.img)}" alt="${Utils.escapeHtml(agent.ldap)}" loading="lazy" />
-									<span class="row-name">${Utils.escapeHtml(agent.ldap)}</span>
-								</div>
-								<div class="row-right">
-									<div class="row-meta">
-										<span class="row-time">${Utils.escapeHtml(agent.lastChangeRaw)} <span class="row-subtime">(${Utils.escapeHtml(agent.timeInState)})</span></span>
-										<span class="row-status">${Utils.escapeHtml(agent.displayStatus)}${poolText}</span>
-									</div>
-									${iconsHtml}
-								</div>
-								`;
-
-							const rowEl = Utils.createEl("div", {
-								className: `cm-row ${agent.cssClass} ${isOverTime ? "is-over" : ""} ${isFullLayout ? "is-full" : ""}`,
-								style: `--progress: ${progressPct}%; --st-color: ${stConf.color}; --st-track: ${stConf.track};`,
-								html: rowInnerHtml,
-								parent: stack,
-							});
-							rowEl.dataset.ldap = agent.ldap;
-						});
-
-						fragment.appendChild(groupBlock);
-					});
-
-					listRoot.textContent = "";
-					listRoot.appendChild(fragment);
+					renderDashboardSection(bauAgents, "BAU");
+					renderDashboardSection(lmAgents, "LM");
 				} catch (err) {
 					console.error("Dash render error:", err);
 				}
@@ -527,7 +559,7 @@
 
 			updateDashboard();
 		}
-    };
+	};
 
 	// ==========================================
 	// 7. ROUTER & INITIALIZATION

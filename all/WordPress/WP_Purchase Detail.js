@@ -14,11 +14,7 @@ function _v() {
 function _id() {
     return document.querySelector(".order").innerText.replace(/\D/g, "");
 }
-function _id() {
-    return document
-        .querySelector(".order")
-        .innerText.replace(/[Mã đơn hàng:]/g, "");
-}
+
 // ---- UPD -----
 function _p() {
     return (
