@@ -9,22 +9,6 @@
 	const Utils = {
 		sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 
-		debounce: (fn, wait = 150) => {
-			let timer;
-			return (...args) => {
-				clearTimeout(timer);
-				timer = setTimeout(() => fn(...args), wait);
-			};
-		},
-
-		pollForCondition: async (predicate, interval = 500, maxAttempts = 10) => {
-			for (let i = 0; i < maxAttempts; i++) {
-				if (predicate()) return true;
-				await Utils.sleep(interval);
-			}
-			return false;
-		},
-
 		$: (selector, parent = document) => parent.querySelector(selector),
 		$$: (selector, parent = document) => Array.from(parent.querySelectorAll(selector)),
 
@@ -32,7 +16,7 @@
 			if (!safePolicy) {
 				try {
 					safePolicy = window.trustedTypes?.createPolicy("default", { createHTML: (s) => s }) || window.trustedTypes?.defaultPolicy;
-				} catch { /* policy existed or restricted */ }
+				} catch { /* Policy existed or restricted */ }
 				if (!safePolicy) safePolicy = { createHTML: (s) => s };
 			}
 			return safePolicy.createHTML(str);
@@ -150,7 +134,7 @@
 				.ti-close { padding: 8px 20px !important; font-size: 13px !important; font-weight: 500 !important; cursor: pointer !important; border: 1px solid rgba(0, 0, 0, 0.1) !important; border-radius: 9999px !important; background-color: #FFFFFF !important; color: #1D1D1F !important; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important; box-shadow: 0 2px 6px rgba(0,0,0,0.02) !important; box-sizing: border-box !important; white-space: nowrap !important; }
 				.ti-close:hover { background-color: #F5F5F7 !important; border-color: rgba(0, 0, 0, 0.15) !important; }
 				.ti-close:active { transform: scale(0.96) !important; }
-			`,
+			`
 			);
 		},
 
@@ -540,11 +524,11 @@
 
 				if (config.subStatus) {
 					const prefix = config.subStatus.split(" - ")[0];
-					await Utils.pollForCondition(
-						() => Utils.$$(QPlusAutomator.SELECTORS.label).some((l) => l.textContent.includes(prefix)),
-						150,
-						15,
-					);
+					let attempts = 0;
+					while (attempts++ < 15) {
+						if (Utils.$$(QPlusAutomator.SELECTORS.label).some((l) => l.textContent.includes(prefix))) break;
+						await Utils.sleep(150);
+					}
 					QPlusAutomator.selectOptions(config.subStatus);
 					await Utils.sleep(300);
 				}
@@ -582,14 +566,14 @@
 		updateFn: null,
 
 		STATUS_MAP: {
-			active:         { prio: 1,   maxSecs: 3600, color: "#34C759", track: "rgba(52, 199, 89, 0.15)" },
-			video:          { prio: 2,   maxSecs: 2700, color: "#AF52DE", track: "rgba(175, 82, 222, 0.15)", ico: "9571/9571236", anim: "breathe" },
-			phone:          { prio: 2.5, maxSecs: 2700, color: "#FF3B30", track: "rgba(255, 59, 48, 0.15)", ico: "13332/13332839", anim: "ring" },
-			"lunch-break":  { prio: 3,   maxSecs: 3600, color: "#FFCC00", track: "rgba(255, 204, 0, 0.15)",  ico: "1182/1182132", anim: "bounce-y" },
-			email:          { prio: 4,   maxSecs: 900,  color: "#0071E3", track: "rgba(0, 113, 227, 0.15)",  ico: "7487/7487055", anim: "fly" },
-			"coffee-break": { prio: 5,   maxSecs: 900,  color: "#FF9500", track: "rgba(255, 149, 0, 0.15)",  ico: "16108/16108931", anim: "rock" },
-			break:          { prio: 6,   maxSecs: 900,  color: "#8E8E93", track: "rgba(142, 142, 147, 0.15)", ico: "5140/5140652", anim: "fade-pulse" },
-			default:        { prio: 99,  maxSecs: 2700, color: "#8E8E93", track: "rgba(142, 142, 147, 0.15)" },
+			active: { prio: 1, maxSecs: 3600, color: "#34C759", track: "rgba(52, 199, 89, 0.15)" },
+			video: { prio: 2, maxSecs: 2700, color: "#AF52DE", track: "rgba(175, 82, 222, 0.15)", ico: "9571/9571236", anim: "breathe" },
+			phone: { prio: 2.5, maxSecs: 2700, color: "#FF3B30", track: "rgba(255, 59, 48, 0.15)", ico: "13332/13332839", anim: "ring" },
+			"lunch-break": { prio: 3, maxSecs: 3600, color: "#FFCC00", track: "rgba(255, 204, 0, 0.15)", ico: "1182/1182132", anim: "bounce-y" },
+			email: { prio: 4, maxSecs: 900, color: "#0071E3", track: "rgba(0, 113, 227, 0.15)", ico: "7487/7487055", anim: "fly" },
+			"coffee-break": { prio: 5, maxSecs: 900, color: "#FF9500", track: "rgba(255, 149, 0, 0.15)", ico: "16108/16108931", anim: "rock" },
+			break: { prio: 6, maxSecs: 900, color: "#8E8E93", track: "rgba(142, 142, 147, 0.15)", ico: "5140/5140652", anim: "fade-pulse" },
+			default: { prio: 99, maxSecs: 2700, color: "#8E8E93", track: "rgba(142, 142, 147, 0.15)" },
 		},
 
 		ICONS: {
@@ -714,7 +698,7 @@
 				@media screen and (max-width: 280px) { #cm-root .row-info { display: none !important; } }
 				@media screen and (max-width: 240px) { #cm-root .row-right img, #cm-root .row-ico img { display: none !important; } }
 				@media screen and (max-width: 220px) { #cm-root .row-subtime { display: none !important; } }
-				`,
+				`
 			);
 
 			const uiContainer = Utils.$("#cm-root") || Utils.createEl("div", { id: "cm-root", parent: document.body });
@@ -870,7 +854,6 @@
 						const statusIconHtml = stConf.ico
 							? `<img src="https://cdn-icons-png.flaticon.com/512/${stConf.ico}.png" animation="${stConf.anim}" alt="${agent.statusKey} icon" loading="lazy" />` : "";
 						const iconsHtml = `${statusIconHtml}${nonPhoneImg}${nonVideoImg}`;
-						const poolText = agent.poolDisplay ? ` (${Utils.escapeHtml(agent.poolDisplay)})` : "";
 
 						const rowInnerHtml = isFullLayout
 							? `
@@ -878,7 +861,7 @@
 								<img class="row-avatar" src="${Utils.escapeHtml(agent.img)}" alt="${Utils.escapeHtml(agent.ldap)}" loading="lazy" />
 								<div class="row-info">
 									<span class="row-name">${Utils.escapeHtml(agent.ldap)}</span>
-									<span class="row-status">${Utils.escapeHtml(agent.displayStatus)}${poolText}</span>
+									<span class="row-status">${Utils.escapeHtml(agent.displayStatus)}</span>
 								</div>
 							</div>
 							<div class="row-col">
@@ -899,7 +882,7 @@
 							<div class="row-right">
 								<div class="row-meta">
 									<span class="row-time">${Utils.escapeHtml(agent.lastChangeRaw)} <span class="row-subtime">(${Utils.escapeHtml(agent.timeInState)})</span></span>
-									<span class="row-status">${Utils.escapeHtml(agent.displayStatus)}${poolText}</span>
+									<span class="row-status">${Utils.escapeHtml(agent.displayStatus)}</span>
 								</div>
 								${iconsHtml}
 							</div>
@@ -976,18 +959,23 @@
 							return b.durationSeconds - a.durationSeconds;
 						});
 
-					const bauAgents = parsedAgents.filter((a) => a.poolDisplay === "BAU");
-					const lmAgents = parsedAgents.filter((a) => a.poolDisplay === "LM");
-
-					renderDashboardSection(bauAgents, "BAU");
-					renderDashboardSection(lmAgents, "LM");
+					renderDashboardSection(parsedAgents.filter((a) => a.poolDisplay === "BAU"), "BAU");
+					renderDashboardSection(parsedAgents.filter((a) => a.poolDisplay === "LM"), "LM");
 				} catch (err) {
 					console.error("Dash render error:", err);
 				}
 			};
 
+			const debouncedUpdate = (() => {
+				let timer;
+				return () => {
+					clearTimeout(timer);
+					timer = setTimeout(updateDashboard, 150);
+				};
+			})();
+
 			Dash.updateFn = updateDashboard;
-			Dash.observer = new MutationObserver(Utils.debounce(updateDashboard, 150));
+			Dash.observer = new MutationObserver(debouncedUpdate);
 			Dash.observer.observe(targetContainer, {
 				attributes: true,
 				childList: true,
@@ -1396,7 +1384,7 @@
 				.qm-badge { display: none; position: absolute; top: -4px; right: -4px; background: #FF8787; border-radius: 9999px; padding: 2px 6px; font-size: 10px; font-weight: 700; line-height: 1; border: 1.5px solid #FFFFFF; color: #FFFFFF; }
 				.qm-sig { margin: 12px 0; }
 				.dock-container { max-height: 400px !important; overflow-y: auto !important; }
-				`,
+				`
 			);
 
 			const panel = Utils.createEl("div", { id: "qm-panel", parent: document.body });
@@ -1444,70 +1432,18 @@
 
 			Utils.waitForElement(".li-popup_lstcasefl")
 				.then((el) => {
-					const badge = Utils.$("#flup-badge");
-					const updateBadge = () => {
-						if (badge) badge.style.display = el.dataset.attr && el.dataset.attr !== "0" ? "block" : "none";
-					};
-					new MutationObserver(updateBadge).observe(el, { attributes: true, attributeFilter: ["data-attr"] });
-					updateBadge();
-				})
-				.catch(() => { });
+					const badge = Utils.$("#flup-badge"); const updateBadge = () => { if (badge) badge.style.display = el.dataset.attr && el.dataset.attr !== "0" ? "block" : "none"; }; new MutationObserver(updateBadge).observe(el, { attributes: true, attributeFilter: ["data-attr"] }); updateBadge();
+				}).catch(() => { }); const flupBtn = Utils.createEl("button", { textContent: "FL Up:", title: "Set Follow-up", className: "qm-btn", style: { backgroundColor: "#99E9F2", color: "#0C5460", paddingRight: "44px" }, parent: panel, onClick: (e) => { if (e.target.id === "qm-flup-in") return; CasesConnect.executeFollowUp(flupBtn); }, }); Utils.createEl("input", { id: "qm-flup-in", type: "text", value: "2", parent: flupBtn, onClick: (e) => e.stopPropagation(), onfocus: (e) => e.target.select(), oninput: (e) => (e.target.value = e.target.value.replace(/\D/g, "").slice(0, 1)), onkeydown: (e) => { if (e.key === "Enter") { e.preventDefault(); CasesConnect.executeFollowUp(flupBtn); } }, }); Utils.createEl("button", {
+					textContent: "Sign", title: "Insert Signature at Cursor", className: "qm-btn", style: { backgroundColor: "#CED4DA", color: "#343A40" }, parent: panel, onmousedown: (e) => e.preventDefault(), onClick: () => {
+						const sel = window.getSelection(); if (!sel?.rangeCount) { return alert("Please click inside the email body to place your cursor first."); } const node = sel.getRangeAt(0).startContainer.parentNode; if (!node?.closest("[contenteditable]")) { return alert("Please place your cursor inside the text area where you want the signature."); } Utils.$$(".qm-sig").forEach((el) => el.remove());
 
-			const flupBtn = Utils.createEl("button", {
-				textContent: "FL Up:",
-				title: "Set Follow-up",
-				className: "qm-btn",
-				style: { backgroundColor: "#99E9F2", color: "#0C5460", paddingRight: "44px" },
-				parent: panel,
-				onClick: (e) => {
-					if (e.target.id === "qm-flup-in") return;
-					CasesConnect.executeFollowUp(flupBtn);
-				},
-			});
+						let sigName = localStorage.getItem("__signature_name");
+						if (!sigName) {
+							sigName = prompt("Enter your name:") || "Agent";
+							localStorage.setItem("__signature_name", sigName);
+						}
 
-			Utils.createEl("input", {
-				id: "qm-flup-in",
-				type: "text",
-				value: "2",
-				parent: flupBtn,
-				onClick: (e) => e.stopPropagation(),
-				onfocus: (e) => e.target.select(),
-				oninput: (e) => (e.target.value = e.target.value.replace(/\D/g, "").slice(0, 1)),
-				onkeydown: (e) => {
-					if (e.key === "Enter") {
-						e.preventDefault();
-						CasesConnect.executeFollowUp(flupBtn);
-					}
-				},
-			});
-
-			Utils.createEl("button", {
-				textContent: "Sign",
-				title: "Insert Signature at Cursor",
-				className: "qm-btn",
-				style: { backgroundColor: "#CED4DA", color: "#343A40" },
-				parent: panel,
-				onmousedown: (e) => e.preventDefault(),
-				onClick: () => {
-					const sel = window.getSelection();
-					if (!sel?.rangeCount) {
-						return alert("Please click inside the email body to place your cursor first.");
-					}
-
-					const node = sel.getRangeAt(0).startContainer.parentNode;
-					if (!node?.closest("[contenteditable]")) {
-						return alert("Please place your cursor inside the text area where you want the signature.");
-					}
-
-					Utils.$$(".qm-sig").forEach((el) => el.remove());
-
-					let sigName = localStorage.getItem("__signature_name");
-					if (!sigName) {
-						sigName = prompt("Enter your name:") || "Agent";
-						localStorage.setItem("__signature_name", sigName);
-					}
-
-					const htmlString = `
+						const htmlString = `
 					<table class="qm-sig" style="width: 348px; padding: 0 30px;" data-sig-injected="true">
 						<tbody>
 							<tr align="left">
@@ -1524,9 +1460,9 @@
 						</tbody>
 					</table>`;
 
-					document.execCommand("insertHTML", false, Utils.toSafeHTML(htmlString));
-				},
-			});
+						document.execCommand("insertHTML", false, Utils.toSafeHTML(htmlString));
+					},
+				});
 		},
 	};
 
@@ -1548,47 +1484,42 @@
 				.gpt-aw-badge:hover { background: #2D323F; }
 				.gpt-aw-btn { padding: 8px 12px; background: #0071e3; color: #ffffff; border: 1px solid #0071e3; border-radius: 8px; font-size: 12px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, sans-serif; box-shadow: 0 4px 16px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s ease; user-select: none; }
 				.gpt-aw-btn:hover { background: #0077ed; }
-				`,
+				`
 			);
 
-			const isDataReady = await Utils.pollForCondition(() => window.conversions_data?.SHARED_ALL_ENABLED_CONVERSIONS, 600, 5);
+			let isDataReady = false;
+			for (let i = 0; i < 5; i++) {
+				if (window.conversions_data?.SHARED_ALL_ENABLED_CONVERSIONS) {
+					isDataReady = true;
+					break;
+				}
+				await Utils.sleep(600);
+			}
 			if (!isDataReady) return;
 
 			const navGoals = Utils.$('[id="navigation.goals"]');
 			if (navGoals && !navGoals.querySelector(".selected")) {
 				Utils.$('[id="navigation.goals"] a')?.click();
-			}
-
-			try {
-				await Utils.waitForElement('[id*="diagnosticsHome"]');
-			} catch (err) {
-				console.warn("diagnosticsHome did not appear within timeout:", err);
-			}
-
-			AdWords.processData(window.conversions_data.SHARED_ALL_ENABLED_CONVERSIONS);
-		},
-
-		getSelectedConversionIds() {
-			return [
-				...new Set(
-					Utils.$$(".particle-table-row")
-						.filter((row) => {
-							const cb = row.querySelector("mat-checkbox");
-							return (
-								row.classList.contains("particle-row-selected") ||
-								cb?.getAttribute("aria-checked") === "true" ||
-								cb?.hasAttribute("checked") ||
-								cb?.querySelector(".mat-checkbox-container")?.classList.contains("checked")
-							);
-						})
-						.map((row) => {
-							const cell = row.querySelector(".conversion-name-cell .internal");
-							const hrefCtId = row.querySelector("a.ess-cell-link")?.href?.match(/ctId=(\d+)/)?.[1];
-							const rawId = cell?.dataset?.originalId || hrefCtId || cell?.innerText?.trim() || "";
-							return rawId.match(/\d+/)?.[0];
-						})
-						.filter(Boolean),
-				),
+			} try { await Utils.waitForElement('[id*="diagnosticsHome"]'); } catch (err) { console.warn("diagnosticsHome did not appear within timeout:", err); } AdWords.processData(window.conversions_data.SHARED_ALL_ENABLED_CONVERSIONS);
+		}, getSelectedConversionIds() {
+			return [...new Set(Utils.$$(".particle-table-row")
+				.filter((row) => {
+					const cb = row.querySelector("mat-checkbox");
+					return (
+						row.classList.contains("particle-row-selected") ||
+						cb?.getAttribute("aria-checked") === "true" ||
+						cb?.hasAttribute("checked") ||
+						cb?.querySelector(".mat-checkbox-container")?.classList.contains("checked")
+					);
+				})
+				.map((row) => {
+					const cell = row.querySelector(".conversion-name-cell .internal");
+					const hrefCtId = row.querySelector("a.ess-cell-link")?.href?.match(/ctId=(\d+)/)?.[1];
+					const rawId = cell?.dataset?.originalId || hrefCtId || cell?.innerText?.trim() || "";
+					return rawId.match(/\d+/)?.[0];
+				})
+				.filter(Boolean),
+			),
 			];
 		},
 
@@ -1623,15 +1554,12 @@
 			});
 
 			Utils.$$(".expand-more").forEach((el) => el.click());
-
 			try {
 				const parsed = JSON.parse(rawData);
 				if (!parsed?.[1]) return;
-
 				const dataMap = new Map(parsed[1].map((item) => [item[1], item]));
 				const rawDiag = window.conversions_data?.CONVERSION_DIAGNOSTICS;
-				const diagData = typeof rawDiag === "string" ? rawDiag : JSON.stringify(rawDiag || "");
-
+				const diagData = typeof rawDiag === "string" ? rawDiag : "";
 				setTimeout(() => {
 					Utils.$$(".conversion-name-cell .internal").forEach((cell) => {
 						const row = cell.closest(".particle-table-row");

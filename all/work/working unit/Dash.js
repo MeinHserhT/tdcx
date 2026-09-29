@@ -25,7 +25,7 @@
 			return false;
 		},
 
-		$: (selector, parent = document) => parent.querySelector(selector),$$: (selector, parent = document) => Array.from(parent.querySelectorAll(selector)),
+		$: (selector, parent = document) => parent.querySelector(selector), $$: (selector, parent = document) => Array.from(parent.querySelectorAll(selector)),
 
 		toSafeHTML: (str) => {
 			if (!safePolicy) {
@@ -126,14 +126,14 @@
 		updateFn: null,
 
 		STATUS_MAP: {
-			active:         { prio: 1,   maxSecs: 3600, color: "#34C759", track: "rgba(52, 199, 89, 0.15)" },
-			video:          { prio: 2,   maxSecs: 2700, color: "#AF52DE", track: "rgba(175, 82, 222, 0.15)", ico: "9571/9571236", anim: "breathe" },
-			phone:          { prio: 2.5, maxSecs: 2700, color: "#FF3B30", track: "rgba(255, 59, 48, 0.15)", ico: "13332/13332839", anim: "ring" },
-			"lunch-break":  { prio: 3,   maxSecs: 3600, color: "#FFCC00", track: "rgba(255, 204, 0, 0.15)",  ico: "1182/1182132", anim: "bounce-y" },
-			email:          { prio: 4,   maxSecs: 900,  color: "#0071E3", track: "rgba(0, 113, 227, 0.15)",  ico: "7487/7487055", anim: "fly" },
-			"coffee-break": { prio: 5,   maxSecs: 900,  color: "#FF9500", track: "rgba(255, 149, 0, 0.15)",  ico: "16108/16108931", anim: "rock" },
-			break:          { prio: 6,   maxSecs: 900,  color: "#8E8E93", track: "rgba(142, 142, 147, 0.15)", ico: "5140/5140652", anim: "fade-pulse" },
-			default:        { prio: 99,  maxSecs: 2700, color: "#8E8E93", track: "rgba(142, 142, 147, 0.15)" },
+			active: { prio: 1, maxSecs: 3600, color: "#34C759", track: "rgba(52, 199, 89, 0.15)" },
+			video: { prio: 2, maxSecs: 2700, color: "#AF52DE", track: "rgba(175, 82, 222, 0.15)", ico: "9571/9571236", anim: "breathe" },
+			phone: { prio: 2.5, maxSecs: 2700, color: "#FF3B30", track: "rgba(255, 59, 48, 0.15)", ico: "13332/13332839", anim: "ring" },
+			"lunch-break": { prio: 3, maxSecs: 3600, color: "#FFCC00", track: "rgba(255, 204, 0, 0.15)", ico: "1182/1182132", anim: "bounce-y" },
+			email: { prio: 4, maxSecs: 900, color: "#0071E3", track: "rgba(0, 113, 227, 0.15)", ico: "7487/7487055", anim: "fly" },
+			"coffee-break": { prio: 5, maxSecs: 900, color: "#FF9500", track: "rgba(255, 149, 0, 0.15)", ico: "16108/16108931", anim: "rock" },
+			break: { prio: 6, maxSecs: 900, color: "#8E8E93", track: "rgba(142, 142, 147, 0.15)", ico: "5140/5140652", anim: "fade-pulse" },
+			default: { prio: 99, maxSecs: 2700, color: "#8E8E93", track: "rgba(142, 142, 147, 0.15)" },
 		},
 
 		ICONS: {
@@ -258,7 +258,7 @@
 				@media screen and (max-width: 280px) { #cm-root .row-info { display: none !important; } }
 				@media screen and (max-width: 240px) { #cm-root .row-right img, #cm-root .row-ico img { display: none !important; } }
 				@media screen and (max-width: 220px) { #cm-root .row-subtime { display: none !important; } }
-				`,
+				`
 			);
 
 			const uiContainer = Utils.$("#cm-root") || Utils.createEl("div", { id: "cm-root", parent: document.body });
@@ -414,7 +414,6 @@
 						const statusIconHtml = stConf.ico
 							? `<img src="https://cdn-icons-png.flaticon.com/512/${stConf.ico}.png" animation="${stConf.anim}" alt="${agent.statusKey} icon" loading="lazy" />` : "";
 						const iconsHtml = `${statusIconHtml}${nonPhoneImg}${nonVideoImg}`;
-						const poolText = agent.poolDisplay ? ` (${Utils.escapeHtml(agent.poolDisplay)})` : "";
 
 						const rowInnerHtml = isFullLayout
 							? `
@@ -422,7 +421,7 @@
 								<img class="row-avatar" src="${Utils.escapeHtml(agent.img)}" alt="${Utils.escapeHtml(agent.ldap)}" loading="lazy" />
 								<div class="row-info">
 									<span class="row-name">${Utils.escapeHtml(agent.ldap)}</span>
-									<span class="row-status">${Utils.escapeHtml(agent.displayStatus)}${poolText}</span>
+									<span class="row-status">${Utils.escapeHtml(agent.displayStatus)}</span>
 								</div>
 							</div>
 							<div class="row-col">
@@ -443,7 +442,7 @@
 							<div class="row-right">
 								<div class="row-meta">
 									<span class="row-time">${Utils.escapeHtml(agent.lastChangeRaw)} <span class="row-subtime">(${Utils.escapeHtml(agent.timeInState)})</span></span>
-									<span class="row-status">${Utils.escapeHtml(agent.displayStatus)}${poolText}</span>
+									<span class="row-status">${Utils.escapeHtml(agent.displayStatus)}</span>
 								</div>
 								${iconsHtml}
 							</div>
@@ -520,18 +519,23 @@
 							return b.durationSeconds - a.durationSeconds;
 						});
 
-					const bauAgents = parsedAgents.filter((a) => a.poolDisplay === "BAU");
-					const lmAgents = parsedAgents.filter((a) => a.poolDisplay === "LM");
-
-					renderDashboardSection(bauAgents, "BAU");
-					renderDashboardSection(lmAgents, "LM");
+					renderDashboardSection(parsedAgents.filter((a) => a.poolDisplay === "BAU"), "BAU");
+					renderDashboardSection(parsedAgents.filter((a) => a.poolDisplay === "LM"), "LM");
 				} catch (err) {
 					console.error("Dash render error:", err);
 				}
 			};
 
+			const debouncedUpdate = (() => {
+				let timer;
+				return () => {
+					clearTimeout(timer);
+					timer = setTimeout(updateDashboard, 150);
+				};
+			})();
+
 			Dash.updateFn = updateDashboard;
-			Dash.observer = new MutationObserver(Utils.debounce(updateDashboard, 150));
+			Dash.observer = new MutationObserver(debouncedUpdate);
 			Dash.observer.observe(targetContainer, {
 				attributes: true,
 				childList: true,
@@ -560,7 +564,6 @@
 			updateDashboard();
 		}
 	};
-
 	// ==========================================
 	// 7. ROUTER & INITIALIZATION
 	// ==========================================
