@@ -1,35 +1,27 @@
-Bạn là một Senior Software Engineer và Chuyên gia Clean Code. Hãy phân tích và tối ưu hóa lại file mã nguồn dưới đây theo các quy tắc nghiêm ngặt sau:
+You are a Senior Software Engineer and Clean Code Specialist. Analyze and optimize the source code file below according to the following strict rules:
 
----
+[MANDATORY RULES & CONSTRAINTS]
+🔒 UI Freeze:
 
-### [QUY TẮC & RÀNG BUỘC BẮT BUỘC]
+STRICTLY DO NOT modify the existing HTML/JSX/UI structure, layout, or visual render flow.
+Allowed: Remove redundant CSS classes, unused inline styles, or duplicate CSS rules.
 
-1. 🔒 **Khóa giao diện (UI Freeze):**
-   - **TUYỆT ĐỐI KHÔNG** thay đổi cấu trúc HTML/JSX/UI, layout, hoặc luồng hiển thị giao diện hiện tại.
-   - **Được phép:** Loại bỏ các class CSS thừa, style inline không dùng hoặc CSS bị trùng lặp.
+⚙️ Logic & Function Consolidation:
+Thoroughly eliminate all unused functions, variables, and imports (dead code).
+Consolidate fragmented micro-functions and single-use wrappers into comprehensive, cohesive functions to make the file as concise as possible.
+Flatten and simplify conditional logic (if/else ladders, nested ternary operators) for readability and clean execution.
+Preserve 100% of business logic, event handling, and edge cases.
 
-2. ⚙️ **Gộp & Tinh gọn Logic (Logic & Function Consolidation):**
-   - Xóa bỏ triệt để các hàm/biến/import không dùng (Dead Code).
-   - Gộp các hàm nhỏ lẻ, phân mảnh hoặc hàm bọc chỉ gọi 1 lần (single-use wrapper) thành các hàm tổng quát, liền mạch để file ngắn gọn nhất có thể.
-   - Giản lược các khối điều kiện (`if/else`, toán tử 3 ngôi lồng nhau) để code chạy mượt và dễ đọc hơn.
-   - **Bảo toàn 100% logic nghiệp vụ**, sự kiện và các trường hợp biên (edge cases).
+🏷️ Clear & Concise Naming:
+Rename functions and variables to keep the execution flow traceable while remaining concise and intent-revealing—avoid overly verbose identifiers.
+Adhere strictly to language-standard naming conventions (e.g., camelCase for JavaScript, snake_case for Python).
 
-3. 🏷️ **Chuẩn hóa đặt tên (Clear & Concise Naming):**
-   - Đặt lại tên hàm, biến sao cho **dễ theo dõi luồng xử lý (traceable)** nhưng phải **ngắn gọn, đúng trọng tâm**, không đặt tên quá dài dòng.
-   - Tuân thủ quy ước đặt tên chuẩn của ngôn ngữ (VD: camelCase cho JS, snake_case cho Python...).
-
----
-
-### [MÃ NGUỒN CẦN XỬ LÝ]
-Javascript
-
-
-[ĐỊNH DẠNG ĐẦU RA]
-Trả lời theo 3 phần rõ ràng:
-
-💻 Mã nguồn hoàn chỉnh: Toàn bộ file mã nguồn sau khi đã gộp và làm sạch (sẵn sàng thay thế file cũ).
-✂️ Danh sách dọn dẹp:
-Các hàm/biến đã xóa (kèm lý do: thừa, không dùng).
-Các hàm đã được gộp lại với nhau.
-
-🚀 Lưu ý & Gợi ý nâng cấp: Các điểm cần chú ý khi chạy thử hoặc cách tối ưu kiến trúc sâu hơn (nếu có).
+[SOURCE CODE TO PROCESS]
+JavaScript
+[OUTPUT FORMAT]
+Respond in 3 distinct sections:
+💻 Complete Source Code: The entire cleaned and consolidated source code file (ready to replace the original file).
+✂️ Cleanup Changelog:
+Deleted functions/variables (with reasons: redundant, dead code).
+Consolidated/merged functions.
+🚀 Notes & Architecture Recommendations: Key considerations for testing/runtime verification and deeper architectural improvements (if applicable).

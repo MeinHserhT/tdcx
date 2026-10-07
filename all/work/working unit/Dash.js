@@ -162,17 +162,17 @@
 			Utils.addStyle(
 				"cm-styles",
 				`
-				@import url('https://fonts.googleapis.com/css2?family=Alegreya:wght@700&family=Cookie&family=Lexend:wght@700&family=Viga&display=swap');
+				@import url('https://fonts.googleapis.com/css2?family=Alegreya:wght@700&family=Cookie&family=Lexend:wght@700&family=Fraunces&display=swap');
 				#cm-root, #cm-root * { box-sizing: border-box; font-family: "Lexend", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-weight: 700 !important; }
 				#cm-root { position: fixed; height: 100%; width: 100%; top: 0; right: 0; background-color: rgba(0, 0, 0, 0.45); z-index: 9999; display: flex; justify-content: flex-end; align-items: center; padding: 20px; pointer-events: none; }
-				#cm-root .cm-wrap { position: relative; pointer-events: auto; width: 100%; max-width: 320px; height: 90vh; background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.02); padding: 16px; border: 1px solid rgba(255, 255, 255, 0.8); color: #1D1D1F; transition: max-width 0.25s cubic-bezier(0.16, 1, 0.3, 1), all 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; gap: 12px; }
+				#cm-root .cm-wrap { position: relative; pointer-events: auto; width: 100%; max-width: 320px; height: auto; max-height: 95vh; background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.02); padding: 16px; border: 1px solid rgba(255, 255, 255, 0.8); color: #1D1D1F; transition: max-width 0.25s cubic-bezier(0.16, 1, 0.3, 1), all 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
 				#cm-root .cm-wrap.cm-full { max-width: 400px; }
 				#cm-root .cm-close { position: absolute; top: 10px; right: 10px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.06); cursor: pointer; z-index: 20; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
 				#cm-root .cm-close:hover { background: #FFFFFF; transform: scale(1.08); }
 				#cm-root .cm-close img { width: 11px; height: 11px; opacity: 0.6; }
-				#cm-root .cm-card { display: flex; flex-direction: column; width: 100%; background: rgba(255, 255, 255, 0.5); border-radius: 14px; padding: 10px; border: 1px solid rgba(0,0,0,0.05); min-height: 0; }
-				#cm-root #cm-card-bau { flex: 1 1 30%; }
-				#cm-root #cm-card-lm { flex: 1 1 70%; }
+				#cm-root .cm-card { display: flex; flex-direction: column; width: 100%; background: rgba(255, 255, 255, 0.5); border-radius: 14px; padding: 10px; border: 1px solid rgba(0,0,0,0.05); min-height: 0; height: auto; flex: 0 1 auto; }
+				#cm-root #cm-card-bau { max-height: 100%; }
+				#cm-root #cm-card-lm { max-height: 70%; }
 				#cm-root .cm-head { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; width: 100%; flex-shrink: 0; }
 				#cm-root .cm-head-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
 				#cm-root .cm-head h3 { margin: 0; font-size: 11px; color: #86868B; text-transform: uppercase; letter-spacing: 0.8px; display: flex; align-items: center; gap: 6px; }
@@ -215,18 +215,11 @@
 				#cm-root .row-meta { display: flex; flex-direction: column; text-align: right; }
 				#cm-root .row-col { position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: center; text-align: center; min-width: 0; }
 
-				#cm-root .row-time, #cm-root .row-subtime { font-family: "Viga", sans-serif !important; font-size: 11.5px !important; color: #1D1D1F; opacity: 0.95; font-variant-numeric: tabular-nums; letter-spacing: -0.2px; line-height: 1.2; white-space: nowrap; }
+				#cm-root .row-time, #cm-root .row-subtime { font-family: "Fraunces", sans-serif !important; font-size: 11.5px !important; color: #1D1D1F; opacity: 0.95; font-variant-numeric: tabular-nums; letter-spacing: -0.2px; line-height: 1.2; white-space: nowrap; }
 				#cm-root .row-subtime { display: inline; }
 
 				#cm-root .row-status,
-				#cm-root .row-info .row-status {
-					font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
-					font-size: 9.5px;
-					letter-spacing: 0.25px;
-					display: inline-block;
-					margin-top: 1px;
-					line-height: 1.2;
-				}
+				#cm-root .row-info .row-status { font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; font-size: 9.5px; letter-spacing: 0.25px; display: inline-block; margin-top: 1px; line-height: 1.2; }
 				#cm-root .row-info .row-status { font-size: 9px; margin-top: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 				#cm-root .row-right img, #cm-root .row-ico img { width: 16px; height: 16px; min-width: 16px; max-width: 16px; max-height: 16px; object-fit: contain; opacity: 0.85; display: block; flex-shrink: 0; }
@@ -347,6 +340,7 @@
 				if (cardEl && healthWarn) {
 					cardEl.classList.toggle("cm-warn", isLowAvailability);
 					healthWarn.style.display = isLowAvailability ? "inline" : "none";
+					cardEl.style.display = totalCount === 0 ? "none" : "flex";
 				}
 
 				const groups = [];
@@ -564,6 +558,7 @@
 			updateDashboard();
 		}
 	};
+
 	// ==========================================
 	// 7. ROUTER & INITIALIZATION
 	// ==========================================

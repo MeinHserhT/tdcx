@@ -1,33 +1,49 @@
+/**
+ * Omnitool Bookmarklet Suite
+ * @version 1.5.0
+ */
 (function () {
 	"use strict";
+
+	// Bookmarklet Re-entrancy Guard: Prevent duplicate observers/listeners on repeated clicks
+	if (window.__OMNITOOL_ACTIVE__) {
+		console.warn("⚠️ Omnitool v1.5.0 is already running.");
+		return;
+	}
+	window.__OMNITOOL_ACTIVE__ = true;
 
 	// ==========================================
 	// 1. SHARED UTILITIES
 	// ==========================================
 	let safePolicy;
 
+	const toSafeHTML = (html) => {
+		if (!safePolicy) {
+			try {
+				safePolicy = window.trustedTypes?.createPolicy("default", { createHTML: (s) => s }) 
+					|| window.trustedTypes?.defaultPolicy;
+			} catch { /* Policy already registered or restricted */ }
+			safePolicy ??= { createHTML: (s) => s };
+		}
+		return safePolicy.createHTML(html);
+	};
+
 	const Utils = {
 		sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 
 		$: (selector, parent = document) => parent.querySelector(selector),
-		$$: (selector, parent = document) => Array.from(parent.querySelectorAll(selector)),
+		$$: (selector, parent = document) => [...parent.querySelectorAll(selector)],
 
-		toSafeHTML: (str) => {
-			if (!safePolicy) {
-				try {
-					safePolicy = window.trustedTypes?.createPolicy("default", { createHTML: (s) => s }) || window.trustedTypes?.defaultPolicy;
-				} catch { /* Policy existed or restricted */ }
-				if (!safePolicy) safePolicy = { createHTML: (s) => s };
-			}
-			return safePolicy.createHTML(str);
-		},
+		toSafeHTML,
 
-		createEl: (tag, { parent, onClick, style, text, html, className, id, ...props } = {}) => {
+		createEl: (tag, { parent, onClick, style, text, textContent, html, className, id, ...props } = {}) => {
 			const el = document.createElement(tag);
 			if (id) el.id = id;
 			if (className) el.className = className;
-			if (text !== undefined) el.textContent = text;
-			if (html !== undefined) el.innerHTML = Utils.toSafeHTML(html);
+
+			const bodyText = text ?? textContent;
+			if (bodyText !== undefined) el.textContent = bodyText;
+			if (html !== undefined) el.innerHTML = toSafeHTML(html);
 
 			if (style) {
 				typeof style === "string" ? (el.style.cssText = style) : Object.assign(el.style, style);
@@ -48,20 +64,20 @@
 			document.getElementById(id)?.remove();
 			const styleEl = document.createElement("style");
 			styleEl.id = id;
-			styleEl.textContent = Utils.toSafeHTML(cssText);
+			styleEl.textContent = cssText;
 			document.head.appendChild(styleEl);
 		},
 
 		waitForElement: (selector, timeout = 5000) =>
 			new Promise((resolve, reject) => {
-				const existing = Utils.$(selector);
+				const existing = document.querySelector(selector);
 				if (existing) return resolve(existing);
 
 				const observer = new MutationObserver((_, obs) => {
-					const el = Utils.$(selector);
-					if (el) {
+					const found = document.querySelector(selector);
+					if (found) {
 						obs.disconnect();
-						resolve(el);
+						resolve(found);
 					}
 				});
 
@@ -77,7 +93,7 @@
 			element.addEventListener("click", async () => {
 				try {
 					await navigator.clipboard.writeText(text);
-					element.dataset.origText = element.dataset.origText || element.textContent;
+					element.dataset.origText ||= element.textContent;
 					element.textContent = successMsg;
 					element.classList.add("is-copied");
 					clearTimeout(timer);
@@ -148,7 +164,7 @@
 			}
 			window.performance?.getEntriesByType?.("resource").forEach((r) => scan(r.name));
 
-			return Array.from(tagSet).sort((a, b) => {
+			return [...tagSet].sort((a, b) => {
 				const prioA = TagInspector.CONFIG[a.split("-")[0]]?.prio ?? 4;
 				const prioB = TagInspector.CONFIG[b.split("-")[0]]?.prio ?? 4;
 				return prioA - prioB || a.localeCompare(b);
@@ -271,32 +287,35 @@
 			AUD: { taskType: ["Ads Standard Remarketing", "GA4 Standard Remarketing"], ga4Features: ["Standard Audiences"] },
 		},
 
+		STATUS_OPTIONS: [
+			{ id: "SO", label: "Solution Offered" },
+			{ id: "NI", label: "Need Attention" },
+			{ id: "IN", label: "Inactive" },
+		],
+
+		VALIDATION_SUBTASKS: [
+			{ id: "CT", label: "Conversion Tracking" },
+			{ id: "EC", label: "Enhanced Conversion Tracking" },
+			{ id: "GA4", label: "GA4 setup" },
+			{ id: "GA4_UPD", label: "GA4 UPD" },
+			{ id: "AUD", label: "Ads Audiences" },
+		],
+
+		getTasksByStatus() {
+			return {
+				SO: this.VALIDATION_SUBTASKS,
+				NI: [
+					{ id: "WAIT_INPUT", label: "Waiting Input" },
+					{ id: "WAIT_VALIDATION", label: "Waiting Validation" },
+					{ id: "IN_CONSULT", label: "In Consult" },
+				],
+				IN: [{ id: "UNREACHABLE", label: "Unreachable" }],
+			};
+		},
+
 		async promptUser() {
 			return new Promise((resolve) => {
-				const statusOptions = [
-					{ id: "SO", label: "Solution Offered" },
-					{ id: "NI", label: "Need Attention" },
-					{ id: "IN", label: "Inactive" },
-				];
-
-				const validationSubTasks = [
-					{ id: "CT", label: "Conversion Tracking" },
-					{ id: "EC", label: "Enhanced Conversion Tracking" },
-					{ id: "GA4", label: "GA4 setup" },
-					{ id: "GA4_UPD", label: "GA4 UPD" },
-					{ id: "AUD", label: "Ads Audiences" },
-				];
-
-				const tasksByStatus = {
-					SO: validationSubTasks,
-					NI: [
-						{ id: "WAIT_INPUT", label: "Waiting Input" },
-						{ id: "WAIT_VALIDATION", label: "Waiting Validation" },
-						{ id: "IN_CONSULT", label: "In Consult" },
-					],
-					IN: [{ id: "UNREACHABLE", label: "Unreachable" }],
-				};
-
+				const tasksByStatus = QPlusAutomator.getTasksByStatus();
 				let selectedStatus = null;
 				let selectedTask = null;
 
@@ -378,7 +397,7 @@
 				};
 
 				const showStatusStep = () =>
-					renderStep("Step 1: Select Status", statusOptions, (status) => {
+					renderStep("Step 1: Select Status", QPlusAutomator.STATUS_OPTIONS, (status) => {
 						selectedStatus = status;
 						showTaskStep();
 					});
@@ -401,7 +420,7 @@
 				const showSubTaskStep = () =>
 					renderStep(
 						"Step 3: Select Validation Task",
-						validationSubTasks,
+						QPlusAutomator.VALIDATION_SUBTASKS,
 						(subTask) => closeDialog({ status: selectedStatus, task: selectedTask, subTask }),
 						showTaskStep,
 					);
@@ -411,40 +430,25 @@
 		},
 
 		buildConfig({ status, task, subTask }) {
-			const statusMappings = {
-				SO: {
-					status: "Implemented",
-					subStatus: "SO - Implementation only",
-					fillExtra: true,
-					targetTaskId: task.id,
-				},
-				NI: {
-					status: "In Progress",
-					subStatus: {
-						WAIT_INPUT: "NI - Awaiting Inputs",
-						WAIT_VALIDATION: "NI - Awaiting Validation",
-						IN_CONSULT: "NI - In Consult",
-					}[task.id] || "",
-					fillExtra: task.id === "WAIT_VALIDATION",
-					targetTaskId: task.id === "WAIT_VALIDATION" ? subTask?.id : null,
-				},
-				IN: {
-					status: "Inactive",
-					subStatus: "Inactive - Unreachable",
-					fillExtra: false,
-					targetTaskId: null,
-				},
-			};
+			const isWaitVal = status.id === "NI" && task.id === "WAIT_VALIDATION";
+			const isSO = status.id === "SO";
+			const fillExtra = isSO || isWaitVal;
 
-			const mapped = statusMappings[status.id] || { status: "", subStatus: "", fillExtra: false, targetTaskId: null };
-			const taskMeta = (mapped.targetTaskId && QPlusAutomator.TASK_METRICS[mapped.targetTaskId]) || {};
+			const subStatus = isSO
+				? "SO - Implementation only"
+				: status.id === "NI"
+					? { WAIT_INPUT: "NI - Awaiting Inputs", WAIT_VALIDATION: "NI - Awaiting Validation", IN_CONSULT: "NI - In Consult" }[task.id] || ""
+					: "Inactive - Unreachable";
+
+			const targetTaskId = isSO ? task.id : isWaitVal ? subTask?.id : null;
+			const taskMeta = (targetTaskId && QPlusAutomator.TASK_METRICS[targetTaskId]) || {};
 
 			return {
 				ldap: "",
 				date: "",
-				status: mapped.status,
-				subStatus: mapped.subStatus,
-				radioQs: mapped.fillExtra
+				status: isSO ? "Implemented" : status.id === "NI" ? "In Progress" : "Inactive",
+				subStatus,
+				radioQs: fillExtra
 					? [
 						{ title: "If task type was EC", choice: taskMeta.ecFeasible || "Not Applicable (N/A)" },
 						{ title: "what option was used", choice: taskMeta.ecOption || "Not Applicable (N/A)" },
@@ -454,7 +458,7 @@
 						{ title: "CMS / Platform", choice: "Didn't check" },
 					]
 					: [],
-				checkboxQs: mapped.fillExtra
+				checkboxQs: fillExtra
 					? [
 						{ title: "Task Type", choices: taskMeta.taskType || [] },
 						{ title: "For GA4 Cases, what exact features", choices: taskMeta.ga4Features || ["Not Applicable (N/A)"] },
@@ -584,6 +588,16 @@
 
 		POOL_RANKS: { LM: 1, BAU: 2 },
 
+		formatTime: (str) => String(str || "").replace(/(\d+)\s*([hms])/gi, "$1 $2").replace(/\s+/g, " ").trim(),
+
+		parseDuration: (timeStr) =>
+			(timeStr.match(/\d+[hms]/g) || []).reduce(
+				(acc, curr) => acc + parseInt(curr, 10) * ({ h: 3600, m: 60, s: 1 }[curr.slice(-1)] || 0),
+				0,
+			),
+
+		extractState: (cell) => (cell?.innerText.match(/[a-zA-Z\s]+/)?.[0] || "").trim().toLowerCase().replace(/\s+/g, "-"),
+
 		init() {
 			if (Dash.isRunning) return;
 			Dash.isRunning = true;
@@ -602,17 +616,17 @@
 			Utils.addStyle(
 				"cm-styles",
 				`
-				@import url('https://fonts.googleapis.com/css2?family=Alegreya:wght@700&family=Cookie&family=Lexend:wght@700&family=Viga&display=swap');
+				@import url('https://fonts.googleapis.com/css2?family=Alegreya:wght@700&family=Cookie&family=Lexend:wght@700&family=Fraunces&display=swap');
 				#cm-root, #cm-root * { box-sizing: border-box; font-family: "Lexend", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-weight: 700 !important; }
 				#cm-root { position: fixed; height: 100%; width: 100%; top: 0; right: 0; background-color: rgba(0, 0, 0, 0.45); z-index: 9999; display: flex; justify-content: flex-end; align-items: center; padding: 20px; pointer-events: none; }
-				#cm-root .cm-wrap { position: relative; pointer-events: auto; width: 100%; max-width: 320px; height: 90vh; background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.02); padding: 16px; border: 1px solid rgba(255, 255, 255, 0.8); color: #1D1D1F; transition: max-width 0.25s cubic-bezier(0.16, 1, 0.3, 1), all 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; gap: 12px; }
+				#cm-root .cm-wrap { position: relative; pointer-events: auto; width: 100%; max-width: 320px; height: auto; max-height: 95vh; background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.02); padding: 16px; border: 1px solid rgba(255, 255, 255, 0.8); color: #1D1D1F; transition: max-width 0.25s cubic-bezier(0.16, 1, 0.3, 1), all 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
 				#cm-root .cm-wrap.cm-full { max-width: 400px; }
 				#cm-root .cm-close { position: absolute; top: 10px; right: 10px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.06); cursor: pointer; z-index: 20; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
 				#cm-root .cm-close:hover { background: #FFFFFF; transform: scale(1.08); }
 				#cm-root .cm-close img { width: 11px; height: 11px; opacity: 0.6; }
-				#cm-root .cm-card { display: flex; flex-direction: column; width: 100%; background: rgba(255, 255, 255, 0.5); border-radius: 14px; padding: 10px; border: 1px solid rgba(0,0,0,0.05); min-height: 0; }
-				#cm-root #cm-card-bau { flex: 1 1 30%; }
-				#cm-root #cm-card-lm { flex: 1 1 70%; }
+				#cm-root .cm-card { display: flex; flex-direction: column; width: 100%; background: rgba(255, 255, 255, 0.5); border-radius: 14px; padding: 10px; border: 1px solid rgba(0,0,0,0.05); min-height: 0; height: auto; flex: 0 1 auto; }
+				#cm-root #cm-card-bau { max-height: 100%; }
+				#cm-root #cm-card-lm { max-height: 70%; }
 				#cm-root .cm-head { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; width: 100%; flex-shrink: 0; }
 				#cm-root .cm-head-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
 				#cm-root .cm-head h3 { margin: 0; font-size: 11px; color: #86868B; text-transform: uppercase; letter-spacing: 0.8px; display: flex; align-items: center; gap: 6px; }
@@ -655,18 +669,11 @@
 				#cm-root .row-meta { display: flex; flex-direction: column; text-align: right; }
 				#cm-root .row-col { position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: center; text-align: center; min-width: 0; }
 
-				#cm-root .row-time, #cm-root .row-subtime { font-family: "Viga", sans-serif !important; font-size: 11.5px !important; color: #1D1D1F; opacity: 0.95; font-variant-numeric: tabular-nums; letter-spacing: -0.2px; line-height: 1.2; white-space: nowrap; }
+				#cm-root .row-time, #cm-root .row-subtime { font-family: "Fraunces", sans-serif !important; font-size: 11.5px !important; color: #1D1D1F; opacity: 0.95; font-variant-numeric: tabular-nums; letter-spacing: -0.2px; line-height: 1.2; white-space: nowrap; }
 				#cm-root .row-subtime { display: inline; }
 
 				#cm-root .row-status,
-				#cm-root .row-info .row-status {
-					font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
-					font-size: 9.5px;
-					letter-spacing: 0.25px;
-					display: inline-block;
-					margin-top: 1px;
-					line-height: 1.2;
-				}
+				#cm-root .row-info .row-status { font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; font-size: 9.5px; letter-spacing: 0.25px; display: inline-block; margin-top: 1px; line-height: 1.2; }
 				#cm-root .row-info .row-status { font-size: 9px; margin-top: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 				#cm-root .row-right img, #cm-root .row-ico img { width: 16px; height: 16px; min-width: 16px; max-width: 16px; max-height: 16px; object-fit: contain; opacity: 0.85; display: block; flex-shrink: 0; }
@@ -690,9 +697,9 @@
 				@keyframes fly { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(3px, -3px); } }
 				[animation="fade-pulse"] { animation: fade-pulse 3s infinite ease-in-out; }
 				@keyframes fade-pulse { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.05); } }
-				#cm-root .cm-list::-webkit-scrollbar { width: 4px; }
-				#cm-root .cm-list::-webkit-scrollbar-track { background: transparent; }
-				#cm-root .cm-list::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.1); border-radius: 10px; }
+				#cm-list::-webkit-scrollbar { width: 4px; }
+				#cm-list::-webkit-scrollbar-track { background: transparent; }
+				#cm-list::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.1); border-radius: 10px; }
 				@media screen and (max-width: 380px) { #cm-root .grp-lbl { display: none !important; } }
 				@media screen and (max-width: 320px) { #cm-root .cm-stats { display: none !important; } #cm-root .cm-head h3 { margin-bottom: 0; } }
 				@media screen and (max-width: 280px) { #cm-root .row-info { display: none !important; } }
@@ -715,9 +722,7 @@
 				<div class="cm-wrap ${isFull ? "cm-full" : ""}" id="cm-wrap-shell">
 					<button class="cm-close" title="Close"><img src="${Dash.ICONS.close}" alt="Close"/></button>
 					
-					<!-- LM Agent Dashboard Card -->
 					<div class="cm-card" id="cm-card-lm">
-						
 						<div class="cm-head">
 							<div class="cm-head-top">
 								<h3>
@@ -736,15 +741,13 @@
 						<div class="cm-list" id="cm-list-lm"></div>
 					</div>
 
-					<!-- BAU Agent Dashboard Card -->
 					<div class="cm-card" id="cm-card-bau">
 						<div class="cm-head">
 							<div class="cm-head-top">
 								<h3>
 									<span>BAU Team Status</span>
-									<span class="cm-warn-txt" id="cm-health-warn-bau" style="display:none;">⚠️ Low Availability</span>
+									<span class="cm-warn-txt" id="cm-health-warn-bau" style="display:none;">⚠️️ Low Availability</span>
 								</h3>
-
 							</div>
 							<div class="cm-stats">
 								<span class="cm-pill badge-act" id="cnt-act-bau" title="Active">Actv: 0</span> +
@@ -755,19 +758,10 @@
 						</div>
 						<div class="cm-list" id="cm-list-bau"></div>
 					</div>
-
 				</div>`;
 				uiContainer.innerHTML = Utils.toSafeHTML(skeletonHtml);
 				uiContainer.style.display = "flex";
 			}
-
-			const formatTime = (str) => String(str || "").replace(/(\d+)\s*([hms])/gi, "$1 $2").replace(/\s+/g, " ").trim();
-			const parseDuration = (timeStr) =>
-				(timeStr.match(/\d+[hms]/g) || []).reduce(
-					(acc, curr) => acc + parseInt(curr, 10) * ({ h: 3600, m: 60, s: 1 }[curr.slice(-1)] || 0),
-					0,
-				);
-			const extractState = (cell) => (cell?.innerText.match(/[a-zA-Z\s]+/)?.[0] || "").trim().toLowerCase().replace(/\s+/g, "-");
 
 			const renderDashboardSection = (agents, type) => {
 				const activeCount = agents.filter((a) => a.statusKey === "active").length;
@@ -787,6 +781,7 @@
 				if (cardEl && healthWarn) {
 					cardEl.classList.toggle("cm-warn", isLowAvailability);
 					healthWarn.style.display = isLowAvailability ? "inline" : "none";
+					cardEl.style.display = totalCount === 0 ? "none" : "flex";
 				}
 
 				const groups = [];
@@ -906,13 +901,13 @@
 
 			const updateDashboard = () => {
 				try {
-					const parsedAgents = Array.from(targetContainer.querySelectorAll("tbody tr"))
+					const parsedAgents = [...targetContainer.querySelectorAll("tbody tr")]
 						.map((row) => {
 							const cells = row.querySelectorAll("td");
 							if (!cells || cells.length < 10) return null;
 
-							const rawStatus1 = extractState(cells[5]);
-							const rawStatus2 = extractState(cells[8]);
+							const rawStatus1 = Dash.extractState(cells[5]);
+							const rawStatus2 = Dash.extractState(cells[8]);
 							let displayStatus = cells[3]?.innerText.trim() || "";
 							let statusKey = displayStatus.toLowerCase().replace(/\s+/g, "-");
 
@@ -931,12 +926,12 @@
 							return {
 								img: row.querySelector("img")?.src || "",
 								ldap: cells[1]?.innerText.trim() || "",
-								timeInState: formatTime(cells[4]?.innerText.trim() || ""),
-								lastChangeRaw: formatTime(cells[9]?.innerText.trim() || ""),
+								timeInState: Dash.formatTime(cells[4]?.innerText.trim() || ""),
+								lastChangeRaw: Dash.formatTime(cells[9]?.innerText.trim() || ""),
 								displayStatus,
 								statusKey,
 								cssClass: `st-${statusKey}`,
-								durationSeconds: parseDuration(cells[9]?.innerText || ""),
+								durationSeconds: Dash.parseDuration(cells[9]?.innerText || ""),
 								poolDisplay,
 								rawStatus1,
 								rawStatus2,
@@ -966,13 +961,11 @@
 				}
 			};
 
-			const debouncedUpdate = (() => {
-				let timer;
-				return () => {
-					clearTimeout(timer);
-					timer = setTimeout(updateDashboard, 150);
-				};
-			})();
+			let timer;
+			const debouncedUpdate = () => {
+				clearTimeout(timer);
+				timer = setTimeout(updateDashboard, 150);
+			};
 
 			Dash.updateFn = updateDashboard;
 			Dash.observer = new MutationObserver(debouncedUpdate);
@@ -1188,7 +1181,7 @@
 								fontWeight: "600",
 								cursor: "pointer",
 								backgroundColor: bg,
-								color: color,
+								color,
 								transition: "all 0.15s ease",
 							},
 							onmouseenter: (e) => (e.currentTarget.style.filter = "brightness(0.96)"),
@@ -1432,18 +1425,15 @@
 
 			Utils.waitForElement(".li-popup_lstcasefl")
 				.then((el) => {
-					const badge = Utils.$("#flup-badge"); const updateBadge = () => { if (badge) badge.style.display = el.dataset.attr && el.dataset.attr !== "0" ? "block" : "none"; }; new MutationObserver(updateBadge).observe(el, { attributes: true, attributeFilter: ["data-attr"] }); updateBadge();
-				}).catch(() => { }); const flupBtn = Utils.createEl("button", { textContent: "FL Up:", title: "Set Follow-up", className: "qm-btn", style: { backgroundColor: "#99E9F2", color: "#0C5460", paddingRight: "44px" }, parent: panel, onClick: (e) => { if (e.target.id === "qm-flup-in") return; CasesConnect.executeFollowUp(flupBtn); }, }); Utils.createEl("input", { id: "qm-flup-in", type: "text", value: "2", parent: flupBtn, onClick: (e) => e.stopPropagation(), onfocus: (e) => e.target.select(), oninput: (e) => (e.target.value = e.target.value.replace(/\D/g, "").slice(0, 1)), onkeydown: (e) => { if (e.key === "Enter") { e.preventDefault(); CasesConnect.executeFollowUp(flupBtn); } }, }); Utils.createEl("button", {
-					textContent: "Sign", title: "Insert Signature at Cursor", className: "qm-btn", style: { backgroundColor: "#CED4DA", color: "#343A40" }, parent: panel, onmousedown: (e) => e.preventDefault(), onClick: () => {
-						const sel = window.getSelection(); if (!sel?.rangeCount) { return alert("Please click inside the email body to place your cursor first."); } const node = sel.getRangeAt(0).startContainer.parentNode; if (!node?.closest("[contenteditable]")) { return alert("Please place your cursor inside the text area where you want the signature."); } Utils.$$(".qm-sig").forEach((el) => el.remove());
+					const badge = Utils.$("#flup-badge"); 					const updateBadge = () => { 						if (badge) badge.style.display = el.dataset.attr && el.dataset.attr !== "0" ? "block" : "none"; 					}; 					new MutationObserver(updateBadge).observe(el, { attributes: true, attributeFilter: ["data-attr"] }); 					updateBadge(); 				}) 				.catch(() => {});  			const flupBtn = Utils.createEl("button", { 				textContent: "FL Up:", 				title: "Set Follow-up", 				className: "qm-btn", 				style: { backgroundColor: "#99E9F2", color: "#0C5460", paddingRight: "44px" }, 				parent: panel, 				onClick: (e) => { 					if (e.target.id === "qm-flup-in") return; 					CasesConnect.executeFollowUp(flupBtn); 				}, 			});  			Utils.createEl("input", { 				id: "qm-flup-in", 				type: "text", 				value: "2", 				parent: flupBtn, 				onClick: (e) => e.stopPropagation(), 				onfocus: (e) => e.target.select(), 				oninput: (e) => (e.target.value = e.target.value.replace(/\D/g, "").slice(0, 1)), 				onkeydown: (e) => { 					if (e.key === "Enter") { 						e.preventDefault(); 						CasesConnect.executeFollowUp(flupBtn); 					} 				}, 			});  			Utils.createEl("button", { 				textContent: "Sign", 				title: "Insert Signature at Cursor", 				className: "qm-btn", 				style: { backgroundColor: "#CED4DA", color: "#343A40" }, 				parent: panel, 				onmousedown: (e) => e.preventDefault(), 				onClick: () => { 					const sel = window.getSelection(); 					if (!sel?.rangeCount) { 						return alert("Please click inside the email body to place your cursor first."); 					} 					const node = sel.getRangeAt(0).startContainer.parentNode; 					if (!node?.closest("[contenteditable]")) { 						return alert("Please place your cursor inside the text area where you want the signature."); 					} 					Utils.$$(".qm-sig").forEach((el) => el.remove());
 
-						let sigName = localStorage.getItem("__signature_name");
-						if (!sigName) {
-							sigName = prompt("Enter your name:") || "Agent";
-							localStorage.setItem("__signature_name", sigName);
-						}
+					let sigName = localStorage.getItem("__signature_name");
+					if (!sigName) {
+						sigName = prompt("Enter your name:") || "Agent";
+						localStorage.setItem("__signature_name", sigName);
+					}
 
-						const htmlString = `
+					const htmlString = `
 					<table class="qm-sig" style="width: 348px; padding: 0 30px;" data-sig-injected="true">
 						<tbody>
 							<tr align="left">
@@ -1460,9 +1450,9 @@
 						</tbody>
 					</table>`;
 
-						document.execCommand("insertHTML", false, Utils.toSafeHTML(htmlString));
-					},
-				});
+					document.execCommand("insertHTML", false, Utils.toSafeHTML(htmlString));
+				},
+			});
 		},
 	};
 
@@ -1499,10 +1489,7 @@
 
 			const navGoals = Utils.$('[id="navigation.goals"]');
 			if (navGoals && !navGoals.querySelector(".selected")) {
-				Utils.$('[id="navigation.goals"] a')?.click();
-			} try { await Utils.waitForElement('[id*="diagnosticsHome"]'); } catch (err) { console.warn("diagnosticsHome did not appear within timeout:", err); } AdWords.processData(window.conversions_data.SHARED_ALL_ENABLED_CONVERSIONS);
-		}, getSelectedConversionIds() {
-			return [...new Set(Utils.$$(".particle-table-row")
+				Utils.$('[id="navigation.goals"] a')?.click(); 			}  			try { 				await Utils.waitForElement('[id*="diagnosticsHome"]'); 			} catch (err) { 				console.warn("diagnosticsHome did not appear within timeout:", err); 			}  			AdWords.processData(window.conversions_data.SHARED_ALL_ENABLED_CONVERSIONS); 		},  		getSelectedConversionIds() { 			return [...new Set(Utils.$$(".particle-table-row")
 				.filter((row) => {
 					const cb = row.querySelector("mat-checkbox");
 					return (
@@ -1519,8 +1506,7 @@
 					return rawId.match(/\d+/)?.[0];
 				})
 				.filter(Boolean),
-			),
-			];
+			)];
 		},
 
 		processData(rawData) {
@@ -1553,15 +1539,7 @@
 				},
 			});
 
-			Utils.$$(".expand-more").forEach((el) => el.click());
-			try {
-				const parsed = JSON.parse(rawData);
-				if (!parsed?.[1]) return;
-				const dataMap = new Map(parsed[1].map((item) => [item[1], item]));
-				const rawDiag = window.conversions_data?.CONVERSION_DIAGNOSTICS;
-				const diagData = typeof rawDiag === "string" ? rawDiag : "";
-				setTimeout(() => {
-					Utils.$$(".conversion-name-cell .internal").forEach((cell) => {
+			Utils.$$(".expand-more").forEach((el) => el.click());  			try { 				const parsed = JSON.parse(rawData); 				if (!parsed?.[1]) return; 				const dataMap = new Map(parsed[1].map((item) => [item[1], item])); 				const rawDiag = window.conversions_data?.CONVERSION_DIAGNOSTICS; 				const diagData = typeof rawDiag === "string" ? rawDiag : "";  				setTimeout(() => { 					Utils.$$(".conversion-name-cell .internal").forEach((cell) => {
 						const row = cell.closest(".particle-table-row");
 						const sourceText = row?.querySelector('[essfield="aggregated_conversion_source"]')?.innerText?.toLowerCase();
 						if (row && !sourceText?.includes("web")) return row.remove();

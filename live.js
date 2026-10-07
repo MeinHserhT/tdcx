@@ -30,7 +30,7 @@ function a() {
 // Value
 function a() {
 	var a = +document
-		.querySelector("main > div:nth-child(2) > div > div:nth-child(4) > span")
+		.querySelector(".order_detail_success:nth-child(4)")
 		.innerText.replace(/[^\d]/g, "");
 	return a;
 }
@@ -53,7 +53,7 @@ function a() {
 
 function a() {
 	var p;
-	document.querySelectorAll('[name="f_dienthoai"]').forEach(function (e) {
+	document.querySelectorAll('[name="mobilePhone"]').forEach(function (e) {
 		e.value &&
 			(p = "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""));
 	});
@@ -91,7 +91,7 @@ document.querySelectorAll("[type=email]").forEach(function (e) {
 			email: e.value,
 		});
 });
-document.querySelectorAll("[id=email]").forEach(function (e) {
+document.querySelectorAll("[id=bookingemail]").forEach(function (e) {
 	if (e.value)
 		dataLayer.push({
 			email: e.value,
