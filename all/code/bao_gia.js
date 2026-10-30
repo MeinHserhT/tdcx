@@ -17,20 +17,20 @@ document.querySelectorAll(".arcu-button").forEach(function (e) {
 });
 
 document.addEventListener("click", function (e) {
-    (l = e.target.closest('a.btn-price-document')),
-        (f = l && l.closest("[class*=-body]"));
-    f &&
-        ((p = f.querySelector('input[data-field="DienThoai"]')),
-            setTimeout(function () {
-                r = document.querySelector(".gh-alert-content .msg");
-                !r &&
-                    p &&
-                    p.value &&
-                    dataLayer.push({
-                        event: "formmm",
-                        phone:
-                            "+84" +
-                            p.value.replace(/\D/g, "").replace(/^(84|0)/, ""),
-                    });
-            }, 200));
+  var btn = e.target && e.target.closest ? e.target.closest("a.btn") : null;
+  var container = btn && btn.closest("[class*=-body]");
+  var phoneInput = container && container.querySelector('input[data-field="DienThoai"]');
+
+  if (!phoneInput) return;
+
+  setTimeout(function () {
+    var errorMsg = document.querySelector(".gh-alert-content .msg");
+    if (!errorMsg && phoneInput.value) {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: "formmm",
+        phone: "+84" + phoneInput.value.replace(/\D/g, "").replace(/^(84|0)/, "")
+      });
+    }
+  }, 200);
 });

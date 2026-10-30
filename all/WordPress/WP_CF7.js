@@ -32,9 +32,9 @@ document.addEventListener("wpcf7mailsent", function (e) {
     });
     b.value &&
         dataLayer.push({
-            event: "cf7_booking_success",
+            event: "cf7Submission",
             formID: e.detail.contactFormId,
-            phone: b.value,
+            phone: "+84" + b.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
         });
 });
 
@@ -45,7 +45,7 @@ document.addEventListener("wpcf7mailsent", function (e) {
         return i.name.includes("email");
     })?.value;
     var b = e.detail.inputs.find(function (i) {
-        return i.name.includes("tel");
+        return i.name.includes("phone");
     })?.value;
 
     (a || b) &&

@@ -21,7 +21,7 @@ function a() {
 // Local Storage
 localStorage.setItem(
 	"total",
-	+document.querySelector("#total-display").innerText.replace(/[^\d]/g, ""),
+	+document.querySelector(".totalPay").innerText.replace(/[^\d]/g, "")
 );
 function a() {
 	return +localStorage.getItem("total");
@@ -30,16 +30,25 @@ function a() {
 // Value
 function a() {
 	var a = +document
-		.querySelector(".order_detail_success:nth-child(4)")
+		.querySelector(".dtc-payment-total-price-txt")
 		.innerText.replace(/[^\d]/g, "");
 	return a;
 }
 
-// JS Phone
 function a() {
 	return document.querySelector(
-		"#mm-0 > div.wrap-home.py-5 > div > div > div > div:nth-child(2) > div > a"
+		".dtc-payment-price"
 	).innerText;
+}
+
+// JS Phone
+function a() {
+	var match = document.querySelector(
+		".w-full > div:nth-child(3) > div > .ant-flex"
+	).innerText.match(/0\d{9}/);
+	var phone = match[0].replace(/^0/, "+84");
+
+	return phone;
 }
 
 function a() {
@@ -53,7 +62,7 @@ function a() {
 
 function a() {
 	var p;
-	document.querySelectorAll('[name="mobilePhone"]').forEach(function (e) {
+	document.querySelectorAll('.field-phone input').forEach(function (e) {
 		e.value &&
 			(p = "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""));
 	});
@@ -133,8 +142,19 @@ function a() {
 }
 
 function a() {
-	var a = document.querySelector('[name="name"]').value;
-	var b = document.querySelector('[name="email"]').value;
+	var a = document.querySelector('input[name*="name"]').value;
+	var b = document.querySelector('input[name*="email"]').value;
+	var c = document.querySelector('input[name*="phone"]').value;
+	var d = document.querySelector('input[name*="address"]').value;
+	var e = document.querySelector('input[name*="subject"]').value;
+
+	if (a && b && c && d && e) return "y";
+	return "n";
+}
+
+function a() {
+	var a = document.querySelector('[name*="name"]').value;
+	var b = document.querySelector('[name*="email"]').value;
 	var c =
 		document.querySelector('[role="combobox"] span').innerText !==
 		"Select a reason";
@@ -153,3 +173,10 @@ function a() {
 }
 
 
+// xem 3 trang bất kỳ
+var pageCount = parseInt(sessionStorage.getItem('user_page_count') || 0);
+pageCount += 1;
+sessionStorage.setItem('user_page_count', pageCount);
+if (pageCount === 3) {
+	dataLayer.push({ event: "3pagesview" });
+}

@@ -917,11 +917,11 @@
 							}
 
 							const combinedPool = `${cells[10]?.innerText.trim() || ""},${cells[13]?.innerText.trim() || ""}`;
-							const poolDisplay = combinedPool.includes("3004773")
-								? "BAU"
-								: combinedPool.includes("3028872") || combinedPool.includes("3014937")
+							const poolDisplay = combinedPool.includes("3028872") || combinedPool.includes("3014937")
 									? "LM"
-									: "";
+										: combinedPool.includes("3004773")
+									? "BAU"
+										: "";
 
 							return {
 								img: row.querySelector("img")?.src || "",
