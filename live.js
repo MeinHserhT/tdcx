@@ -29,15 +29,14 @@ function a() {
 
 // Value
 function a() {
-	var a = +document
-		.querySelector(".dtc-payment-total-price-txt")
+	return +document
+		.querySelector(".payment-due__price")
 		.innerText.replace(/[^\d]/g, "");
-	return a;
 }
 
 function a() {
 	return document.querySelector(
-		".dtc-payment-price"
+		".order-summary__title strong"
 	).innerText;
 }
 
@@ -153,6 +152,16 @@ function a() {
 }
 
 function a() {
+	var a = document.querySelector('input[name*="name"]').value;
+	var c = document.querySelector('input[name*="phone"]').value;
+	var d = document.querySelector('input[name*="address"]').value;
+	var e = document.querySelector('input[name*="subject"]').value;
+
+	if (a && b && c && d && e) return "y";
+	return "n";
+}
+
+function a() {
 	var a = document.querySelector('[name*="name"]').value;
 	var b = document.querySelector('[name*="email"]').value;
 	var c =
@@ -179,4 +188,27 @@ pageCount += 1;
 sessionStorage.setItem('user_page_count', pageCount);
 if (pageCount === 3) {
 	dataLayer.push({ event: "3pagesview" });
+}
+
+
+function a() {
+	var r = document.querySelector('input[name="form_item3"]:checked');
+
+	var text = r.value;
+
+	var cprice = text.match(/(\d{1,3}(?:\.\d{3})+)\s*đ/i) || text.match(/(\d+)\s*k/i);
+	var tt = 0;
+
+	if (cprice) {
+		if (cprice[1].indexOf('.') !== -1) {
+			tt = parseInt(cprice[1].replace(/\./g, ''), 10);
+		} else {
+			tt = parseInt(cprice[1], 10) * 1000;
+		}
+	}
+
+	var s = text.match(/\+\s*(\d+)\s*k\s*(?:phí\s*)?ship/i);
+	var s = s ? parseInt(shipMatch[1], 10) * 1000 : 0;
+
+	return tt + s;
 }
