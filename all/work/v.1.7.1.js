@@ -57,10 +57,6 @@
             parent?.appendChild(el);
             return el;
         },
-        getLdap: () =>
-                $("[alt='profile photo']")
-                    ?.src?.match(/photos\/([^/?]+)/)?.[1]
-                    ?.toLowerCase() ?? "",
         addStyle(id, cssText) {
             document.getElementById(id)?.remove();
             Utils.createEl("style", {
@@ -373,7 +369,11 @@
                 return console.warn(
                     "Dash: .agent-table-container not found on this page.",
                 );
-            const isAdmin = Utils.getLdap() === "vongoc";
+            const currentUserName =
+                $("[alt='profile photo']")?.src?.match(
+                    /photos\/([^/?]+)/,
+                )?.[1] ?? "Unknown";
+            const isAdmin = currentUserName.toLowerCase() === "vongoc";
             let layout = isAdmin ? "simplicity" : "full";
             const layoutLabel = () =>
                 layout === "full" ? "Layout: Full" : "Layout: Simple";
@@ -830,9 +830,9 @@
         currentFollowUp: () => {
             const val = $('[data-infocase="follow_up_time"]')?.dataset
                 ?.valchoice;
-            if (!val) return "NA";
-            const ts = Number(val);
-            return !isNaN(ts) && ts > 1e11 ? Utils.isoDate(new Date(ts)) : val;
+            if (!val || val === "Finish") return "NA";
+            const d = CasesConnect.parseDate(val);
+            return d && !isNaN(d) ? Utils.isoDate(d) : val;
         },
         isAppt5DaysBefore() {
             const apptEl = $('[data-infocase="appointment_time"]');
@@ -1380,6 +1380,10 @@
                 btn.style.backgroundColor = on ? "#B2F2BB" : "#FFA8A8";
                 btn.style.color = on ? "#1E5E2A" : "#6A1A1A";
             };
+            const getLdap = () =>
+                $("[alt='profile photo']")
+                    ?.src?.match(/photos\/([^/?]+)/)?.[1]
+                    ?.toLowerCase() ?? "";
             const autoBtn = Utils.createEl("button", {
                 title: "Auto Click",
                 className: "qm-btn",
@@ -1462,12 +1466,12 @@
                 onClick: () => C.insertSignature(),
             });
             const syncLdapUI = () => {
-                const isAdmin = Utils.getLdap() === "vongoc";
-                const disp = isAdmin ? "" : "none";
+                const isVongoc = getLdap() === "vongoc";
+                const disp = isVongoc ? "" : "none";
                 autoBtn.style.display = disp;
                 flupItemBtn.style.display = disp;
                 signBtn.style.display = disp;
-                setAuto(autoBtn, isAdmin);
+                setAuto(autoBtn, isVongoc);
             };
             syncLdapUI();
             if (!$("[alt='profile photo']"))
