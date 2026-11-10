@@ -54,7 +54,7 @@ function a() {
 	return (
 		"+84" +
 		document
-			.querySelector("div.order-address > div:nth-child(2)")
+			.querySelector("#nw-phone")
 			.innerText.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, "")
 	);
 }

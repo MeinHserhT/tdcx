@@ -63,29 +63,66 @@ document.querySelectorAll("chat-widget").forEach(function (widget) {
     });
 });
 
-var a = Date.now();
-(function (a, b) {
-  var c = document.createElement("script");
-  (c.type = "text/javascript"),
-    c.readyState
-      ? (c.onreadystatechange = function () {
-          ("loaded" == c.readyState || "complete" == c.readyState) &&
-            ((c.onreadystatechange = null), b());
-        })
-      : (c.onload = function () {
-          b();
-        });
-  const d = trustedTypes.createPolicy("foo-js-static", {
-    createScriptURL: () => a,
-  });
-  c.src = d.createScriptURL("");
-  document.getElementsByTagName("head")[0].appendChild(c);
-})(
-  "https://cdtx.lyl.vn/cdtx-assistant/_Bookmark/bookmark_list/mirinGoogleUIRemind.js" +
-    "?v=" +
-    a,
-  function () {
-    console.log("DONE");
+(function () {
+  var HOST_SELECTOR = '[id^="ldg-frame14-"]';   // id suffix may change per page
+  var TARGET = '.f14-msg.success.show';
+
+  // Desktop, tablet and mobile each have their own .f14-msg; only one is displayed
+  function isVisible(el) {
+    return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
   }
-);
+
+  function onSuccess(el, host) {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: 'f14_form_success',
+      f14_host_id: host.id,
+      f14_message: (el.textContent || '').trim()
+    });
+    console.log('[f14] success message shown:', el.textContent);
+  }
+
+  function watch(host) {
+    if (host.__f14Watched) return;
+    var root = host.shadowRoot;
+    if (!root) {
+      console.warn('[f14] No shadowRoot on', host, '- declarative shadow DOM not attached');
+      return;
+    }
+    host.__f14Watched = true;
+    var fired = false;
+
+    function check() {
+      var els = root.querySelectorAll(TARGET);
+      var hit = null;
+      for (var i = 0; i < els.length; i++) {
+        if (isVisible(els[i])) { hit = els[i]; break; }
+      }
+      if (hit && !fired) { fired = true; onSuccess(hit, host); }
+      else if (!hit) { fired = false; } // reset so the next submit fires again
+    }
+
+    check(); // in case it's already showing
+    new MutationObserver(check).observe(root, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ['class']
+    });
+  }
+
+  function init() {
+    var hosts = document.querySelectorAll(HOST_SELECTOR);
+    for (var i = 0; i < hosts.length; i++) watch(hosts[i]);
+    return hosts.length > 0;
+  }
+
+  // Wait for the host if it's injected later (e.g. by the page builder or lazy load)
+  if (!init()) {
+    var docObs = new MutationObserver(function () {
+      if (init()) docObs.disconnect();
+    });
+    docObs.observe(document.documentElement, { childList: true, subtree: true });
+  }
+})();
 
