@@ -63,6 +63,43 @@
         throw new Error(`Timeout: ${sel}`);
     };
 
+    const isVisible = (n) => {
+        if (
+            !n ||
+            !(
+                n.checkVisibility?.({
+                    checkOpacity: true,
+                    checkVisibilityCSS: true,
+                }) ?? n.offsetParent !== null
+            )
+        )
+            return false;
+        const r = n.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+    };
+
+    const getVisibleCaseNote = () => {
+        const visible = $$('[aria-label="Case Note"]').filter(isVisible);
+        const top = visible.filter((n) => {
+            const r = n.getBoundingClientRect();
+            const hit = document.elementFromPoint(
+                Math.min(Math.max(r.left + r.width / 2, 1), innerWidth - 1),
+                Math.min(Math.max(r.top + r.height / 2, 1), innerHeight - 1),
+            );
+            const box =
+                n.closest("write-card, .write-card, write-deck") ||
+                n.parentElement;
+            return hit && (n.contains(hit) || box?.contains(hit));
+        });
+        return (
+            (top.length ? top : visible).sort(
+                (a, b) =>
+                    a.getBoundingClientRect().top -
+                    b.getBoundingClientRect().top,
+            )[0] || null
+        );
+    };
+
     const BASE_COMMENTS = [
         "Setup Conversion Linker",
         "Guided the advertiser how to see the report",
@@ -294,7 +331,7 @@
         [
             ...new Set(
                 [
-                    ...document.body.innerText.matchAll(
+                    ...document.body.textContent.matchAll(
                         /Speakeasy session ID:\s*(P\d+)/gi,
                     ),
                 ].map((m) => m[1]),
@@ -614,9 +651,13 @@
     };
 
     const insertNote = async (templateHTML, replaceExisting) => {
-        if (!$('[aria-label="Case Note"]')) {
+        let caseNote = getVisibleCaseNote();
+        if (!caseNote) {
+            const fabIcon =
+                $$("write-deck material-fab material-icon i").find(isVisible) ||
+                $("write-deck material-fab material-icon i");
             for (
-                let n = $("write-deck material-fab material-icon i");
+                let n = fabIcon;
                 n && n !== document.body;
                 n = n.parentElement
             ) {
@@ -624,24 +665,23 @@
                     n.dispatchEvent(new MouseEvent(t, { bubbles: true }));
             }
             await sleep(150);
-            $("div:nth-child(4) > material-fab i")?.click();
-            await sleep(200);
+            (
+                $$("div:nth-child(4) > material-fab i").find(isVisible) ||
+                $("div:nth-child(4) > material-fab i")
+            )?.click();
+            for (
+                let t = 0;
+                t < 2000 && !(caseNote = getVisibleCaseNote());
+                t += 100
+            )
+                await sleep(100);
         }
-        const caseNote =
-            $$('[aria-label="Case Note"]')
-                .filter((n) => n.offsetParent !== null)
-                .sort(
-                    (a, b) =>
-                        a.getBoundingClientRect().top -
-                        b.getBoundingClientRect().top,
-                )[0] || $('[aria-label="Case Note"]');
-        const existing =
-            replaceExisting && caseNote && $("#noteCaseUI", caseNote);
+        if (!caseNote) return false;
+        const existing = replaceExisting && $("#noteCaseUI", caseNote);
         if (existing) existing.outerHTML = toSafeHTML(templateHTML);
-        else
-            caseNote?.insertAdjacentHTML("beforeend", toSafeHTML(templateHTML));
-        caseNote?.dispatchEvent(new Event("input", { bubbles: true }));
-        return Boolean(existing || caseNote);
+        else caseNote.insertAdjacentHTML("beforeend", toSafeHTML(templateHTML));
+        caseNote.dispatchEvent(new Event("input", { bubbles: true }));
+        return true;
     };
 
     const executeFollowUp = async (flupBtn) => {
@@ -699,27 +739,37 @@
             $('[aria-haspopup="dialog"]')?.click();
             await sleep(200);
             const checkAllBtn = $('[debug-id="check-all-box"]');
-            if (checkAllBtn?.getAttribute("aria-checked") === "false") {
+            for (
+                let i = 0;
+                i < 2 &&
+                checkAllBtn &&
+                checkAllBtn.getAttribute("aria-checked") !== "true";
+                i++
+            ) {
                 checkAllBtn.click();
                 await sleep(150);
             }
             $('[debug-id="apply-filter"]')?.click();
             await sleep(300);
             const expandBtn = $(
-                '[aria-label="Expand all messages"][aria-expanded="false"]',
+                '[aria-label="Expand all messages"]:not([aria-expanded="true"])',
             );
             if (expandBtn) {
                 expandBtn.click();
                 await sleep(300);
             }
+            await waitFor(
+                ".speakeasy-agent-activity, .message-body-panel",
+                1500,
+            ).catch(() => {});
             const verifiedTags = [
                 ...new Set(
                     $$(".message-body.note").flatMap((n) =>
                         /successfully verified for the below listed conversion actions/i.test(
-                            n.innerText,
+                            n.textContent,
                         )
                             ? [
-                                  ...n.innerText.matchAll(
+                                  ...n.textContent.matchAll(
                                       /^[ \t]*(?:-\s*)?([^\n,|]+?)\s*(?:,|\|)\s*[A-Za-z0-9_-]{10,}\s*(?:,|\|)/gm,
                                   ),
                               ].map((m) => m[1].trim())
@@ -784,14 +834,22 @@
             clearInterval(clickerInterval);
             clickerInterval = on
                 ? setInterval(async () => {
-                      if (flupBtn.dataset.busy || $("#noteCaseUI")) return;
+                      const visibleNote = getVisibleCaseNote();
+                      if (
+                          flupBtn.dataset.busy ||
+                          (visibleNote && $("#noteCaseUI", visibleNote))
+                      )
+                          return;
                       if (
                           await insertNote(buildNoteTemplateHTML(null), false)
                       ) {
                           clearTimeout(removeTimer);
                           removeTimer = setTimeout(
                               () =>
-                                  $(".cdtx__uioncall_control-remove")?.click(),
+                                  $(
+                                      ".cdtx__uioncall_control-remove",
+                                      getVisibleCaseNote() || document,
+                                  )?.click(),
                               6000,
                           );
                       }
