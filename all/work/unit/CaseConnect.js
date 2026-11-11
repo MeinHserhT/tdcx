@@ -4,17 +4,14 @@
     try {
         G.teardown?.();
     } catch (e) {
-        console.warn("Omnitool: previous cleanup failed", e);
+        console.warn("Omnitool: cleanup failed", e);
     }
     const cleanups = [];
-    const onTeardown = (fn) => cleanups.push(fn);
     G.teardown = () => {
         while (cleanups.length)
             try {
                 cleanups.pop()();
-            } catch (e) {
-                console.warn("Omnitool: cleanup error", e);
-            }
+            } catch {}
     };
 
     const toSafeHTML = (html) => {
@@ -30,8 +27,8 @@
     };
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-    const $ = (sel, p = document) => p.querySelector(sel);
-    const $$ = (sel, p = document) => [...p.querySelectorAll(sel)];
+    const $ = (s, p = document) => p.querySelector(s);
+    const $$ = (s, p = document) => [...p.querySelectorAll(s)];
     const isoDate = (d = new Date()) =>
         `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     const esc = (s) =>
@@ -47,40 +44,24 @@
                 })[c],
         );
 
-    const createEl = (
-        tag,
-        { parent, onClick, style, text, html, ...props } = {},
-    ) => {
-        const el = Object.assign(document.createElement(tag), props);
-        if (text !== undefined) el.textContent = text;
-        if (html !== undefined) el.innerHTML = toSafeHTML(html);
-        if (style) el.style.cssText = style;
-        if (onClick) el.addEventListener("click", onClick);
-        parent?.appendChild(el);
-        return el;
+    const el = (tag, { parent, onClick, style, text, html, ...props } = {}) => {
+        const node = Object.assign(document.createElement(tag), props);
+        if (text !== undefined) node.textContent = text;
+        if (html !== undefined) node.innerHTML = toSafeHTML(html);
+        if (style) node.style.cssText = style;
+        if (onClick) node.addEventListener("click", onClick);
+        parent?.appendChild(node);
+        return node;
     };
 
-    const waitForElement = (sel, timeout = 5e3) =>
-        new Promise((resolve, reject) => {
-            const existing = $(sel);
-            if (existing) return resolve(existing);
-            const obs = new MutationObserver(() => {
-                const found = $(sel);
-                if (found) {
-                    obs.disconnect();
-                    clearTimeout(timer);
-                    resolve(found);
-                }
-            });
-            obs.observe(document.documentElement, {
-                childList: true,
-                subtree: true,
-            });
-            const timer = setTimeout(() => {
-                obs.disconnect();
-                reject(new Error(`Timeout waiting for: ${sel}`));
-            }, timeout);
-        });
+    const waitFor = async (sel, ms = 5000) => {
+        for (let t = 0; t < ms; t += 100) {
+            const found = $(sel);
+            if (found) return found;
+            await sleep(100);
+        }
+        throw new Error(`Timeout: ${sel}`);
+    };
 
     const BASE_COMMENTS = [
         "Setup Conversion Linker",
@@ -147,19 +128,6 @@
             s && s !== "NA" && /enhanced conversion|\becw\b|\becl\b/i.test(s),
         );
 
-    const CONV_BASE = (subStatus) => ({
-        subStatus,
-        subStatusReason: "Implement Ads Conversion Tracking",
-        taskTypes: "Ads - Conversion Tracking",
-        tagsImplemented: "Ads Conversion Tracking",
-        comments: [
-            "Implemented Google Ads conversions for { Hotline / Zalo / Purchase / Form } via GTM / Gtag",
-            "Tested with Tag Assistant",
-            "No recent conversions",
-            ...BASE_COMMENTS,
-        ],
-    });
-
     const STEP_OPTIONS = {
         0: [
             [
@@ -175,10 +143,11 @@
                 "IN - Inactive",
                 [
                     "IN - Instruction Share",
-                    "IN - Out of Scope",
                     "IN - Not Reachable",
-                    "IN - Infeasible",
                     "IN - Not Interested",
+                    "In - Not Ready",
+                    "IN - Infeasible",
+                    "IN - Out of Scope",
                 ],
             ],
         ],
@@ -287,17 +256,18 @@
     const head = (title) =>
         `<tr style="height:21pt"><td colspan="2" style="${TD_STYLE}background:#fff2cc;text-align:center;"><span style="${FONT_STYLE}font-weight:700;">${title}</span> <span style="${FONT_STYLE}font-style:italic;">(Mandatory)</span></td></tr>`;
     const row = (lbl, desc, val = "NA", bg = "", attr = "") =>
-        `<tr${attr} style="height:21pt"><td style="${TD_STYLE}width:30%;"><span style="${FONT_STYLE}${bg ? `background:${bg};` : ""}font-weight:700;">${lbl}</span>${desc ? `<div style="font-size:9.5pt;font-family:'Google Sans',sans-serif;color:#5f6368;margin-top:2px;line-height:1.25;">${desc}</div>` : ""}</td><td style="${TD_STYLE}width:70%;"><span style="${FONT_STYLE}${bg ? `background:${bg};` : ""}">${val}</span></td></tr>`;
+        `<tr${attr} style="height:21pt"><td style="${TD_STYLE}width:30%;"><span style="${FONT_STYLE}${bg ? `background:${bg};` : ""}font-weight:700;">${lbl}</span><span class="qm-del-row" data-del-row="1" contenteditable="false" title="Delete row" style="float:right;cursor:pointer;color:#c92a2a;background:#ffe3e3;font-weight:700;font-size:10pt;line-height:1;padding:1px 5px;border-radius:4px;margin-left:4px;user-select:none;">✕</span>${desc ? `<div style="font-size:9.5pt;font-family:'Google Sans',sans-serif;color:#5f6368;margin-top:2px;line-height:1.25;">${desc}</div>` : ""}</td><td style="${TD_STYLE}width:70%;"><span style="${FONT_STYLE}${bg ? `background:${bg};` : ""}">${val}</span></td></tr>`;
 
     const parseDate = (val) => {
         if (!val) return null;
-        const ts = Number(val);
-        if (ts > 1e11) return new Date(ts);
+        if (+val > 1e11) return new Date(+val);
         const p = String(val).match(/\d+/g);
         return p?.length >= 3
-            ? p[0].length === 4
-                ? new Date(+p[0], +p[1] - 1, +p[2])
-                : new Date(+p[2], +p[1] - 1, +p[0])
+            ? new Date(
+                  p[0].length === 4 ? +p[0] : +p[2],
+                  +p[1] - 1,
+                  p[0].length === 4 ? +p[2] : +p[0],
+              )
             : null;
     };
     const currentFollowUp = () => {
@@ -331,26 +301,24 @@
             ),
         ].join(", ") || "NA";
     const scrapeDomTasks = () => {
-        const apptTasks = $$(`.form-label`)
-            .filter((el) =>
+        const els = $$(".form-label")
+            .filter((l) =>
                 /^(Appointment tasks|Case Summary)$/i.test(
-                    el.textContent.trim(),
+                    l.textContent.trim(),
                 ),
             )
-            .flatMap((el) => [
-                ...(el.parentElement?.querySelectorAll(
+            .flatMap((l) => [
+                ...(l.parentElement?.querySelectorAll(
                     "sanitized-content, [debug-id='html-value']",
                 ) || []),
             ]);
-        return apptTasks?.length
-            ? [
-                  ...new Set(
-                      apptTasks
-                          .map((el) => matchTaskType(el.textContent))
-                          .filter((t) => t && t !== "NA"),
-                  ),
-              ].join(", ")
-            : "";
+        return [
+            ...new Set(
+                els
+                    .map((e) => matchTaskType(e.textContent))
+                    .filter((t) => t && t !== "NA"),
+            ),
+        ].join(", ");
     };
 
     const ecRowsHTML = (is5Days = isAppt5DaysBefore()) => {
@@ -382,13 +350,13 @@
     const syncEcRows = (tbl, taskText) => {
         const tbody = tbl?.tBodies?.[0] || tbl;
         if (!tbody) return;
-        $$("tr", tbody).forEach((tr) => {
+        for (const tr of $$("tr", tbody)) {
             if (
                 tr.dataset.ecRow ||
                 /\(only for ecw\)/i.test(tr.cells?.[0]?.textContent || "")
             )
                 tr.remove();
-        });
+        }
         if (isEcTask(taskText)) {
             const html = toSafeHTML(ecRowsHTML());
             tbody.lastElementChild
@@ -402,12 +370,12 @@
             $("#qm-modal-overlay")?.remove();
             const rootOpts = STEP_OPTIONS[daysOffset];
             if (!rootOpts) return resolve(null);
-            const overlay = createEl("div", {
+            const overlay = el("div", {
                 id: "qm-modal-overlay",
                 parent: document.body,
                 style: "position:fixed;inset:0;background:rgba(0,0,0,0.15);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:2147483647;",
             });
-            const modal = createEl("div", {
+            const modal = el("div", {
                 parent: overlay,
                 style: "background:#FFF;border-radius:16px;padding:22px;width:320px;box-shadow:0 16px 36px rgba(0,0,0,0.12);text-align:center;border:1px solid rgba(0,0,0,0.05);max-height:85vh;overflow-y:auto;",
             });
@@ -415,42 +383,43 @@
                 overlay.remove();
                 resolve(val);
             };
-            onTeardown(() => close(null));
+            cleanups.push(() => close(null));
+
             const render = (title, items, backFn) => {
                 modal.textContent = "";
-                createEl("div", {
+                el("div", {
                     text: title,
                     parent: modal,
                     style: "font-size:18px;font-weight:700;color:#1D1D1F;margin-bottom:4px;",
                 });
-                createEl("div", {
+                el("div", {
                     text: "Choose sub-status:",
                     parent: modal,
                     style: "font-size:14px;color:#86868B;margin-bottom:18px;",
                 });
-                const actions = createEl("div", {
+                const actions = el("div", {
                     parent: modal,
                     style: "display:flex;flex-direction:column;gap:8px;",
                 });
-                [
-                    ...items.map((item, i) => {
-                        const [label, val] = Array.isArray(item)
-                            ? item
-                            : [item, item];
-                        return [
-                            label,
-                            ...PALETTE[i % PALETTE.length],
-                            () =>
-                                Array.isArray(val)
-                                    ? render(label, val, () =>
-                                          render(
-                                              `Options for ${daysOffset} Day(s)`,
-                                              rootOpts,
-                                          ),
-                                      )
-                                    : close(val),
-                        ];
-                    }),
+                const btns = items.map((item, i) => {
+                    const [label, val] = Array.isArray(item)
+                        ? item
+                        : [item, item];
+                    return [
+                        label,
+                        ...PALETTE[i % PALETTE.length],
+                        () =>
+                            Array.isArray(val)
+                                ? render(label, val, () =>
+                                      render(
+                                          `Options for ${daysOffset} Day(s)`,
+                                          rootOpts,
+                                      ),
+                                  )
+                                : close(val),
+                    ];
+                });
+                btns.push(
                     backFn
                         ? ["← Back", "#F1F3F5", "#495057", backFn]
                         : [
@@ -459,14 +428,15 @@
                               "#495057",
                               () => close(null),
                           ],
-                ].forEach(([label, bg, color, onClick]) =>
-                    createEl("button", {
+                );
+                for (const [label, bg, color, onClick] of btns) {
+                    el("button", {
                         text: label,
                         parent: actions,
-                        style: `padding:10px 14px;border-radius:10px;border:none;font-size:16px;font-weight:600;cursor:pointer;${bg ? `background:${bg};` : ""}color:${color};`,
+                        style: `padding:10px 14px;border-radius:10px;border:none;font-size:16px;font-weight:600;cursor:pointer;background:${bg};color:${color};`,
                         onClick,
-                    }),
-                );
+                    });
+                }
             };
             render(`Options for ${daysOffset} Day(s)`, rootOpts);
         });
@@ -480,10 +450,22 @@
         let cfg =
             NOTE_TEMPLATES[templateKey] ||
             (templateKey?.startsWith("SO - ")
-                ? CONV_BASE(templateKey)
+                ? {
+                      subStatus: templateKey,
+                      subStatusReason: "Implement Ads Conversion Tracking",
+                      taskTypes: "Ads - Conversion Tracking",
+                      tagsImplemented: "Ads Conversion Tracking",
+                      comments: [
+                          "Implemented Google Ads conversions for { Hotline / Zalo / Purchase / Form } via GTM / Gtag",
+                          "Tested with Tag Assistant",
+                          "No recent conversions",
+                          ...BASE_COMMENTS,
+                      ],
+                  }
                 : templateKey
                   ? { subStatus: templateKey }
                   : null);
+
         if (
             cfg &&
             is5Days &&
@@ -522,6 +504,7 @@
             !/Attempted Contact|Not Reachable|Unreachable/i.test(cfg.subStatus)
                 ? "Yes"
                 : "NA";
+
         return `<div id="noteCaseUI" class="cdtx__uioncall"><div class="cdtx__uioncall_control"><span class="cdtx__uioncall_control-load" data-text="Split &amp; Transfer" data-btnclk="oncall_templ_lt_template">&nbsp;</span><span class="cdtx__uioncall_control-load" data-text="List" data-btnclk="oncall_templ_act_load">&nbsp;</span><span class="cdtx__uioncall_control-save" data-text="Save" data-btnclk="oncall_templ_act_save" data-btntooltip="Save template Reuse">&nbsp;</span><span class="cdtx__uioncall_control-remove" data-text="Remove" data-btnclk="oncall_templ_act_remove">&nbsp;</span></div><article class="cdtx__uioncall_outer"><table style="width:100% !important;table-layout:fixed !important;border-collapse:collapse !important;margin:8px 0 !important;box-sizing:border-box !important;"><tbody>${
             head("General Details") +
             row(
@@ -633,22 +616,20 @@
     const insertNote = async (templateHTML, replaceExisting) => {
         if (!$('[aria-label="Case Note"]')) {
             for (
-                let el = $("write-deck material-fab material-icon i");
-                el && el !== document.body;
-                el = el.parentElement
-            )
-                ["pointerenter", "mouseenter", "mouseover"].forEach((t) =>
-                    el.dispatchEvent(new MouseEvent(t, { bubbles: true })),
-                );
+                let n = $("write-deck material-fab material-icon i");
+                n && n !== document.body;
+                n = n.parentElement
+            ) {
+                for (const t of ["pointerenter", "mouseenter", "mouseover"])
+                    n.dispatchEvent(new MouseEvent(t, { bubbles: true }));
+            }
             await sleep(150);
-            $(
-                "div:nth-child(4) > material-fab ._ngcontent-dpl-66 i, div:nth-child(4) > material-fab i",
-            )?.click();
+            $("div:nth-child(4) > material-fab i")?.click();
             await sleep(200);
         }
         const caseNote =
             $$('[aria-label="Case Note"]')
-                .filter((el) => el.offsetParent !== null)
+                .filter((n) => n.offsetParent !== null)
                 .sort(
                     (a, b) =>
                         a.getBoundingClientRect().top -
@@ -657,8 +638,8 @@
         const existing =
             replaceExisting && caseNote && $("#noteCaseUI", caseNote);
         if (existing) existing.outerHTML = toSafeHTML(templateHTML);
-        else if (caseNote)
-            caseNote.insertAdjacentHTML("beforeend", toSafeHTML(templateHTML));
+        else
+            caseNote?.insertAdjacentHTML("beforeend", toSafeHTML(templateHTML));
         caseNote?.dispatchEvent(new Event("input", { bubbles: true }));
         return Boolean(existing || caseNote);
     };
@@ -683,7 +664,7 @@
             ) {
                 apptEl.click();
                 await sleep(150);
-                (await waitForElement(".datepicker-grid .today")).click();
+                (await waitFor(".datepicker-grid .today")).click();
                 await sleep(200);
             }
             const templateKey = await promptCaseType(daysOffset);
@@ -696,7 +677,7 @@
                     target.setDate(target.getDate() + 1);
                     if (target.getDay() % 6 !== 0) c++;
                 }
-                let dayEl = await waitForElement(".datepicker-grid .today");
+                let dayEl = await waitFor(".datepicker-grid .today");
                 for (
                     let i = 0, diff = Math.round((target - start) / 864e5);
                     i < diff && dayEl;
@@ -708,10 +689,10 @@
                     await sleep(200);
                 }
             } else {
-                (await waitForElement('[data-thischoice="Finish"]')).click();
+                (await waitFor('[data-thischoice="Finish"]')).click();
                 await sleep(200);
             }
-            (await waitForElement("[data-type=follow_up_time]")).click();
+            (await waitFor("[data-type=follow_up_time]")).click();
             await sleep(200);
             $('[aria-label="Case log"]')?.click();
             await sleep(200);
@@ -733,12 +714,12 @@
             }
             const verifiedTags = [
                 ...new Set(
-                    $$(".message-body.note").flatMap((el) =>
+                    $$(".message-body.note").flatMap((n) =>
                         /successfully verified for the below listed conversion actions/i.test(
-                            el.innerText,
+                            n.innerText,
                         )
                             ? [
-                                  ...el.innerText.matchAll(
+                                  ...n.innerText.matchAll(
                                       /^[ \t]*(?:-\s*)?([^\n,|]+?)\s*(?:,|\|)\s*[A-Za-z0-9_-]{10,}\s*(?:,|\|)/gm,
                                   ),
                               ].map((m) => m[1].trim())
@@ -775,7 +756,7 @@
             return alert(
                 "Please place your cursor inside the text area where you want the signature.",
             );
-        $$(".qm-sig").forEach((el) => el.remove());
+        $$(".qm-sig").forEach((n) => n.remove());
         let sigName = localStorage.getItem("__signature_name");
         if (!sigName)
             localStorage.setItem(
@@ -789,18 +770,16 @@
     const init = () => {
         $("#qm-panel")?.remove();
         $("#qm-styles")?.remove();
-        createEl("style", {
+        el("style", {
             id: "qm-styles",
-            text: '@import url(\'https://fonts.googleapis.com/css2?family=Eczar:wght@400;600;700&display=swap\'); #qm-panel, #qm-panel *, #qm-modal-overlay, #qm-modal-overlay * { font-family: "Eczar", serif !important; } #qm-panel { position: fixed; bottom: 20px; left: 20px; display: flex; gap: 8px; align-items: center; z-index: 99999; font-size: 14px; } .qm-btn { z-index: 10; color: #1D1D1F; padding: 10px 16px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); backdrop-filter: blur(6px); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.6); user-select: none; } .qm-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); filter: brightness(0.97); } .qm-btn:active { transform: scale(0.96); } #qm-flup-in { position: absolute; top: 50%; transform: translateY(-50%); right: 6px; width: 28px; height: 24px; padding: 0; border: none; border-radius: 6px; background: rgba(255, 255, 255, 0.95); color: #1D1D1F; font-weight: 700; font-size: 14px; text-align: center; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06); transition: all 0.2s ease; -moz-appearance: textfield; z-index: 20; cursor: text; user-select: text; } #qm-flup-in:focus { outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06), 0 0 0 2px #74B9FF; } .qm-badge { display: none; position: absolute; top: -4px; right: -4px; background: #FF8787; border-radius: 9999px; padding: 2px 6px; font-size: 10px; font-weight: 700; line-height: 1; border: 1.5px solid #FFFFFF; color: #FFFFFF; } .qm-sig { margin: 12px 0; } .dock-container { max-height: 400px !important; overflow-y: auto !important; } .qm-task-pick { cursor: pointer !important; user-select: none; } .qm-task-pick::after { content: " ▾"; font-size: 10px; }',
             parent: document.head || document.documentElement,
+            text: '@import url(\'https://fonts.googleapis.com/css2?family=Eczar:wght@400;600;700&display=swap\'); #qm-panel, #qm-panel *, #qm-modal-overlay, #qm-modal-overlay * { font-family: "Eczar", serif !important; } #qm-panel { position: fixed; bottom: 20px; left: 20px; display: flex; gap: 8px; align-items: center; z-index: 99999; font-size: 14px; } .qm-btn { z-index: 10; color: #1D1D1F; padding: 10px 16px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); backdrop-filter: blur(6px); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.6); user-select: none; } .qm-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); filter: brightness(0.97); } .qm-btn:active { transform: scale(0.96); } #qm-flup-in { position: absolute; top: 50%; transform: translateY(-50%); right: 6px; width: 28px; height: 24px; padding: 0; border: none; border-radius: 6px; background: rgba(255, 255, 255, 0.95); color: #1D1D1F; font-weight: 700; font-size: 14px; text-align: center; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06); transition: all 0.2s ease; -moz-appearance: textfield; z-index: 20; cursor: text; user-select: text; } #qm-flup-in:focus { outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06), 0 0 0 2px #74B9FF; } .qm-badge { display: none; position: absolute; top: -4px; right: -4px; background: #FF8787; border-radius: 9999px; padding: 2px 6px; font-size: 10px; font-weight: 700; line-height: 1; border: 1.5px solid #FFFFFF; color: #FFFFFF; } .qm-sig { margin: 12px 0; } .dock-container { max-height: 400px !important; overflow-y: auto !important; } .qm-task-pick { cursor: pointer !important; user-select: none; } .qm-task-pick::after { content: " ▾"; font-size: 10px; }',
         });
-        const panel = createEl("div", {
-            id: "qm-panel",
-            parent: document.body,
-        });
+        const panel = el("div", { id: "qm-panel", parent: document.body });
         let clickerInterval = null,
             removeTimer = null,
             badgeObserver = null;
+
         const setAuto = (btn, on) => {
             clearInterval(clickerInterval);
             clickerInterval = on
@@ -822,13 +801,14 @@
             btn.style.backgroundColor = on ? "#B2F2BB" : "#FFA8A8";
             btn.style.color = on ? "#1E5E2A" : "#6A1A1A";
         };
-        const autoBtn = createEl("button", {
+
+        const autoBtn = el("button", {
             title: "Auto Click",
             className: "qm-btn",
             parent: panel,
             onClick: () => setAuto(autoBtn, !clickerInterval),
         });
-        const flupItemBtn = createEl("button", {
+        const flupItemBtn = el("button", {
             html: '<img src="https://cdn-icons-png.flaticon.com/512/1069/1069138.png" style="width:20px;height:20px;filter:brightness(0.2);"><span id="flup-badge" class="qm-badge">+</span>',
             title: "Click Follow-up Item",
             className: "qm-btn",
@@ -837,28 +817,30 @@
             onClick: async () => {
                 $('[debug-id="dock-item-home"]')?.click();
                 try {
-                    (await waitForElement(".li-popup_lstcasefl")).click();
+                    (await waitFor(".li-popup_lstcasefl")).click();
                 } catch {}
             },
         });
-        waitForElement(".li-popup_lstcasefl")
-            .then((el) => {
+
+        waitFor(".li-popup_lstcasefl")
+            .then((item) => {
                 if (!panel.isConnected) return;
                 const badge = $("#flup-badge", panel);
                 const update = () =>
                     (badge.style.display =
-                        el.dataset.attr && el.dataset.attr !== "0"
+                        item.dataset.attr && item.dataset.attr !== "0"
                             ? "block"
                             : "none");
                 badgeObserver = new MutationObserver(update);
-                badgeObserver.observe(el, {
+                badgeObserver.observe(item, {
                     attributes: true,
                     attributeFilter: ["data-attr"],
                 });
                 update();
             })
             .catch(() => {});
-        const flupBtn = createEl("div", {
+
+        const flupBtn = el("div", {
             text: "fl up:",
             title: "Set Follow-up",
             className: "qm-btn",
@@ -867,7 +849,7 @@
             onClick: (e) =>
                 e.target.id !== "qm-flup-in" && executeFollowUp(flupBtn),
         });
-        createEl("input", {
+        el("input", {
             id: "qm-flup-in",
             type: "text",
             value: "2",
@@ -892,7 +874,7 @@
                 e.target.value = d ? d.slice(-1) : "";
             },
         });
-        const signBtn = createEl("button", {
+        const signBtn = el("button", {
             text: "sign",
             title: "Insert Signature at Cursor",
             className: "qm-btn",
@@ -901,6 +883,7 @@
             onmousedown: (e) => e.preventDefault(),
             onClick: insertSignature,
         });
+
         const syncLdapUI = () => {
             const isVongoc =
                 $("[alt='profile photo']")
@@ -914,28 +897,26 @@
         };
         syncLdapUI();
         if (!$("[alt='profile photo']"))
-            waitForElement("[alt='profile photo']")
+            waitFor("[alt='profile photo']")
                 .then(() => panel.isConnected && syncLdapUI())
                 .catch(() => {});
 
         const syncCaseTasks = (text) => {
-            const editBtn = $(
-                '._connectcase_info-act_edit, [data-btnclk="_connectcase_info-act_edit"]',
-            );
-            if (!$('[data-btnsave], [data-btnclk="btnsave"]')) editBtn?.click();
+            if (!$('[data-btnsave], [data-btnclk="btnsave"]'))
+                $(
+                    '._connectcase_info-act_edit, [data-btnclk="_connectcase_info-act_edit"]',
+                )?.click();
             const setVal = () => {
                 const taskEl = $('[data-infocase="tasks"]');
                 if (!taskEl) return;
                 const inp = taskEl.matches("input, textarea")
                     ? taskEl
-                    : taskEl.querySelector("input, textarea");
+                    : $("input, textarea", taskEl);
                 if (inp) {
-                    inp.value = "";
                     inp.value = text;
                     inp.dispatchEvent(new Event("input", { bubbles: true }));
                     inp.dispatchEvent(new Event("change", { bubbles: true }));
                 } else {
-                    taskEl.textContent = "";
                     taskEl.textContent = text;
                     taskEl.dispatchEvent(new Event("input", { bubbles: true }));
                 }
@@ -946,19 +927,32 @@
 
         let closeTaskPop = null;
         const findTaskPickTarget = (node) => {
-            const el = node?.nodeType === 1 ? node : node?.parentElement;
-            if (!el || el.closest("#qm-task-pop")) return null;
-            const direct = el.closest(".qm-task-pick, [data-task-pick]");
+            const n = node?.nodeType === 1 ? node : node?.parentElement;
+            if (!n || n.closest("#qm-task-pop")) return null;
+            const direct = n.closest(".qm-task-pick, [data-task-pick]");
             if (direct) return direct;
-            const td = el.closest("td"),
+            const td = n.closest("td"),
                 tr = td?.parentElement;
             return tr &&
                 td === tr.cells?.[1] &&
                 /^\s*Task types:/i.test(tr.cells[0]?.textContent || "")
-                ? td.querySelector("span span") || td.firstElementChild || td
+                ? $("span span", td) || td.firstElementChild || td
                 : null;
         };
+
         const onDocClick = (e) => {
+            const delBtn = (
+                e.target?.nodeType === 1 ? e.target : e.target?.parentElement
+            )?.closest(".qm-del-row, [data-del-row]");
+            if (delBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                const tr = delBtn.closest("tr"),
+                    note = tr?.closest('[aria-label="Case Note"]');
+                tr?.remove();
+                note?.dispatchEvent(new Event("input", { bubbles: true }));
+                return;
+            }
             let target = findTaskPickTarget(e.target);
             if (!target) return;
             e.preventDefault();
@@ -968,55 +962,53 @@
             const current = new Set(
                 target.textContent
                     .split(",")
-                    .map((s) => s.trim())
-                    .filter(Boolean)
-                    .map(matchTaskType)
+                    .map((s) => matchTaskType(s.trim()))
                     .filter(Boolean),
             );
             if (!current.size || current.has("NA")) {
                 current.clear();
                 current.add("NA");
             }
+
             const rect = target.getBoundingClientRect();
-            const pop = createEl("div", {
+            const pop = el("div", {
                 id: "qm-task-pop",
                 parent: document.body,
                 style: `position:fixed;top:${Math.max(8, Math.min(rect.bottom + 4, innerHeight - 280))}px;left:${Math.max(8, Math.min(rect.left, innerWidth - 340))}px;width:320px;max-height:260px;background:#fff;border:1px solid #ccc;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.18);z-index:2147483647;display:flex;flex-direction:column;padding:8px;gap:6px;font-family:sans-serif;font-size:12px;box-sizing:border-box;`,
             });
-            const search = createEl("input", {
+            const search = el("input", {
                 type: "search",
                 placeholder: "Search task types...",
                 parent: pop,
                 style: "padding:6px 8px;border:1px solid #ddd;border-radius:6px;outline:none;flex-shrink:0;font-size:12px;",
                 oninput: () => {
                     const q = search.value.toLowerCase();
-                    $$("label", list).forEach(
-                        (l) =>
-                            (l.style.display = l.textContent
-                                .toLowerCase()
-                                .includes(q)
-                                ? "flex"
-                                : "none"),
-                    );
+                    for (const l of $$("label", list))
+                        l.style.display = l.textContent
+                            .toLowerCase()
+                            .includes(q)
+                            ? "flex"
+                            : "none";
                 },
             });
-            const list = createEl("div", {
+            const list = el("div", {
                 parent: pop,
                 style: "flex:1 1 auto;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:4px;",
             });
-            TASK_TYPES.forEach((t) => {
-                const setStyle = (el, on) =>
-                    Object.assign(el.style, {
-                        background: on ? "#ffe066" : "transparent",
-                        color: on ? "#c92a2a" : "#1D1D1F",
-                        fontWeight: on ? "700" : "400",
-                    });
-                const lbl = createEl("label", {
+            const setStyle = (n, on) =>
+                Object.assign(n.style, {
+                    background: on ? "#ffe066" : "transparent",
+                    color: on ? "#c92a2a" : "#1D1D1F",
+                    fontWeight: on ? "700" : "400",
+                });
+
+            for (const t of TASK_TYPES) {
+                const lbl = el("label", {
                     parent: list,
                     style: "flex-shrink:0;display:flex;align-items:center;gap:6px;cursor:pointer;padding:4px 6px;border-radius:4px;margin:0;line-height:1.3;",
                 });
                 setStyle(lbl, current.has(t));
-                createEl("input", {
+                el("input", {
                     type: "checkbox",
                     checked: current.has(t),
                     parent: lbl,
@@ -1034,13 +1026,11 @@
                         }
                         if (!current.size) current.add("NA");
 
-                        $$("label", list).forEach((l) => {
-                            const name = l.textContent.trim();
-                            const on = current.has(name);
-                            const inp = $("input", l);
-                            if (inp) inp.checked = on;
+                        for (const l of $$("label", list)) {
+                            const on = current.has(l.textContent.trim());
+                            $("input", l).checked = on;
                             setStyle(l, on);
-                        });
+                        }
 
                         const nextText = current.has("NA")
                             ? "NA"
@@ -1065,7 +1055,7 @@
                     },
                 });
                 lbl.append(t);
-            });
+            }
             search.focus();
             const onOutside = (ev) => {
                 if (!pop.contains(ev.target) && !target.contains(ev.target))
@@ -1074,11 +1064,13 @@
             closeTaskPop = () => {
                 if (taskUpdated) {
                     syncCaseTasks(target.textContent);
-                    setTimeout(() => {
-                        $(
-                            '._connectcase_info--outer [data-btnsave], [data-btnsave], [data-btnclk="btnsave"]',
-                        )?.click();
-                    }, 100);
+                    setTimeout(
+                        () =>
+                            $(
+                                '._connectcase_info--outer [data-btnsave], [data-btnsave], [data-btnclk="btnsave"]',
+                            )?.click(),
+                        100,
+                    );
                 }
                 pop.remove();
                 document.removeEventListener("mousedown", onOutside, true);
@@ -1086,8 +1078,9 @@
             };
             document.addEventListener("mousedown", onOutside, true);
         };
+
         document.addEventListener("click", onDocClick, true);
-        onTeardown(() => {
+        cleanups.push(() => {
             clearInterval(clickerInterval);
             clearTimeout(removeTimer);
             badgeObserver?.disconnect();
@@ -1097,11 +1090,7 @@
         });
     };
 
-    const start = () =>
-        Promise.resolve()
-            .then(init)
-            .catch((err) => console.error("Omnitool error:", err));
     document.readyState === "loading"
-        ? document.addEventListener("DOMContentLoaded", start, { once: true })
-        : start();
+        ? document.addEventListener("DOMContentLoaded", init, { once: true })
+        : init();
 })();
