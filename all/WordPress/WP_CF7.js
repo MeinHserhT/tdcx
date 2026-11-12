@@ -28,11 +28,11 @@ document.addEventListener("wpcf7mailsent", function (e) {
 // -----------------------------------------------------------------------------
 document.addEventListener("wpcf7mailsent", function (e) {
     var b = e.detail.inputs.find(function (n) {
-        return n.name.includes("phone");
+        return n.name.includes("so-dien-thoai");
     });
     b.value &&
         dataLayer.push({
-            event: "cf7Submission",
+            event: "gui_form",
             formID: e.detail.contactFormId,
             phone: "+84" + b.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
         });

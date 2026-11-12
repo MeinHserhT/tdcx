@@ -764,17 +764,27 @@
             ).catch(() => {});
             const verifiedTags = [
                 ...new Set(
-                    $$(".message-body.note").flatMap((n) =>
-                        /successfully verified for the below listed conversion actions/i.test(
-                            n.textContent,
+                    $$(".message-body.note").flatMap((n) => {
+                        if (
+                            !/successfully verified for the below listed conversion actions/i.test(
+                                n.textContent,
+                            )
                         )
-                            ? [
-                                  ...n.textContent.matchAll(
-                                      /^[ \t]*(?:-\s*)?([^\n,|]+?)\s*(?:,|\|)\s*[A-Za-z0-9_-]{10,}\s*(?:,|\|)/gm,
-                                  ),
-                              ].map((m) => m[1].trim())
-                            : [],
-                    ),
+                            return [];
+                        const clone = n.cloneNode(true);
+                        $$("br, p, div, li, tr", clone).forEach((b) =>
+                            b.before("\n"),
+                        );
+                        const body = clone.textContent.replace(
+                            /^[\s\S]*?successfully verified for the below listed conversion actions[^:\n]*:\s*/i,
+                            "",
+                        );
+                        return [
+                            ...body.matchAll(
+                                /(?:^|\n)\s*-\s*([^\n,|]+?)\s*(?:,|\|)\s*[A-Za-z0-9_-]{10,}\s*(?:,|\|)/g,
+                            ),
+                        ].map((m) => m[1].trim());
+                    }),
                 ),
             ].join(", ");
             await insertNote(
@@ -998,10 +1008,149 @@
                 : null;
         };
 
+        let lastStrippedAt = 0;
+        const stripDelBtnsOnSubmit = (e) => {
+            const raw =
+                e.target?.nodeType === 1 ? e.target : e.target?.parentElement;
+            const submitBtn = raw?.closest('[debug-id="submit-button"]');
+            if (!submitBtn) return;
+            let scope = submitBtn.parentElement;
+            while (
+                scope &&
+                scope !== document.body &&
+                !$('[aria-label="Case Note"], #noteCaseUI', scope)
+            )
+                scope = scope.parentElement;
+            const notes = [
+                ...new Set(
+                    [
+                        scope && $('[aria-label="Case Note"]', scope),
+                        getVisibleCaseNote(),
+                        ...$$('[aria-label="Case Note"]'),
+                    ].filter(Boolean),
+                ),
+            ];
+            let removed = false;
+            for (const note of notes) {
+                const btns = $$(".qm-del-row, [data-del-row]", note);
+                if (btns.length) {
+                    btns.forEach((b) => b.remove());
+                    note.focus();
+                    for (const t of ["beforeinput", "input", "keyup", "change"])
+                        note.dispatchEvent(new Event(t, { bubbles: true }));
+                    removed = true;
+                }
+            }
+            if (removed) lastStrippedAt = Date.now();
+            if (
+                e.type === "click" &&
+                !submitBtn.dataset.qmCleanSubmit &&
+                (removed || Date.now() - lastStrippedAt < 120)
+            ) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                submitBtn.dataset.qmCleanSubmit = "1";
+                setTimeout(() => {
+                    submitBtn.click();
+                    delete submitBtn.dataset.qmCleanSubmit;
+                }, 60);
+            }
+        };
+
+        const clearNaAtNode = (raw) => {
+            const note = raw?.closest(
+                '[aria-label="Case Note"], #noteCaseUI, .cdtx__uioncall',
+            );
+            if (!note) return false;
+            const editable =
+                note.closest(
+                    '[aria-label="Case Note"], [contenteditable="true"]',
+                ) || note;
+            const td = raw?.closest("td");
+            const isValTd = !td || td !== td.parentElement?.cells?.[0];
+
+            const replaceTextNodeWithCaret = (
+                tn,
+                start = 0,
+                end = tn.nodeValue.length,
+            ) => {
+                const parent = tn.parentElement;
+                if (parent?.hasAttribute("data-btnclk"))
+                    parent.removeAttribute("data-btnclk");
+                editable.focus?.();
+                const sel = window.getSelection();
+                if (!sel) return;
+                const r = document.createRange();
+                r.setStart(tn, start);
+                r.setEnd(tn, end);
+                sel.removeAllRanges();
+                sel.addRange(r);
+                document.execCommand("delete", false, null);
+                if (tn.isConnected && /^\s*NA\s*$/i.test(tn.nodeValue)) {
+                    tn.nodeValue = "\u200B";
+                    const r2 = document.createRange();
+                    r2.setStart(tn, 1);
+                    r2.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(r2);
+                }
+                editable.dispatchEvent(new Event("input", { bubbles: true }));
+            };
+
+            if (isValTd && td && /^\s*NA\s*$/i.test(td.textContent)) {
+                const walker = document.createTreeWalker(
+                    td,
+                    NodeFilter.SHOW_TEXT,
+                );
+                let tn;
+                while ((tn = walker.nextNode())) {
+                    if (/^\s*NA\s*$/i.test(tn.nodeValue)) {
+                        replaceTextNodeWithCaret(tn);
+                        return true;
+                    }
+                }
+            }
+
+            if (/^\s*NA\s*$/i.test(raw?.textContent || "")) {
+                const walker = document.createTreeWalker(
+                    raw,
+                    NodeFilter.SHOW_TEXT,
+                );
+                let tn;
+                while ((tn = walker.nextNode())) {
+                    if (/^\s*NA\s*$/i.test(tn.nodeValue)) {
+                        replaceTextNodeWithCaret(tn);
+                        return true;
+                    }
+                }
+            }
+
+            const sel = window.getSelection();
+            const aNode = sel?.anchorNode;
+            if (
+                isValTd &&
+                aNode?.nodeType === 3 &&
+                note.contains(aNode) &&
+                /\bNA\b/.test(aNode.nodeValue)
+            ) {
+                for (const m of aNode.nodeValue.matchAll(/\bNA\b/g)) {
+                    if (
+                        sel.anchorOffset >= m.index &&
+                        sel.anchorOffset <= m.index + 2
+                    ) {
+                        replaceTextNodeWithCaret(aNode, m.index, m.index + 2);
+                        return true;
+                    }
+                }
+            }
+            return false;
+        };
+
         const onDocClick = (e) => {
-            const delBtn = (
-                e.target?.nodeType === 1 ? e.target : e.target?.parentElement
-            )?.closest(".qm-del-row, [data-del-row]");
+            stripDelBtnsOnSubmit(e);
+            const raw =
+                e.target?.nodeType === 1 ? e.target : e.target?.parentElement;
+            const delBtn = raw?.closest(".qm-del-row, [data-del-row]");
             if (delBtn) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1012,7 +1161,10 @@
                 return;
             }
             let target = findTaskPickTarget(e.target);
-            if (!target) return;
+            if (!target) {
+                if (clearNaAtNode(raw)) e.stopPropagation();
+                return;
+            }
             e.preventDefault();
             e.stopPropagation();
             closeTaskPop?.();
@@ -1137,12 +1289,20 @@
             document.addEventListener("mousedown", onOutside, true);
         };
 
-        document.addEventListener("click", onDocClick, true);
+        window.addEventListener("pointerdown", stripDelBtnsOnSubmit, true);
+        window.addEventListener("mousedown", stripDelBtnsOnSubmit, true);
+        window.addEventListener("click", onDocClick, true);
         cleanups.push(() => {
             clearInterval(clickerInterval);
             clearTimeout(removeTimer);
             badgeObserver?.disconnect();
-            document.removeEventListener("click", onDocClick, true);
+            window.removeEventListener(
+                "pointerdown",
+                stripDelBtnsOnSubmit,
+                true,
+            );
+            window.removeEventListener("mousedown", stripDelBtnsOnSubmit, true);
+            window.removeEventListener("click", onDocClick, true);
             closeTaskPop?.();
             panel.remove();
         });
