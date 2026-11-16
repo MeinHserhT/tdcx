@@ -157,7 +157,12 @@
                     nt.includes(r) ||
                     r.includes(nt)
                 );
-            }) || String(raw ?? "").trim()
+            }) ||
+            String(raw ?? "")
+                .trim()
+                .replace(/_+/g, " ")
+                .replace(/\s+/g, " ")
+                .replace(/\b[a-z]/g, (c) => c.toUpperCase())
         );
     };
     const isEcTask = (s) =>
@@ -290,10 +295,12 @@
     const FONT_STYLE =
         "font-size:11pt;font-family:'Google Sans',sans-serif;color:#000;white-space:pre-wrap;";
     const g = (s) => `<span style="color:#188038;">${s}</span>`;
+    const delBtnHTML = (title = "Delete row", sec = false) =>
+        `<span class="qm-del-row" data-del-row="1"${sec ? ' data-del-sec="1"' : ""} contenteditable="false" title="${title}" style="float:right;cursor:pointer;color:#c92a2a;background:#ffe3e3;font-weight:700;font-size:10pt;line-height:1;padding:1px 5px;border-radius:4px;margin-left:4px;user-select:none;">✕</span>`;
     const head = (title) =>
-        `<tr style="height:21pt"><td colspan="2" style="${TD_STYLE}background:#fff2cc;text-align:center;"><span style="${FONT_STYLE}font-weight:700;">${title}</span> <span style="${FONT_STYLE}font-style:italic;">(Mandatory)</span></td></tr>`;
+        `<tr data-sec-head="1" style="height:21pt"><td colspan="2" style="${TD_STYLE}background:#fff2cc;text-align:center;"><span style="${FONT_STYLE}font-weight:700;">${title}</span> <span style="${FONT_STYLE}font-style:italic;">(Mandatory)</span>${delBtnHTML("Delete section", true)}</td></tr>`;
     const row = (lbl, desc, val = "NA", bg = "", attr = "") =>
-        `<tr${attr} style="height:21pt"><td style="${TD_STYLE}width:30%;"><span style="${FONT_STYLE}${bg ? `background:${bg};` : ""}font-weight:700;">${lbl}</span><span class="qm-del-row" data-del-row="1" contenteditable="false" title="Delete row" style="float:right;cursor:pointer;color:#c92a2a;background:#ffe3e3;font-weight:700;font-size:10pt;line-height:1;padding:1px 5px;border-radius:4px;margin-left:4px;user-select:none;">✕</span>${desc ? `<div style="font-size:9.5pt;font-family:'Google Sans',sans-serif;color:#5f6368;margin-top:2px;line-height:1.25;">${desc}</div>` : ""}</td><td style="${TD_STYLE}width:70%;"><span style="${FONT_STYLE}${bg ? `background:${bg};` : ""}">${val}</span></td></tr>`;
+        `<tr${attr} style="height:21pt"><td style="${TD_STYLE}width:30%;"><span style="${FONT_STYLE}${bg ? `background:${bg};` : ""}font-weight:700;">${lbl}</span>${delBtnHTML()}${desc ? `<div style="font-size:9.5pt;font-family:'Google Sans',sans-serif;color:#5f6368;margin-top:2px;line-height:1.25;">${desc}</div>` : ""}</td><td style="${TD_STYLE}width:70%;"><span style="${FONT_STYLE}${bg ? `background:${bg};` : ""}">${val}</span></td></tr>`;
 
     const parseDate = (val) => {
         if (!val) return null;
@@ -349,10 +356,17 @@
                     "sanitized-content, [debug-id='html-value']",
                 ) || []),
             ]);
+        const rawList = els.length
+            ? els.flatMap((e) => e.textContent.split(","))
+            : (
+                  $('[data-infocase="tasks"]')?.value ||
+                  $('[data-infocase="tasks"]')?.textContent ||
+                  ""
+              ).split(",");
         return [
             ...new Set(
-                els
-                    .map((e) => matchTaskType(e.textContent))
+                rawList
+                    .map((s) => matchTaskType(s))
                     .filter((t) => t && t !== "NA"),
             ),
         ].join(", ");
@@ -394,10 +408,16 @@
             )
                 tr.remove();
         }
-        if (isEcTask(taskText)) {
+        const implHead = $$("tr", tbody).find((r) =>
+            /implementation screenshots/i.test(r.textContent),
+        );
+        if (isEcTask(taskText) && implHead) {
             const html = toSafeHTML(ecRowsHTML());
-            tbody.lastElementChild
-                ? tbody.lastElementChild.insertAdjacentHTML("beforebegin", html)
+            const last = tbody.lastElementChild;
+            last &&
+            last !== implHead &&
+            /additional screenshots/i.test(last.cells?.[0]?.textContent || "")
+                ? last.insertAdjacentHTML("beforebegin", html)
                 : tbody.insertAdjacentHTML("beforeend", html);
         }
     };
@@ -1156,7 +1176,21 @@
                 e.stopPropagation();
                 const tr = delBtn.closest("tr"),
                     note = tr?.closest('[aria-label="Case Note"]');
-                tr?.remove();
+                if (tr) {
+                    const isSec =
+                        delBtn.dataset.delSec ||
+                        tr.dataset.secHead ||
+                        tr.cells?.[0]?.colSpan > 1;
+                    while (
+                        isSec &&
+                        tr.nextElementSibling &&
+                        !tr.nextElementSibling.dataset.secHead &&
+                        !(tr.nextElementSibling.cells?.[0]?.colSpan > 1)
+                    ) {
+                        tr.nextElementSibling.remove();
+                    }
+                    tr.remove();
+                }
                 note?.dispatchEvent(new Event("input", { bubbles: true }));
                 return;
             }
@@ -1212,7 +1246,7 @@
                     fontWeight: on ? "700" : "400",
                 });
 
-            for (const t of TASK_TYPES) {
+            for (const t of new Set([...TASK_TYPES, ...current])) {
                 const lbl = el("label", {
                     parent: list,
                     style: "flex-shrink:0;display:flex;align-items:center;gap:6px;cursor:pointer;padding:4px 6px;border-radius:4px;margin:0;line-height:1.3;",
