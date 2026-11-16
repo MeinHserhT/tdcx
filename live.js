@@ -85,7 +85,7 @@ document.querySelectorAll('[placeholder*="Điện thoại"]').forEach(function (
 		});
 });
 
-document.querySelectorAll("[type=tel]").forEach(function (e) {
+document.querySelectorAll("[type=tel], [name=phone]").forEach(function (e) {
 	if (e.value)
 		dataLayer.push({
 			phone: "+84" + e.value.replace(/^0|^(84)0*|^(\+84)0*|\D+/g, ""),
