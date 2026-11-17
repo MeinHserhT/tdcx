@@ -181,6 +181,7 @@
         FLUP_LIST_ITEM: ".li-popup_lstcasefl",
         TODAY: ".datepicker-grid .today",
         DEL_BTN: ".qm-del-row, [data-del-row]",
+        DESC: '.qm-desc, [data-qm-desc], [style*="#5f6368"], [style*="95, 99, 104"]',
         TASK_PICK: ".qm-task-pick, [data-task-pick]",
         SUBMIT: '[debug-id="submit-button"]',
     };
@@ -547,8 +548,9 @@
     const noteRow = (lbl, desc, val = "NA", bg = "", attr = "") => {
         const bgCss = bg ? `background:${bg};` : "";
         const descHTML = desc
-            ? `<div style="font-size:9.5pt;font-family:'Google Sans',sans-serif;color:#5f6368;margin-top:2px;line-height:1.25;">${desc}</div>`
+            ? `<div class="qm-desc" data-qm-desc="1" style="font-size:9.5pt;font-family:'Google Sans',sans-serif;color:#5f6368;margin-top:2px;line-height:1.25;">${desc}</div>`
             : "";
+
         return `<tr${attr} style="height:21pt"><td width="30%" style="${TD_STYLE}width:30% !important;max-width:30% !important;">${delBtnHTML()}<span style="${FONT_STYLE}${bgCss}font-weight:700;">${lbl}</span>${descHTML}</td><td width="70%" style="${TD_STYLE}width:70% !important;max-width:70% !important;"><span style="${FONT_STYLE}${bgCss}">${val}</span></td></tr>`;
     };
     // Each entry: [label, description, value = "NA", background = ""]
@@ -883,7 +885,7 @@
         if (!submitBtn) return;
         let removed = false;
         for (const note of $$(SEL.CASE_NOTE)) {
-            const btns = $$(SEL.DEL_BTN, note);
+            const btns = $$(`${SEL.DEL_BTN}, ${SEL.DESC}`, note);
             btns.forEach((b) => b.remove());
             const hls = $$(HIGHLIGHT_SEL, note);
             hls.reverse().forEach((h) => h.replaceWith(...h.childNodes)); // innermost first
