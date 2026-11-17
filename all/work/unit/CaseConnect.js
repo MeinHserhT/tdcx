@@ -664,7 +664,7 @@
         const consent =
             cfg?.subStatus &&
             !/Attempted Contact|Not Reachable|Unreachable/i.test(cfg.subStatus)
-                ? "Yes"
+                ? "No"
                 : "NA";
         const commentsHTML = comments.length
             ? `<ul dir="auto" style="margin:0;padding-left:18px;">${comments.map((c) => `<li>${highlightPlaceholders(c)}</li>`).join("")}</ul>`
