@@ -1,0 +1,52 @@
+{
+  "workbench.sideBar.location": "right",
+  "workbench.startupEditor": "none",
+  "workbench.colorTheme": "One Dark Pro Flat",
+  "workbench.layoutControl.enabled": false,
+  "window.commandCenter": true,
+  "workbench.editorAssociations": {
+    "*.md": "vscode.markdown.preview.editor"
+  },
+  "editor.fontFamily": "'Victor Mono', 'JetBrains Mono', monospace",
+  "editor.fontSize": 15,
+  "editor.fontWeight": "normal",
+  "editor.fontLigatures": true,
+  "editor.lineHeight": 1.5,
+  "editor.letterSpacing": 0,
+  "editor.wordWrap": "on",
+  "editor.autoIndentOnPaste": true,
+  "debug.console.fontSize": 12,
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      {
+        "scope": [
+          "entity.name.function",
+          "support.function",
+          "meta.function-call"
+        ],
+        "settings": {
+          "fontStyle": "italic"
+        }
+      }
+    ]
+  },
+  "editor.semanticTokenColorCustomizations": {
+    "enabled": true,
+    "rules": {
+      "function": { "italic": true },
+      "method": { "italic": true }
+    }
+  },
+  "files.autoSave": "onFocusChange",
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "google.geminicodeassist",
+  "prettier.tabWidth": 4,
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  "terminal.integrated.defaultProfile.linux": "Google Cloud Shell",
+  "geminicodeassist.project": "aipp-internal-testing",
+  "redhat.telemetry.enabled": false,
+  "chat.disableAIFeatures": true,
+  "window.autoDetectColorScheme": true,
+  "workbench.preferredDarkColorTheme": "One Dark Pro Night Flat"
+}

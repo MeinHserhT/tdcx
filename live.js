@@ -30,7 +30,7 @@ function a() {
 // Value
 function a() {
 	return +document
-		.querySelector(".payment-due__price")
+		.querySelector("tr:nth-child(4) td:nth-child(2)")
 		.innerText.replace(/[^\d]/g, "");
 }
 

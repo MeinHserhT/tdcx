@@ -2,7 +2,6 @@ var businessType = "retail";
 var currentUrl = window.location.href;
 
 var is_item = jQuery(".single_add_to_cart_button");
-var is_cart = currentUrl.indexOf("/gio-hang") > -1;
 var is_cv = currentUrl.indexOf("order-received") > -1;
 
 function pushDynamicRemarketing(eventType, itemsArray) {
@@ -24,7 +23,7 @@ if (is_cv) {
 	pushDynamicRemarketing("purchase", purchaseItems);
 	localStorage.removeItem("dr_item_storage");
 } else if (is_item) {
-	var productId = document.querySelector('[name="add-to-cart"]').value;
+	var productId = document.querySelector('.variation_id').value;
 
 	if (productId) {
 		var item = {
@@ -34,18 +33,14 @@ if (is_cv) {
 
 		pushDynamicRemarketing("view_item", [item]);
 
-		jQuery('[name="add-to-cart"], [name="add-to-cart"] *').on(
-			"click",
-			function () {
-				var cartStore = getStorageItems();
-				cartStore.push(item);
-				localStorage.setItem(
-					"dr_item_storage",
-					JSON.stringify(cartStore),
-				);
-				pushDynamicRemarketing("add_to_cart", [item]);
-			},
-		);
+		jQuery(
+            ".button-addc, .button-addc *, .devvn_buy_now, .devvn_buy_now *",
+        ).on("click", function () {
+            var cartStore = getStorageItems();
+            cartStore.push(item);
+            localStorage.setItem("dr_item_storage", JSON.stringify(cartStore));
+            pushDynamicRemarketing("add_to_cart", [item]);
+        });
 	}
 } else {
 	window.dataLayer = window.dataLayer || [];
