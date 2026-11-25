@@ -185,6 +185,7 @@
 		DESC: '.qm-desc, [data-qm-desc], [style*="#5f6368"], [style*="95, 99, 104"]',
 		TASK_PICK: ".qm-task-pick, [data-task-pick]",
 		SUBMIT: '[debug-id="submit-button"]',
+		IS_NEW: ".isnew", // un-crawled case: clicking it crawls data and renders the info fields
 	};
 
 	const HL = { bg: "#ffe066", fg: "#c92a2a" };
@@ -541,6 +542,21 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			}),
 		).join(", ");
 
+    // One entry per unique .cs-img-card. Uses title attributes because the time's textContent also contains the "schedule" icon text.
+    const scrapeScreenshots = () =>
+        [...new Map($$(".cs-img-card[data-id]").map((c) => [c.dataset.id, c])).values()].map((card) => {
+            const img = $("img", card);
+            return {
+                id: card.dataset.id,
+                url: $(".btn-copy-png-url", card)?.dataset.url || `https://screenshot-v2.corp.google.com/${card.dataset.id}`,
+                thumb: img?.src || "",
+                fallback: img?.dataset.fallbackSrc || "",
+                title: $(".cs-img-title", card)?.title || "",
+                time: $(".cs-img-time", card)?.title || "",
+                note: $(".cs-note-input", card)?.value.trim() || "",
+            };
+        });
+
 	// === 5. Note builder ===
 	const TD_STYLE =
 		"border:1pt solid #000;vertical-align:top;padding:5pt;overflow:hidden;word-break:break-word;overflow-wrap:anywhere;box-sizing:border-box;position:relative;";
@@ -666,8 +682,7 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 
 	const buildNoteTemplateHTML = (
 		templateKey,
-		verifiedTags = "",
-		domTasks = scrapeDomTasks(),
+		{ verifiedTags = "", domTasks = scrapeDomTasks(), seIds = scrapeSpeakeasyIds(), screenshots = [] } = {},
 	) => {
 		const is5Days = isAppt5DaysBefore();
 		const cfg = resolveTemplate(templateKey, domTasks, is5Days);
@@ -682,6 +697,14 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			? `<ul dir="auto" style="margin:0;padding-left:18px;">${comments.map((c) => `<li>${highlightPlaceholders(c)}</li>`).join("")}</ul>`
 			: "NA";
 
+        // Picked screenshots replace "NA" in Screenshots → Additional Screenshots.
+        const shotsHTML = screenshots.length
+            ? `<ul dir="auto" style="margin:0;padding-left:18px;">${screenshots
+                  .map((s) => `<li>${s.note ? `${esc(s.note)}: ` : ""}<a href="${esc(s.url)}" target="_blank" style="color:#1155cc;">${esc(s.url)}</a></li>`)
+                  .join("")}</ul>`
+            : "";
+        const screenshotRows = SCREENSHOT_ROWS.map((r) => (shotsHTML && /^Additional Screenshots/.test(r[0]) ? [r[0], r[1], shotsHTML] : r));
+
 		const generalRows = [
 			[
 				"Date:",
@@ -692,7 +715,7 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			[
 				"Speakeasy ID:",
 				`[SpeakEasy session ID from the dashboard (e.g., ${green("P100000000381267617")}). Separate multiple IDs with commas, or write ${green("NA")} for email/offline updates.]`,
-				esc(scrapeSpeakeasyIds()),
+				esc(seIds),
 			],
 			[
 				"Sub-status:",
@@ -747,7 +770,7 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			sectionHead("General Details") +
 			rowsHTML(generalRows) +
 			sectionHead("Screenshots") +
-			rowsHTML(SCREENSHOT_ROWS) +
+			rowsHTML(screenshotRows) +
 			sectionHead("Implementation Screenshots") +
 			rowsHTML(IMPL_ROWS) +
 			(isEcTask(taskVal) ? ecRowsHTML(is5Days) : "") +
@@ -939,73 +962,109 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 	};
 
 	// === 7. UI ===
-	const promptCaseType = (daysOffset) =>
-		new Promise((resolve) => {
-			$("#qm-modal-overlay")?.remove();
-			const rootOpts = STEP_OPTIONS[daysOffset];
-			if (!rootOpts) return resolve(null);
-			const overlay = el("div", {
-				id: "qm-modal-overlay",
-				parent: document.body,
-				style: "position:fixed;inset:0;background:rgba(0,0,0,0.15);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:2147483647;",
-			});
-			const modal = el("div", {
-				parent: overlay,
-				style: "background:#FFF;border-radius:16px;padding:22px;width:320px;box-shadow:0 16px 36px rgba(0,0,0,0.12);text-align:center;border:1px solid rgba(0,0,0,0.05);max-height:85vh;overflow-y:auto;",
-			});
-			const close = (val) => {
-				overlay.remove();
-				resolve(val);
-			};
-			cleanups.push(() => close(null));
+    const MODAL_TITLE = "font-size:18px;font-weight:700;color:#1D1D1F;margin-bottom:4px;";
+    const MODAL_SUB = "font-size:14px;color:#86868B;margin-bottom:18px;";
 
-			const render = (title, items, backFn) => {
-				modal.textContent = "";
-				el("div", {
-					text: title,
-					parent: modal,
-					style: "font-size:18px;font-weight:700;color:#1D1D1F;margin-bottom:4px;",
-				});
-				el("div", {
-					text: "Choose sub-status:",
-					parent: modal,
-					style: "font-size:14px;color:#86868B;margin-bottom:18px;",
-				});
-				const actions = el("div", {
-					parent: modal,
-					style: "display:flex;flex-direction:column;gap:8px;",
-				});
-				const buttons = items.map((item, i) => {
-					const [label, val] = Array.isArray(item)
-						? item
-						: [item, item];
-					const onClick = () =>
-						Array.isArray(val)
-							? render(label, val, renderRoot)
-							: close(val);
-					return [label, ...PALETTE[i % PALETTE.length], onClick];
-				});
-				buttons.push(
-					backFn
-						? ["← Back", ...NEUTRAL_BTN, backFn]
-						: [
-							"Skip / Keep Default",
-							...NEUTRAL_BTN,
-							() => close(null),
-						],
-				);
-				for (const [label, bg, color, onClick] of buttons)
-					el("button", {
-						text: label,
-						parent: actions,
-						style: `padding:10px 14px;border-radius:10px;border:none;font-size:16px;font-weight:600;cursor:pointer;background:${bg};color:${color};`,
-						onClick,
-					});
-			};
-			const renderRoot = () =>
-				render(`Options for ${daysOffset} Day(s)`, rootOpts);
-			renderRoot();
-		});
+    // Shared popup shell. close(val) removes it and resolves the caller's promise.
+    const openModal = (resolve, width = "320px") => {
+        $("#qm-modal-overlay")?.remove();
+        const overlay = el("div", {
+            id: "qm-modal-overlay",
+            parent: document.body,
+            style: "position:fixed;inset:0;background:rgba(0,0,0,0.15);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:2147483647;",
+        });
+        const modal = el("div", {
+            parent: overlay,
+            style: `background:#FFF;border-radius:16px;padding:22px;width:${width};box-shadow:0 16px 36px rgba(0,0,0,0.12);text-align:center;border:1px solid rgba(0,0,0,0.05);max-height:85vh;overflow-y:auto;box-sizing:border-box;`,
+        });
+        const close = (val) => {
+            overlay.remove();
+            resolve(val);
+        };
+        cleanups.push(() => close(null));
+        return { modal, close };
+    };
+    const modalActions = (parent, extra = "") => el("div", { parent, style: `display:flex;flex-direction:column;gap:8px;${extra}` });
+    const modalBtn = (parent, label, [bg, color], onClick) =>
+        el("button", {
+            text: label,
+            parent,
+            style: `padding:10px 14px;border-radius:10px;border:none;font-size:16px;font-weight:600;cursor:pointer;background:${bg};color:${color};`,
+            onClick,
+        });
+
+    const promptCaseType = (daysOffset) =>
+        new Promise((resolve) => {
+            const rootOpts = STEP_OPTIONS[daysOffset];
+            if (!rootOpts) return resolve(null);
+            const { modal, close } = openModal(resolve);
+            const render = (title, items, backFn) => {
+                modal.textContent = "";
+                el("div", { text: title, parent: modal, style: MODAL_TITLE });
+                el("div", { text: "Choose sub-status:", parent: modal, style: MODAL_SUB });
+                const actions = modalActions(modal);
+                items.forEach((item, i) => {
+                    const [label, val] = Array.isArray(item) ? item : [item, item];
+                    modalBtn(actions, label, PALETTE[i % PALETTE.length], () => (Array.isArray(val) ? render(label, val, renderRoot) : close(val)));
+                });
+                if (backFn) modalBtn(actions, "← Back", NEUTRAL_BTN, backFn);
+                else modalBtn(actions, "Skip / Keep Default", NEUTRAL_BTN, () => close(null));
+            };
+            const renderRoot = () => render(`Options for ${daysOffset} Day(s)`, rootOpts);
+            renderRoot();
+        });
+
+    // Flow step 2. Returns false straight away if there are no cards.
+    const askAddScreenshots = (count) =>
+        new Promise((resolve) => {
+            if (!count) return resolve(false);
+            const { modal, close } = openModal(resolve);
+            el("div", { text: "Add screenshots to the case note?", parent: modal, style: MODAL_TITLE });
+            el("div", { text: `${count} screenshot(s) found`, parent: modal, style: MODAL_SUB });
+            const actions = modalActions(modal);
+            modalBtn(actions, "Yes, choose screenshots", PALETTE[1], () => close(true));
+            modalBtn(actions, "No, skip", NEUTRAL_BTN, () => close(false));
+        });
+
+    // Flow step 3. Resolves with the picked shots in gallery order ([] if skipped).
+    const pickScreenshots = (shots) =>
+        new Promise((resolve) => {
+            const { modal, close } = openModal((v) => resolve(v || []), "min(860px, 92vw)");
+            const picked = new Set();
+            el("div", { text: "Choose screenshots for the case note", parent: modal, style: MODAL_TITLE });
+            el("div", { text: "Click a card to select or unselect it", parent: modal, style: MODAL_SUB });
+            const grid = el("div", {
+                parent: modal,
+                style: "display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:14px;text-align:left;",
+            });
+            const actions = modalActions(modal, "position:sticky;bottom:-22px;background:#FFF;padding:8px 0;");
+            const addBtn = modalBtn(actions, "Add 0 to note", PALETTE[0], () => close(shots.filter((s) => picked.has(s))));
+            modalBtn(actions, "Skip", NEUTRAL_BTN, () => close([]));
+
+            for (const s of shots) {
+                const card = el("div", {
+                    parent: grid,
+                    title: s.title,
+                    style: "border:2px solid #E9ECEF;border-radius:10px;padding:6px;cursor:pointer;user-select:none;",
+                    onClick: () => {
+                        picked.has(s) ? picked.delete(s) : picked.add(s);
+                        const on = picked.has(s);
+                        card.style.borderColor = on ? "#1971C2" : "#E9ECEF";
+                        card.style.background = on ? "#E7F5FF" : "";
+                        addBtn.textContent = `Add ${picked.size} to note`;
+                    },
+                });
+                el("img", {
+                    src: s.thumb,
+                    loading: "lazy",
+                    parent: card,
+                    style: "width:100%;height:110px;object-fit:cover;border-radius:6px;display:block;background:#F1F3F5;",
+                    onerror: (e) => s.fallback && e.target.src !== s.fallback && (e.target.src = s.fallback),
+                });
+                el("div", { text: s.note || s.title || s.id, parent: card, style: "font-size:12px;font-weight:600;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" });
+                el("div", { text: s.time, parent: card, style: "font-size:11px;color:#868E96;" });
+            }
+        });
 
 	// Writes task types into the case's own "tasks" field (opens edit mode if needed).
 	const syncCaseTasks = (text) => {
@@ -1245,10 +1304,12 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 		setBusy(flupBtn, true);
 		try {
 			// Un-crawled case: the date fields don't exist until .isnew is clicked and the crawl finishes.
-			if (!$(SEL.APPT)) {
-				$(SEL.RECRAWL)?.click();
-				await waitFor(SEL.APPT, 2000); // throws, which stops the flow, if the crawl never finishes
-			}
+            if (!$(SEL.APPT)) {
+                $(SEL.IS_NEW)?.click();
+                await waitFor(SEL.APPT, 8000); // throws, which stops the flow, if the crawl never finishes
+            }
+            if (!$("._connectcase_info--outer")) $('[data-btnclk="_connectcase_info-act_recrawl"]')?.click();
+            await sleep(250);
 
 			await clickWait($('[aria-label="Overview"]'), 300);
 			const overviewTasks = scrapeDomTasks();
@@ -1263,15 +1324,24 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 				await clickWait(await waitFor(SEL.TODAY), 200); // default appointment = today
 			}
 
-			const templateKey = await promptCaseType(daysOffset);
-			await setFollowUpDate(daysOffset);
-			await openFullCaseLog();
-			const html = buildNoteTemplateHTML(
-				templateKey,
-				scrapeVerifiedTags(),
-				overviewTasks || scrapeDomTasks(),
-			);
-			await insertNote(html, true);
+            const templateKey = await promptCaseType(daysOffset);
+            await setFollowUpDate(daysOffset);
+            await openFullCaseLog();
+
+            // Flow step 1: read Case log data before any popup
+            const seIds = scrapeSpeakeasyIds();
+            const verifiedTags = scrapeVerifiedTags();
+            // Flow steps 2–3
+            const shots = scrapeScreenshots();
+            const screenshots = (await askAddScreenshots(shots.length)) ? await pickScreenshots(shots) : [];
+            // Flow step 4
+            const html = buildNoteTemplateHTML(templateKey, {
+                verifiedTags,
+                domTasks: overviewTasks || scrapeDomTasks(),
+                seIds,
+                screenshots,
+            });
+            await insertNote(html, true);
 		} catch (err) {
 			console.error("Follow up script failed", err);
 		} finally {

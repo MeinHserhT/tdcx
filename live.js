@@ -30,7 +30,7 @@ function a() {
 // Value
 function a() {
 	return +document
-		.querySelector("tr:nth-child(4) td:nth-child(2)")
+		.querySelector("price-amount")
 		.innerText.replace(/[^\d]/g, "");
 }
 

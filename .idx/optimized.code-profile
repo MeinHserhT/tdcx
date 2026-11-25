@@ -1,76 +1,86 @@
 {
-	"workbench.sideBar.location": "right",
-	"workbench.iconTheme": "material-icon-theme",
-	"workbench.startupEditor": "none",
-	"workbench.colorTheme": "One Dark Pro Flat",
-	"workbench.tips.enabled": false,
-	"workbench.tree.enableStickyScroll": false,
-	"workbench.tree.renderIndentGuides": "none",
-	"workbench.tree.indent": 12,
-	"workbench.layoutControl.enabled": false,
-	"workbench.editorAssociations": {
-		"*.md": "vscode.markdown.preview.editor"
-	},
-	"breadcrumbs.enabled": false,
-	"explorer.compactFolders": false,
-	"explorer.confirmDragAndDrop": false,
-	"explorer.confirmDelete": false,
-	"editor.minimap.enabled": false,
-	"editor.fontFamily": "'JetBrains Mono', monospace",
-	"editor.fontLigatures": true,
-	"editor.fontSize": 14,
-	"editor.lineHeight": 2,
-	"editor.wordWrap": "on",
-	"editor.codeLens": false,
-	"editor.lightbulb.enabled": "off",
-	"editor.lineNumbers": "relative",
-	"editor.guides.indentation": false,
-	"editor.renderWhitespace": "none",
-	"editor.selectionHighlight": false,
-	"editor.overviewRulerBorder": false,
-	"editor.tabCompletion": "on",
-	"editor.snippetSuggestions": "top",
-	"editor.formatOnSave": true,
-	"editor.formatOnPaste": true,
-	"editor.defaultFormatter": "esbenp.prettier-vscode",
-	"[javascript]": {
-		"editor.defaultFormatter": "vscode.typescript-language-features"
-	},
-	"editor.tokenColorCustomizations": {
-		"textMateRules": [
-			{
-				"scope": [
-					"comment",
-					"entity.name.function",
-					"support.function",
-					"meta.function-call"
-				],
-				"settings": {
-					"fontStyle": "italic"
-				}
-			}
-		]
-	},
-	"editor.semanticTokenColorCustomizations": {
-		"enabled": true,
-		"rules": {
-			"function": {
-				"italic": true
-			},
-			"method": {
-				"italic": true
-			}
-		}
-	},
-	"files.trimTrailingWhitespace": true,
-	"files.insertFinalNewline": true,
-	"files.autoSave": "afterDelay",
-	"git.enableSmartCommit": true,
-	"git.confirmSync": false,
-	"git.autofetch": true,
-	"extensions.ignoreRecommendations": true,
-	"terminal.integrated.defaultProfile.linux": "Google Cloud Shell",
-	"geminicodeassist.project": "aipp-internal-testing",
-	"redhat.telemetry.enabled": false,
-	"chat.disableAIFeatures": true
+  "workbench.sideBar.location": "right",
+  "workbench.iconTheme": "material-icon-theme",
+  "workbench.startupEditor": "none",
+  "workbench.colorTheme": "Nebula Aura Dark",
+  "workbench.tips.enabled": false,
+  "workbench.tree.enableStickyScroll": false,
+  "workbench.tree.renderIndentGuides": "none",
+  "workbench.tree.indent": 12,
+  "workbench.layoutControl.enabled": false,
+  "workbench.editorAssociations": {
+    "*.md": "vscode.markdown.preview.editor"
+  },
+  "breadcrumbs.enabled": false,
+  "explorer.compactFolders": false,
+  "explorer.confirmDragAndDrop": false,
+  "explorer.confirmDelete": false,
+  "editor.minimap.enabled": false,
+  "editor.fontFamily": "'JetBrains Mono', monospace",
+  "editor.fontLigatures": true,
+  "editor.fontSize": 14,
+  "editor.lineHeight": 2,
+  "editor.wordWrap": "on",
+  "editor.codeLens": false,
+  "editor.lightbulb.enabled": "off",
+  "editor.lineNumbers": "relative",
+  "editor.guides.indentation": false,
+  "editor.renderWhitespace": "none",
+  "editor.selectionHighlight": false,
+  "editor.overviewRulerBorder": false,
+  "editor.tabCompletion": "on",
+  "editor.snippetSuggestions": "top",
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[javascript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      {
+        "scope": [
+          "comment",
+          "entity.name.function",
+          "support.function",
+          "meta.function-call"
+        ],
+        "settings": {
+          "fontStyle": "italic"
+        }
+      }
+    ]
+  },
+  "editor.semanticTokenColorCustomizations": {
+    "enabled": true,
+    "rules": {
+      "function": {
+        "italic": true
+      },
+      "method": {
+        "italic": true
+      }
+    }
+  },
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.autoSave": "afterDelay",
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  "git.autofetch": true,
+  "extensions.ignoreRecommendations": true,
+  "terminal.integrated.defaultProfile.linux": "Google Cloud Shell",
+  "geminicodeassist.project": "aipp-internal-testing",
+  "redhat.telemetry.enabled": false,
+  "chat.disableAIFeatures": true,
+  "indentRainbow.colors": [
+    "rgba(217, 130, 91, 0.25)",
+    "rgba(226, 180, 120, 0.25)",
+    "rgba(163, 190, 140, 0.25)",
+    "rgba(115, 165, 148, 0.25)",
+    "rgba(129, 148, 176, 0.25)"
+  ],
+  "window.commandCenter": true,
+  "window.autoDetectColorScheme": true,
+  "cloudcode.beta.enableBigqueryExplorer": false
 }
