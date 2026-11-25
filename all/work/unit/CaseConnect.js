@@ -962,10 +962,11 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 	};
 
 	// === 7. UI ===
-    const MODAL_TITLE = "font-size:18px;font-weight:700;color:#1D1D1F;margin-bottom:4px;";
+    const MODAL_TITLE = "font-size:18px;font-weight:700;color:#1D1D1F;margin-bottom:4px;padding:0 32px;";
     const MODAL_SUB = "font-size:14px;color:#86868B;margin-bottom:18px;";
 
     // Shared popup shell. close(val) removes it and resolves the caller's promise.
+    // ✕ resolves null, which every caller treats as "nothing chosen" (the note keeps NA).
     const openModal = (resolve, width = "320px") => {
         $("#qm-modal-overlay")?.remove();
         const overlay = el("div", {
@@ -973,16 +974,25 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
             parent: document.body,
             style: "position:fixed;inset:0;background:rgba(0,0,0,0.15);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:2147483647;",
         });
-        const modal = el("div", {
+        const box = el("div", {
             parent: overlay,
-            style: `background:#FFF;border-radius:16px;padding:22px;width:${width};box-shadow:0 16px 36px rgba(0,0,0,0.12);text-align:center;border:1px solid rgba(0,0,0,0.05);max-height:85vh;overflow-y:auto;box-sizing:border-box;`,
+            style: `position:relative;display:flex;flex-direction:column;background:#FFF;border-radius:16px;padding:22px;width:${width};max-height:85vh;box-shadow:0 16px 36px rgba(0,0,0,0.12);text-align:center;border:1px solid rgba(0,0,0,0.05);box-sizing:border-box;`,
         });
         const close = (val) => {
             overlay.remove();
             resolve(val);
         };
+        el("button", {
+            text: "✕",
+            title: "Close",
+            parent: box,
+            style: "position:absolute;top:10px;right:10px;z-index:2;width:28px;height:28px;border:none;border-radius:8px;background:#F1F3F5;color:#495057;font-size:14px;font-weight:700;line-height:1;cursor:pointer;",
+            onClick: () => close(null),
+        });
+        // The body scrolls; the box (and the ✕) stays put.
+        const body = el("div", { parent: box, style: "flex:1 1 auto;min-height:0;overflow-y:auto;" });
         cleanups.push(() => close(null));
-        return { modal, close };
+        return { modal: body, close };
     };
     const modalActions = (parent, extra = "") => el("div", { parent, style: `display:flex;flex-direction:column;gap:8px;${extra}` });
     const modalBtn = (parent, label, [bg, color], onClick) =>
@@ -1029,15 +1039,15 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
     // Flow step 3. Resolves with the picked shots in gallery order ([] if skipped).
     const pickScreenshots = (shots) =>
         new Promise((resolve) => {
-            const { modal, close } = openModal((v) => resolve(v || []), "min(860px, 92vw)");
+            const { modal, close } = openModal((v) => resolve(v || []), "min(1280px, 96vw)");
             const picked = new Set();
             el("div", { text: "Choose screenshots for the case note", parent: modal, style: MODAL_TITLE });
             el("div", { text: "Click a card to select or unselect it", parent: modal, style: MODAL_SUB });
             const grid = el("div", {
                 parent: modal,
-                style: "display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:14px;text-align:left;",
+                style: "display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px;text-align:left;",
             });
-            const actions = modalActions(modal, "position:sticky;bottom:-22px;background:#FFF;padding:8px 0;");
+            const actions = modalActions(modal, "flex-direction:row;justify-content:center;position:sticky;bottom:0;background:#FFF;padding:8px 0;");
             const addBtn = modalBtn(actions, "Add 0 to note", PALETTE[0], () => close(shots.filter((s) => picked.has(s))));
             modalBtn(actions, "Skip", NEUTRAL_BTN, () => close([]));
 
@@ -1058,7 +1068,7 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
                     src: s.thumb,
                     loading: "lazy",
                     parent: card,
-                    style: "width:100%;height:110px;object-fit:cover;border-radius:6px;display:block;background:#F1F3F5;",
+                    style: "width:100%;height:170px;object-fit:cover;border-radius:6px;display:block;background:#F1F3F5;",
                     onerror: (e) => s.fallback && e.target.src !== s.fallback && (e.target.src = s.fallback),
                 });
                 el("div", { text: s.note || s.title || s.id, parent: card, style: "font-size:12px;font-weight:600;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" });
@@ -1125,7 +1135,7 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			type: "search",
 			placeholder: "Search task types...",
 			parent: pop,
-			style: "padding:6px 8px;border:1px solid #ddd;border-radius:6px;outline:none;flex-shrink:0;font-size:12px;",
+			style: "padding:6px 8px;border:1px solid #ddd;border-radius:6px;outline:none;flex-shrink:0;font-size:12px;margin-right:30px;",
 			oninput: () => {
 				const q = search.value.toLowerCase();
 				for (const l of $$("label", list))
@@ -1134,6 +1144,13 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 						: "none";
 			},
 		});
+        el("button", {
+            text: "✕",
+            title: "Close",
+            parent: pop,
+            style: "position:absolute;top:8px;right:8px;width:24px;height:24px;border:none;border-radius:6px;background:#F1F3F5;color:#495057;font-size:12px;font-weight:700;line-height:1;cursor:pointer;",
+            onClick: () => state.closeTaskPop?.(), // keeps ticks already applied; same as clicking outside
+        });
 		const list = el("div", {
 			parent: pop,
 			style: "flex:1 1 auto;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:4px;",
