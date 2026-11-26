@@ -18,7 +18,7 @@
  *   - Anything to undo on re-run (listeners, timers, observers) must be pushed to `cleanups`.
  */
 (() => {
-	("use strict");
+	"use strict";
 
 	// === 1. Bootstrap ===
 	const G = (window.__OMNITOOL__ ||= {});
@@ -186,6 +186,8 @@
 		TASK_PICK: ".qm-task-pick, [data-task-pick]",
 		SUBMIT: '[debug-id="submit-button"]',
 		IS_NEW: ".isnew", // un-crawled case: clicking it crawls data and renders the info fields
+		REFRESH_SNIPS: "#btn-refresh-snips",
+		SHOT_CARD: ".cs-img-card[data-id]",
 	};
 
 	const HL = { bg: "#ffe066", fg: "#c92a2a" };
@@ -393,6 +395,7 @@
 		],
 	});
 	const NOTE_FONT = { family: "'Google Sans', sans-serif", size: "11pt" };
+	const COL = { label: "40%", value: "60%" }; // note table column widths: change here only
 	const PANEL_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Eczar:wght@400;600;700&display=swap');
 #qm-panel, #qm-panel *, #qm-modal-overlay, #qm-modal-overlay * { font-family: "Eczar", serif !important; }
@@ -410,8 +413,8 @@
 :is(#noteCaseUI, .cdtx__uioncall) table { width: 100% !important; table-layout: auto !important; }
 :is(#noteCaseUI, .cdtx__uioncall) td { position: relative !important; }
 :is(#noteCaseUI, .cdtx__uioncall) .qm-del-row { position: absolute !important; top: 4px !important; right: 4px !important; float: none !important; margin: 0 !important; }
-:is(#noteCaseUI, .cdtx__uioncall) tr > td:first-child:not([colspan]) { width: 40% !important; max-width: 40% !important; padding-right: 22px !important; }
-:is(#noteCaseUI, .cdtx__uioncall) tr > td:nth-child(2) { width: 60% !important; max-width: 60% !important; }
+:is(#noteCaseUI, .cdtx__uioncall) tr > td:first-child:not([colspan]) { width: ${COL.label} !important; max-width: ${COL.label} !important; padding-right: 22px !important; }
+:is(#noteCaseUI, .cdtx__uioncall) tr > td:nth-child(2) { width: ${COL.value} !important; max-width: ${COL.value} !important; }
 ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT.family} !important; font-size: ${NOTE_FONT.size} !important; }
 `;
 
@@ -542,20 +545,31 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			}),
 		).join(", ");
 
-    // One entry per unique .cs-img-card. Uses title attributes because the time's textContent also contains the "schedule" icon text.
-    const scrapeScreenshots = () =>
-        [...new Map($$(".cs-img-card[data-id]").map((c) => [c.dataset.id, c])).values()].map((card) => {
-            const img = $("img", card);
-            return {
-                id: card.dataset.id,
-                url: $(".btn-copy-png-url", card)?.dataset.url || `https://screenshot-v2.corp.google.com/${card.dataset.id}`,
-                thumb: img?.src || "",
-                fallback: img?.dataset.fallbackSrc || "",
-                title: $(".cs-img-title", card)?.title || "",
-                time: $(".cs-img-time", card)?.title || "",
-                note: $(".cs-note-input", card)?.value.trim() || "",
-            };
-        });
+	// Click refresh, then wait until the old cards are replaced so we never read a stale list.
+	const refreshScreenshots = async () => {
+		const btn = $(SEL.REFRESH_SNIPS);
+		if (!btn) return; // gallery not on this page: read whatever is there
+		const before = $(SEL.SHOT_CARD);
+		btn.click();
+		// shortcut: assumes refresh re-renders the cards; if it updates them in place, this just waits the full 3s
+		await waitFor(() => (before ? !before.isConnected : $(SEL.SHOT_CARD)), 3000).catch(() => { });
+		await sleep(300); // let the new cards finish rendering
+	};
+
+	// One entry per unique .cs-img-card. Uses title attributes because the time's textContent also contains the "schedule" icon text.
+	const scrapeScreenshots = () =>
+		[...new Map($$(SEL.SHOT_CARD).map((c) => [c.dataset.id, c])).values()].map((card) => {
+			const img = $("img", card);
+			return {
+				id: card.dataset.id,
+				url: $(".btn-copy-png-url", card)?.dataset.url || `https://screenshot-v2.corp.google.com/${card.dataset.id}`,
+				thumb: img?.src || "",
+				fallback: img?.dataset.fallbackSrc || "",
+				title: $(".cs-img-title", card)?.title || "",
+				time: $(".cs-img-time", card)?.title || "",
+				note: $(".cs-note-input", card)?.value.trim() || "",
+			};
+		});
 
 	// === 5. Note builder ===
 	const TD_STYLE =
@@ -579,7 +593,7 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			? `<div class="qm-desc" data-qm-desc="1" style="font-size:${NOTE_FONT.size};font-family:${NOTE_FONT.family};color:#5f6368;margin-top:2px;line-height:1.25;">${desc}</div>`
 			: "";
 
-		return `<tr${attr} style="height:21pt"><td width="30%" style="${TD_STYLE}width:30% !important;max-width:30% !important;">${delBtnHTML()}<span style="${FONT_STYLE}${bgCss}font-weight:700;">${lbl}</span>${descHTML}</td><td width="70%" style="${TD_STYLE}width:70% !important;max-width:70% !important;"><span style="${FONT_STYLE}${bgCss}">${val}</span></td></tr>`;
+		return `<tr${attr} style="height:21pt"><td width="${COL.label}" style="${TD_STYLE}width:${COL.label} !important;max-width:${COL.label} !important;">${delBtnHTML()}<span style="${FONT_STYLE}${bgCss}font-weight:700;">${lbl}</span>${descHTML}</td><td width="${COL.value}" style="${TD_STYLE}width:${COL.value} !important;max-width:${COL.value} !important;"><span style="${FONT_STYLE}${bgCss}">${val}</span></td></tr>`;
 	};
 	// Each entry: [label, description, value = "NA", background = ""]
 	const rowsHTML = (rows) => rows.map((r) => noteRow(...r)).join("");
@@ -697,13 +711,13 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			? `<ul dir="auto" style="margin:0;padding-left:18px;">${comments.map((c) => `<li>${highlightPlaceholders(c)}</li>`).join("")}</ul>`
 			: "NA";
 
-        // Picked screenshots replace "NA" in Screenshots → Additional Screenshots.
-        const shotsHTML = screenshots.length
-            ? `<ul dir="auto" style="margin:0;padding-left:18px;">${screenshots
-                  .map((s) => `<li>${s.note ? `${esc(s.note)}: ` : ""}<a href="${esc(s.url)}" target="_blank" style="color:#1155cc;">${esc(s.url)}</a></li>`)
-                  .join("")}</ul>`
-            : "";
-        const screenshotRows = SCREENSHOT_ROWS.map((r) => (shotsHTML && /^Additional Screenshots/.test(r[0]) ? [r[0], r[1], shotsHTML] : r));
+		// Picked screenshots replace "NA" in Screenshots → Additional Screenshots.
+		const shotsHTML = screenshots.length
+			? `<ul dir="auto" style="margin:0;padding-left:18px;">${screenshots
+				.map((s) => `<li>${s.note ? `${esc(s.note)}: ` : ""}<a href="${esc(s.url)}" target="_blank" style="color:#1155cc;">${esc(s.url)}</a></li>`)
+				.join("")}</ul>`
+			: "";
+		const screenshotRows = SCREENSHOT_ROWS.map((r) => (shotsHTML && /^Additional Screenshots/.test(r[0]) ? [r[0], r[1], shotsHTML] : r));
 
 		const generalRows = [
 			[
@@ -776,7 +790,7 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			(isEcTask(taskVal) ? ecRowsHTML(is5Days) : "") +
 			rowsHTML([IMPL_TAIL_ROW]);
 
-		return `<div id="noteCaseUI" class="cdtx__uioncall">${NOTE_CONTROLS_HTML}<article class="cdtx__uioncall_outer"><table style="width:100% !important;border-collapse:collapse !important;margin:8px 0 !important;box-sizing:border-box !important;"><colgroup><col width="30%" style="width:30% !important;"><col width="70%" style="width:70% !important;"></colgroup><tbody>${body}</tbody></table></article></div>`;
+		return `<div id="noteCaseUI" class="cdtx__uioncall">${NOTE_CONTROLS_HTML}<article class="cdtx__uioncall_outer"><table style="width:100% !important;border-collapse:collapse !important;margin:8px 0 !important;box-sizing:border-box !important;"><colgroup><col width="${COL.label}" style="width:${COL.label} !important;"><col width="${COL.value}" style="width:${COL.value} !important;"></colgroup><tbody>${body}</tbody></table></article></div>`;
 	};
 
 	// === 6. Note editing ===
@@ -927,7 +941,7 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 		}
 		return changed;
 	};
-	// Before submit: remove ✕ buttons and unwrap highlights so they never reach the saved note.
+	// Before submit: remove ✕ buttons and row descriptions, unwrap highlights and set one font, so only clean content is saved.
 	const stripDelBtnsOnSubmit = (e) => {
 		const submitBtn = toElement(e.target)?.closest(SEL.SUBMIT);
 		if (!submitBtn) return;
@@ -938,7 +952,7 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			const hls = $$(HIGHLIGHT_SEL, note);
 			hls.reverse().forEach((h) => h.replaceWith(...h.childNodes)); // innermost first
 			const fontFixed = unifyFont(note);
-			if (btns.length || hls.length) {
+			if (btns.length || hls.length || fontFixed) {
 				note.focus();
 				fire(note, "beforeinput", "input", "keyup", "change");
 				removed = true;
@@ -962,119 +976,119 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 	};
 
 	// === 7. UI ===
-    const MODAL_TITLE = "font-size:18px;font-weight:700;color:#1D1D1F;margin-bottom:4px;padding:0 32px;";
-    const MODAL_SUB = "font-size:14px;color:#86868B;margin-bottom:18px;";
+	const MODAL_TITLE = "font-size:18px;font-weight:700;color:#1D1D1F;margin-bottom:4px;padding:0 32px;";
+	const MODAL_SUB = "font-size:14px;color:#86868B;margin-bottom:18px;";
 
-    // Shared popup shell. close(val) removes it and resolves the caller's promise.
-    // ✕ resolves null, which every caller treats as "nothing chosen" (the note keeps NA).
-    const openModal = (resolve, width = "320px") => {
-        $("#qm-modal-overlay")?.remove();
-        const overlay = el("div", {
-            id: "qm-modal-overlay",
-            parent: document.body,
-            style: "position:fixed;inset:0;background:rgba(0,0,0,0.15);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:2147483647;",
-        });
-        const box = el("div", {
-            parent: overlay,
-            style: `position:relative;display:flex;flex-direction:column;background:#FFF;border-radius:16px;padding:22px;width:${width};max-height:85vh;box-shadow:0 16px 36px rgba(0,0,0,0.12);text-align:center;border:1px solid rgba(0,0,0,0.05);box-sizing:border-box;`,
-        });
-        const close = (val) => {
-            overlay.remove();
-            resolve(val);
-        };
-        el("button", {
-            text: "✕",
-            title: "Close",
-            parent: box,
-            style: "position:absolute;top:10px;right:10px;z-index:2;width:28px;height:28px;border:none;border-radius:8px;background:#F1F3F5;color:#495057;font-size:14px;font-weight:700;line-height:1;cursor:pointer;",
-            onClick: () => close(null),
-        });
-        // The body scrolls; the box (and the ✕) stays put.
-        const body = el("div", { parent: box, style: "flex:1 1 auto;min-height:0;overflow-y:auto;" });
-        cleanups.push(() => close(null));
-        return { modal: body, close };
-    };
-    const modalActions = (parent, extra = "") => el("div", { parent, style: `display:flex;flex-direction:column;gap:8px;${extra}` });
-    const modalBtn = (parent, label, [bg, color], onClick) =>
-        el("button", {
-            text: label,
-            parent,
-            style: `padding:10px 14px;border-radius:10px;border:none;font-size:16px;font-weight:600;cursor:pointer;background:${bg};color:${color};`,
-            onClick,
-        });
+	// Shared popup shell. close(val) removes it and resolves the caller's promise.
+	// ✕ resolves null, which every caller treats as "nothing chosen" (the note keeps NA).
+	const openModal = (resolve, width = "320px") => {
+		$("#qm-modal-overlay")?.remove();
+		const overlay = el("div", {
+			id: "qm-modal-overlay",
+			parent: document.body,
+			style: "position:fixed;inset:0;background:rgba(0,0,0,0.15);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:2147483647;",
+		});
+		const box = el("div", {
+			parent: overlay,
+			style: `position:relative;display:flex;flex-direction:column;background:#FFF;border-radius:16px;padding:22px;width:${width};max-height:85vh;box-shadow:0 16px 36px rgba(0,0,0,0.12);text-align:center;border:1px solid rgba(0,0,0,0.05);box-sizing:border-box;`,
+		});
+		const close = (val) => {
+			overlay.remove();
+			resolve(val);
+		};
+		el("button", {
+			text: "✕",
+			title: "Close",
+			parent: box,
+			style: "position:absolute;top:10px;right:10px;z-index:2;width:28px;height:28px;border:none;border-radius:8px;background:#F1F3F5;color:#495057;font-size:14px;font-weight:700;line-height:1;cursor:pointer;",
+			onClick: () => close(null),
+		});
+		// The body scrolls; the box (and the ✕) stays put.
+		const body = el("div", { parent: box, style: "flex:1 1 auto;min-height:0;overflow-y:auto;" });
+		cleanups.push(() => close(null));
+		return { modal: body, close };
+	};
+	const modalActions = (parent, extra = "") => el("div", { parent, style: `display:flex;flex-direction:column;gap:8px;${extra}` });
+	const modalBtn = (parent, label, [bg, color], onClick) =>
+		el("button", {
+			text: label,
+			parent,
+			style: `padding:10px 14px;border-radius:10px;border:none;font-size:16px;font-weight:600;cursor:pointer;background:${bg};color:${color};`,
+			onClick,
+		});
 
-    const promptCaseType = (daysOffset) =>
-        new Promise((resolve) => {
-            const rootOpts = STEP_OPTIONS[daysOffset];
-            if (!rootOpts) return resolve(null);
-            const { modal, close } = openModal(resolve);
-            const render = (title, items, backFn) => {
-                modal.textContent = "";
-                el("div", { text: title, parent: modal, style: MODAL_TITLE });
-                el("div", { text: "Choose sub-status:", parent: modal, style: MODAL_SUB });
-                const actions = modalActions(modal);
-                items.forEach((item, i) => {
-                    const [label, val] = Array.isArray(item) ? item : [item, item];
-                    modalBtn(actions, label, PALETTE[i % PALETTE.length], () => (Array.isArray(val) ? render(label, val, renderRoot) : close(val)));
-                });
-                if (backFn) modalBtn(actions, "← Back", NEUTRAL_BTN, backFn);
-                else modalBtn(actions, "Skip / Keep Default", NEUTRAL_BTN, () => close(null));
-            };
-            const renderRoot = () => render(`Options for ${daysOffset} Day(s)`, rootOpts);
-            renderRoot();
-        });
+	const promptCaseType = (daysOffset) =>
+		new Promise((resolve) => {
+			const rootOpts = STEP_OPTIONS[daysOffset];
+			if (!rootOpts) return resolve(null);
+			const { modal, close } = openModal(resolve);
+			const render = (title, items, backFn) => {
+				modal.textContent = "";
+				el("div", { text: title, parent: modal, style: MODAL_TITLE });
+				el("div", { text: "Choose sub-status:", parent: modal, style: MODAL_SUB });
+				const actions = modalActions(modal);
+				items.forEach((item, i) => {
+					const [label, val] = Array.isArray(item) ? item : [item, item];
+					modalBtn(actions, label, PALETTE[i % PALETTE.length], () => (Array.isArray(val) ? render(label, val, renderRoot) : close(val)));
+				});
+				if (backFn) modalBtn(actions, "← Back", NEUTRAL_BTN, backFn);
+				else modalBtn(actions, "Skip / Keep Default", NEUTRAL_BTN, () => close(null));
+			};
+			const renderRoot = () => render(`Options for ${daysOffset} Day(s)`, rootOpts);
+			renderRoot();
+		});
 
-    // Flow step 2. Returns false straight away if there are no cards.
-    const askAddScreenshots = (count) =>
-        new Promise((resolve) => {
-            if (!count) return resolve(false);
-            const { modal, close } = openModal(resolve);
-            el("div", { text: "Add screenshots to the case note?", parent: modal, style: MODAL_TITLE });
-            el("div", { text: `${count} screenshot(s) found`, parent: modal, style: MODAL_SUB });
-            const actions = modalActions(modal);
-            modalBtn(actions, "Yes, choose screenshots", PALETTE[1], () => close(true));
-            modalBtn(actions, "No, skip", NEUTRAL_BTN, () => close(false));
-        });
+	// Flow step 2. Returns false straight away if there are no cards.
+	const askAddScreenshots = (count) =>
+		new Promise((resolve) => {
+			if (!count) return resolve(false);
+			const { modal, close } = openModal(resolve);
+			el("div", { text: "Add screenshots to the case note?", parent: modal, style: MODAL_TITLE });
+			el("div", { text: `${count} screenshot(s) found`, parent: modal, style: MODAL_SUB });
+			const actions = modalActions(modal);
+			modalBtn(actions, "Yes, choose screenshots", PALETTE[1], () => close(true));
+			modalBtn(actions, "No, skip", NEUTRAL_BTN, () => close(false));
+		});
 
-    // Flow step 3. Resolves with the picked shots in gallery order ([] if skipped).
-    const pickScreenshots = (shots) =>
-        new Promise((resolve) => {
-            const { modal, close } = openModal((v) => resolve(v || []), "min(1280px, 96vw)");
-            const picked = new Set();
-            el("div", { text: "Choose screenshots for the case note", parent: modal, style: MODAL_TITLE });
-            el("div", { text: "Click a card to select or unselect it", parent: modal, style: MODAL_SUB });
-            const grid = el("div", {
-                parent: modal,
-                style: "display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px;text-align:left;",
-            });
-            const actions = modalActions(modal, "flex-direction:row;justify-content:center;position:sticky;bottom:0;background:#FFF;padding:8px 0;");
-            const addBtn = modalBtn(actions, "Add 0 to note", PALETTE[0], () => close(shots.filter((s) => picked.has(s))));
-            modalBtn(actions, "Skip", NEUTRAL_BTN, () => close([]));
+	// Flow step 3. Resolves with the picked shots in gallery order ([] if skipped).
+	const pickScreenshots = (shots) =>
+		new Promise((resolve) => {
+			const { modal, close } = openModal((v) => resolve(v || []), "min(1280px, 96vw)");
+			const picked = new Set();
+			el("div", { text: "Choose screenshots for the case note", parent: modal, style: MODAL_TITLE });
+			el("div", { text: "Click a card to select or unselect it", parent: modal, style: MODAL_SUB });
+			const grid = el("div", {
+				parent: modal,
+				style: "display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px;text-align:left;",
+			});
+			const actions = modalActions(modal, "flex-direction:row;justify-content:center;position:sticky;bottom:0;background:#FFF;padding:8px 0;");
+			const addBtn = modalBtn(actions, "Add 0 to note", PALETTE[0], () => close(shots.filter((s) => picked.has(s))));
+			modalBtn(actions, "Skip", NEUTRAL_BTN, () => close([]));
 
-            for (const s of shots) {
-                const card = el("div", {
-                    parent: grid,
-                    title: s.title,
-                    style: "border:2px solid #E9ECEF;border-radius:10px;padding:6px;cursor:pointer;user-select:none;",
-                    onClick: () => {
-                        picked.has(s) ? picked.delete(s) : picked.add(s);
-                        const on = picked.has(s);
-                        card.style.borderColor = on ? "#1971C2" : "#E9ECEF";
-                        card.style.background = on ? "#E7F5FF" : "";
-                        addBtn.textContent = `Add ${picked.size} to note`;
-                    },
-                });
-                el("img", {
-                    src: s.thumb,
-                    loading: "lazy",
-                    parent: card,
-                    style: "width:100%;height:170px;object-fit:cover;border-radius:6px;display:block;background:#F1F3F5;",
-                    onerror: (e) => s.fallback && e.target.src !== s.fallback && (e.target.src = s.fallback),
-                });
-                el("div", { text: s.note || s.title || s.id, parent: card, style: "font-size:12px;font-weight:600;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" });
-                el("div", { text: s.time, parent: card, style: "font-size:11px;color:#868E96;" });
-            }
-        });
+			for (const s of shots) {
+				const card = el("div", {
+					parent: grid,
+					title: s.title,
+					style: "border:2px solid #E9ECEF;border-radius:10px;padding:6px;cursor:pointer;user-select:none;",
+					onClick: () => {
+						picked.has(s) ? picked.delete(s) : picked.add(s);
+						const on = picked.has(s);
+						card.style.borderColor = on ? "#1971C2" : "#E9ECEF";
+						card.style.background = on ? "#E7F5FF" : "";
+						addBtn.textContent = `Add ${picked.size} to note`;
+					},
+				});
+				el("img", {
+					src: s.thumb,
+					loading: "lazy",
+					parent: card,
+					style: "width:100%;height:170px;object-fit:cover;border-radius:6px;display:block;background:#F1F3F5;",
+					onerror: (e) => s.fallback && e.target.src !== s.fallback && (e.target.src = s.fallback),
+				});
+				el("div", { text: s.note || s.title || s.id, parent: card, style: "font-size:12px;font-weight:600;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" });
+				el("div", { text: s.time, parent: card, style: "font-size:11px;color:#868E96;" });
+			}
+		});
 
 	// Writes task types into the case's own "tasks" field (opens edit mode if needed).
 	const syncCaseTasks = (text) => {
@@ -1144,13 +1158,13 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 						: "none";
 			},
 		});
-        el("button", {
-            text: "✕",
-            title: "Close",
-            parent: pop,
-            style: "position:absolute;top:8px;right:8px;width:24px;height:24px;border:none;border-radius:6px;background:#F1F3F5;color:#495057;font-size:12px;font-weight:700;line-height:1;cursor:pointer;",
-            onClick: () => state.closeTaskPop?.(), // keeps ticks already applied; same as clicking outside
-        });
+		el("button", {
+			text: "✕",
+			title: "Close",
+			parent: pop,
+			style: "position:absolute;top:8px;right:8px;width:24px;height:24px;border:none;border-radius:6px;background:#F1F3F5;color:#495057;font-size:12px;font-weight:700;line-height:1;cursor:pointer;",
+			onClick: () => state.closeTaskPop?.(), // keeps ticks already applied; same as clicking outside
+		});
 		const list = el("div", {
 			parent: pop,
 			style: "flex:1 1 auto;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:4px;",
@@ -1321,12 +1335,12 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 		setBusy(flupBtn, true);
 		try {
 			// Un-crawled case: the date fields don't exist until .isnew is clicked and the crawl finishes.
-            if (!$(SEL.APPT)) {
-                $(SEL.IS_NEW)?.click();
-                await waitFor(SEL.APPT, 8000); // throws, which stops the flow, if the crawl never finishes
-            }
-            if (!$("._connectcase_info--outer")) $('[data-btnclk="_connectcase_info-act_recrawl"]')?.click();
-            await sleep(250);
+			if (!$(SEL.APPT)) {
+				$(SEL.IS_NEW)?.click();
+				await waitFor(SEL.APPT, 8000); // throws, which stops the flow, if the crawl never finishes
+			}
+			if (!$("._connectcase_info--outer")) $(SEL.RECRAWL)?.click();
+			await sleep(250);
 
 			await clickWait($('[aria-label="Overview"]'), 300);
 			const overviewTasks = scrapeDomTasks();
@@ -1341,24 +1355,25 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 				await clickWait(await waitFor(SEL.TODAY), 200); // default appointment = today
 			}
 
-            const templateKey = await promptCaseType(daysOffset);
-            await setFollowUpDate(daysOffset);
-            await openFullCaseLog();
+			const templateKey = await promptCaseType(daysOffset);
+			await setFollowUpDate(daysOffset);
+			await openFullCaseLog();
 
-            // Flow step 1: read Case log data before any popup
-            const seIds = scrapeSpeakeasyIds();
-            const verifiedTags = scrapeVerifiedTags();
-            // Flow steps 2–3
-            const shots = scrapeScreenshots();
-            const screenshots = (await askAddScreenshots(shots.length)) ? await pickScreenshots(shots) : [];
-            // Flow step 4
-            const html = buildNoteTemplateHTML(templateKey, {
-                verifiedTags,
-                domTasks: overviewTasks || scrapeDomTasks(),
-                seIds,
-                screenshots,
-            });
-            await insertNote(html, true);
+			// Flow step 1: read Case log data before any popup
+			const seIds = scrapeSpeakeasyIds();
+			const verifiedTags = scrapeVerifiedTags();
+			// Flow steps 2–3
+			await refreshScreenshots();
+			const shots = scrapeScreenshots();
+			const screenshots = (await askAddScreenshots(shots.length)) ? await pickScreenshots(shots) : [];
+			// Flow step 4
+			const html = buildNoteTemplateHTML(templateKey, {
+				verifiedTags,
+				domTasks: overviewTasks || scrapeDomTasks(),
+				seIds,
+				screenshots,
+			});
+			await insertNote(html, true);
 		} catch (err) {
 			console.error("Follow up script failed", err);
 		} finally {
