@@ -254,19 +254,19 @@
 			[
 				"IN - Inactive",
 				[
-					"IN - Instruction Share",
-					"IN - Not Reachable",
-					"IN - Not Interested",
-					"In - Not Ready",
-					"IN - Infeasible",
-					"IN - Out of Scope",
+					["IN - Instruction Share", "IN_INSTRUCTION_SHARE"],
+					["IN - Not Reachable", "IN_NOT_REACHABLE"],
+					["IN - Not Interested", "IN_NOT_INTERESTED"],
+					["IN - Not Ready", "IN_NOT_READY"],
+					["IN - Infeasible", "IN_INFEASIBLE"],
+					["IN - Out of Scope", "IN_OUT_OF_SCOPE"],
 				],
 			],
 		],
-		1: ["AS - Reschedule 1", ["NI - Attempted Contact", "ATTEMPT_CONTACT"]],
+		1: [["AS - Reschedule 1", "RESCHEDULE"], ["NI - Attempted Contact", "ATTEMPT_CONTACT"]],
 		2: AWAITING_OPTIONS,
 		3: AWAITING_OPTIONS,
-		5: [["NI - Awaiting Validation (Enhanced Conversion)", "EC"]],
+		7: [["NI - Awaiting Validation (Enhanced Conversion)", "EC"]], // EC follow-up = 1 calendar week
 	};
 
 	// [background, text] per modal button, cycled.
@@ -320,6 +320,10 @@
 		IN_CONSULT: {
 			subStatus: "NI - In Consult",
 			subStatusReason: "Waiting for SME to confirm",
+			comments: [
+				"Raised a consult with an SME for { issue }",
+				"Waiting for the SME to confirm before the next step",
+			],
 		},
 		GA4: {
 			subStatus: "NI - Awaiting Validation",
@@ -360,6 +364,63 @@
 			subStatusReason: "Adv not answer the phone",
 			comments: [
 				"Attempted to contact advertiser, call was not answered",
+			],
+		},
+		RESCHEDULE: {
+			subStatus: "AS - Reschedule 1",
+			subStatusReason: "Advertiser requested to reschedule the appointment",
+			comments: [
+				"Advertiser requested to reschedule the appointment to { YYYY-MM-DD HH:mm }",
+				"Updated the appointment time in the case",
+			],
+		},
+		IN_INSTRUCTION_SHARE: {
+			subStatus: "IN - Instruction Share",
+			subStatusReason: "Shared implementation instructions with the advertiser",
+			comments: [
+				"Shared step-by-step instructions for { task } with the advertiser via { email / GVC chat }",
+				"Advertiser will implement it on their own",
+			],
+		},
+		IN_NOT_REACHABLE: {
+			subStatus: "IN - Not Reachable",
+			subStatusReason: "Advertiser not reachable after multiple contact attempts",
+			comments: [
+				"Attempted to contact the advertiser { 3 } times, calls were not answered",
+				"Sent a follow-up email, no response received",
+				"Closing the case as the advertiser is not reachable",
+			],
+		},
+		IN_NOT_INTERESTED: {
+			subStatus: "IN - Not Interested",
+			subStatusReason: "Advertiser is not interested in the implementation",
+			comments: [
+				"Advertiser confirmed they are not interested in { task }",
+				"Closing the case at the advertiser's request",
+			],
+		},
+		IN_NOT_READY: {
+			subStatus: "IN - Not Ready",
+			subStatusReason: "Advertiser is not ready for the implementation",
+			comments: [
+				"Advertiser is not ready to implement { task } yet: { no website / no GTM access / waiting for developer }",
+				"Advised the advertiser to book a new appointment when ready",
+			],
+		},
+		IN_INFEASIBLE: {
+			subStatus: "IN - Infeasible",
+			subStatusReason: "Implementation is not feasible",
+			comments: [
+				"Implementing { task } is not feasible: { platform limitation / no website access / unsupported setup }",
+				"Explained the limitation and possible alternatives to the advertiser",
+			],
+		},
+		IN_OUT_OF_SCOPE: {
+			subStatus: "IN - Out of Scope",
+			subStatusReason: "Request is out of scope for Technical Solutions",
+			comments: [
+				"Advertiser's request { describe request } is out of scope for Technical Solutions",
+				"Referred the advertiser to { Google Ads Support / relevant team }",
 			],
 		},
 	};
@@ -1295,7 +1356,8 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 		await clickWait($(SEL.FOLLOW_UP), 150);
 		if (daysOffset > 0) {
 			const start = new Date();
-			const diff = dayDiff(start, addBusinessDays(start, daysOffset));
+			// 7 = one calendar week (same weekday next week), not 7 business days
+			const diff = daysOffset === 7 ? 7 : dayDiff(start, addBusinessDays(start, daysOffset));
 			let dayEl = await waitFor(SEL.TODAY);
 			for (let i = 0; i < diff && dayEl; i++)
 				dayEl = dayEl.nextElementSibling;

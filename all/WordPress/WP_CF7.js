@@ -28,7 +28,7 @@ document.addEventListener("wpcf7mailsent", function (e) {
 // -----------------------------------------------------------------------------
 document.addEventListener("wpcf7mailsent", function (e) {
     var b = e.detail.inputs.find(function (n) {
-        return n.name.includes("so-dien-thoai");
+        return n.name.includes("tel");
     });
     b.value &&
         dataLayer.push({
