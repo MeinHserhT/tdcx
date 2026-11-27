@@ -186,7 +186,7 @@
 		TASK_PICK: ".qm-task-pick, [data-task-pick]",
 		SUBMIT: '[debug-id="submit-button"]',
 		IS_NEW: ".isnew", // un-crawled case: clicking it crawls data and renders the info fields
-		REFRESH_SNIPS: "#btn-refresh-snips",
+		REFRESH_SNIPS: '[data-tab-id="case-snipit"]',
 		SHOT_CARD: ".cs-img-card[data-id]",
 	};
 
