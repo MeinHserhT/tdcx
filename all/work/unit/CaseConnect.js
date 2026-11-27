@@ -1102,8 +1102,13 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 				const card = el("div", {
 					parent: grid,
 					title: s.title,
-					style: "border:2px solid #E9ECEF;border-radius:10px;padding:8px;cursor:pointer;user-select:none;",
+					style: "position:relative;border:2px solid #E9ECEF;border-radius:10px;padding:8px;cursor:pointer;user-select:none;",
 					onClick: () => setPicked(!picked.has(s)), // setPicked is defined below; it only runs on click
+				});
+				const tick = el("div", {
+					text: "✓",
+					parent: card,
+					style: "display:none;position:absolute;top:14px;right:14px;z-index:1;width:28px;height:28px;border-radius:50%;background:#1971C2;color:#FFF;font-size:18px;font-weight:700;line-height:28px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.25);pointer-events:none;",
 				});
 				el("img", {
 					src: s.thumb,
@@ -1134,6 +1139,7 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 					on ? picked.add(s) : picked.delete(s);
 					card.style.borderColor = on ? "#1971C2" : "#E9ECEF";
 					card.style.background = on ? "#E7F5FF" : "";
+					tick.style.display = on ? "block" : "none";
 					addBtn.textContent = `Add ${picked.size} to note`;
 					if (on && document.activeElement !== titleIn) titleIn.focus();
 				};
