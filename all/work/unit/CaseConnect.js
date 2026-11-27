@@ -358,7 +358,7 @@
 			subStatus: "AS - Reschedule 1",
 			subStatusReason: "Advertiser requested to reschedule the appointment",
 			comments: [
-				"Advertiser requested to reschedule the appointment to { YYYY-MM-DD HH:mm }",
+				"Advertiser requested to reschedule the appointment",
 				"Updated the appointment time in the case",
 			],
 		},
@@ -366,7 +366,7 @@
 			subStatus: "IN - Instruction Share",
 			subStatusReason: "Shared implementation instructions with the advertiser",
 			comments: [
-				"Shared step-by-step instructions for { task } with the advertiser via { email / GVC chat }",
+				"Shared step-by-step instructions with the advertiser",
 				"Advertiser will implement it on their own",
 			],
 		},
@@ -374,7 +374,7 @@
 			subStatus: "IN - Not Reachable",
 			subStatusReason: "Advertiser not reachable after multiple contact attempts",
 			comments: [
-				"Attempted to contact the advertiser { 3 } times, calls were not answered",
+				"Attempted to contact the advertiser { 2 } times, calls were not answered",
 				"Sent a follow-up email, no response received",
 				"Closing the case as the advertiser is not reachable",
 			],
@@ -391,7 +391,7 @@
 			subStatus: "IN - Not Ready",
 			subStatusReason: "Advertiser is not ready for the implementation",
 			comments: [
-				"Advertiser is not ready to implement { task } yet: { no website / no GTM access / waiting for developer }",
+				"Advertiser is not ready to implement",
 				"Advised the advertiser to book a new appointment when ready",
 			],
 		},
@@ -399,7 +399,7 @@
 			subStatus: "IN - Infeasible",
 			subStatusReason: "Implementation is not feasible",
 			comments: [
-				"Implementing { task } is not feasible: { platform limitation / no website access / unsupported setup }",
+				"Implementing is not feasible",
 				"Explained the limitation and possible alternatives to the advertiser",
 			],
 		},
@@ -407,8 +407,8 @@
 			subStatus: "IN - Out of Scope",
 			subStatusReason: "Request is out of scope for Technical Solutions",
 			comments: [
-				"Advertiser's request { describe request } is out of scope for Technical Solutions",
-				"Referred the advertiser to { Google Ads Support / relevant team }",
+				"Advertiser's request is out of scope for Technical Solutions",
+				"Referred the advertiser to relevant team",
 			],
 		},
 	};
