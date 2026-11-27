@@ -82,12 +82,6 @@
 			.toLowerCase()
 			.replace(/[^a-z0-9]+/g, " ")
 			.trim();
-	const titleCase = (s) =>
-		String(s ?? "")
-			.trim()
-			.replace(/_+/g, " ")
-			.replace(/\s+/g, " ")
-			.replace(/\b[a-z]/g, (c) => c.toUpperCase());
 
 	const isoDate = (d = new Date()) =>
 		`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -155,12 +149,6 @@
 	const clickWait = async (node, ms) => {
 		node?.click();
 		await sleep(ms);
-	};
-	const setBusy = (btn, busy) => {
-		if (busy) btn.dataset.busy = "1";
-		else delete btn.dataset.busy;
-		btn.style.opacity = busy ? "0.6" : "1";
-		btn.style.pointerEvents = busy ? "none" : "auto";
 	};
 
 	// === 3. Config ===
@@ -463,8 +451,8 @@
 #qm-panel { position: fixed; bottom: 20px; left: 20px; display: flex; gap: 8px; align-items: center; z-index: 99999; font-size: 14px; }
 .qm-btn { z-index: 10; color: #1D1D1F; padding: 10px 16px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); backdrop-filter: blur(6px); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.6); user-select: none; }
 .qm-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); filter: brightness(0.97); }
-.qm-btn:active { transform: scale(0.96); }
-#qm-flup-in { position: absolute; top: 50%; transform: translateY(-50%); right: 6px; width: 28px; height: 24px; padding: 0; border: none; border-radius: 6px; background: rgba(255, 255, 255, 0.95); color: #1D1D1F; font-weight: 700; font-size: 14px; text-align: center; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06); transition: all 0.2s ease; -moz-appearance: textfield; z-index: 20; cursor: text; user-select: text; }
+.qm-btn:active { transform: scale(0.96); }\n.qm-btn[data-busy] { opacity: 0.6; pointer-events: none; }
+#qm-flup-in { position: absolute; top: 50%; transform: translateY(-50%); right: 6px; width: 28px; height: 24px; padding: 0; border: none; border-radius: 6px; background: rgba(255, 255, 255, 0.95); color: #1D1D1F; font-weight: 700; font-size: 14px; text-align: center; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06); transition: all 0.2s ease; z-index: 20; cursor: text; user-select: text; }
 #qm-flup-in:focus { outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06), 0 0 0 2px #74B9FF; }
 .qm-badge { display: none; position: absolute; top: -4px; right: -4px; background: #FF8787; border-radius: 9999px; padding: 2px 6px; font-size: 10px; font-weight: 700; line-height: 1; border: 1.5px solid #FFFFFF; color: #FFFFFF; }
 .qm-sig { margin: 12px 0; }
@@ -491,12 +479,9 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			const nt = norm(t.replace(/\(.*?\)/g, ""));
 			return norm(t) === r || nt.includes(r) || r.includes(nt);
 		});
-		return known || titleCase(raw);
+		return known || String(raw).trim().replace(/[_\s]+/g, " ").replace(/\b[a-z]/g, (c) => c.toUpperCase());
 	};
-	const isEcTask = (s) =>
-		Boolean(
-			s && s !== "NA" && /enhanced conversion|\becw\b|\becl\b/i.test(s),
-		);
+	const isEcTask = (s) => /enhanced conversion|\becw\b|\becl\b/i.test(s || "");
 
 	const getVisibleCaseNote = () => {
 		const visible = $$(SEL.CASE_NOTE).filter(isVisible);
@@ -606,13 +591,6 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			}),
 		).join(", ");
 
-	// Click refresh, then wait until the old cards are replaced so we never read a stale list.
-	const refreshScreenshots = async () => {
-		const btn = $(SEL.REFRESH_SNIPS);
-		if (!btn) return; // gallery not on this page: read whatever is there
-		btn.click();
-		await sleep(1000)
-	};
 
 	// One entry per unique .cs-img-card. Uses title attributes because the time's textContent also contains the "schedule" icon text.
 	const scrapeScreenshots = () =>
@@ -642,7 +620,7 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			`<span class="qm-hl" data-qm-hl="1" style="${HL_STYLE}padding:1px 4px;">$&</span>`,
 		);
 	const delBtnHTML = (title = "Delete row", sec = false) =>
-		`<span class="qm-del-row" data-del-row="1"${sec ? ' data-del-sec="1"' : ""} contenteditable="false" title="${title}" style="position:absolute;top:4px;right:4px;float:right;cursor:pointer;color:#000000;background:#FF6666;font-weight:700;font-size:10pt;line-height:1;padding:1px 5px;border-radius:4px;margin-left:4px;user-select:none;">✕</span>`;
+		`<span class="qm-del-row" data-del-row="1"${sec ? ' data-del-sec="1"' : ""} contenteditable="false" title="${title}" style="position:absolute;top:4px;right:4px;cursor:pointer;color:#000000;background:#FF6666;font-weight:700;font-size:10pt;line-height:1;padding:1px 5px;border-radius:4px;user-select:none;">✕</span>`;
 	const sectionHead = (title) =>
 		`<tr data-sec-head="1" style="height:21pt"><td colspan="2" style="${TD_STYLE}background:#fff2cc;text-align:center;">${delBtnHTML("Delete section", true)}<span style="${FONT_STYLE}font-weight:700;">${title}</span> <span style="${FONT_STYLE}font-style:italic;">(Mandatory)</span></td></tr>`;
 	const noteRow = (lbl, desc, val = "NA", bg = "", attr = "") => {
@@ -655,6 +633,7 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 	};
 	// Each entry: [label, description, value = "NA", background = ""]
 	const rowsHTML = (rows) => rows.map((r) => noteRow(...r)).join("");
+	const ulHTML = (items) => `<ul dir="auto" style="margin:0;padding-left:18px;">${items.map((i) => `<li>${i}</li>`).join("")}</ul>`;
 
 	const SCREENSHOT_ROWS = [
 		[
@@ -765,15 +744,11 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 				!/Attempted Contact|Not Reachable|Unreachable/i.test(cfg.subStatus)
 				? "No"
 				: "NA";
-		const commentsHTML = comments.length
-			? `<ul dir="auto" style="margin:0;padding-left:18px;">${comments.map((c) => `<li>${highlightPlaceholders(c)}</li>`).join("")}</ul>`
-			: "NA";
+		const commentsHTML = comments.length ? ulHTML(comments.map((c) => highlightPlaceholders(c))) : "NA";
 
 		// Picked screenshots replace "NA" in Screenshots → Additional Screenshots.
 		const shotsHTML = screenshots.length
-			? `<ul dir="auto" style="margin:0;padding-left:18px;">${screenshots
-				.map((s) => `<li>${s.note ? `${esc(s.note)}: ` : ""}<a href="${esc(s.url)}" target="_blank" style="color:#1155cc;">${esc(s.url)}</a></li>`)
-				.join("")}</ul>`
+			? ulHTML(screenshots.map((s) => `${s.note ? `${esc(s.note)}: ` : ""}<a href="${esc(s.url)}" target="_blank" style="color:#1155cc;">${esc(s.url)}</a>`))
 			: "";
 		const screenshotRows = SCREENSHOT_ROWS.map((r) => (shotsHTML && /^Additional Screenshots/.test(r[0]) ? [r[0], r[1], shotsHTML] : r));
 
@@ -1108,7 +1083,7 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			modalBtn(actions, "No, skip", NEUTRAL_BTN, () => close(false));
 		});
 
-	// Flow step 3. Resolves with the picked shots in gallery order ([] if skipped). The title typed on a card goes into s.note → "title: link" in the note.
+	// Flow step 7. Resolves with the picked shots in gallery order ([] if skipped). The title typed on a card goes into s.note → "title: link" in the note.
 	const pickScreenshots = (shots) =>
 		new Promise((resolve) => {
 			const { modal, close } = openModal((v) => resolve(v || []), "min(1600px, 96vw)");
@@ -1408,7 +1383,7 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 
 	const executeFollowUp = async (flupBtn) => {
 		if (flupBtn.dataset.busy) return;
-		setBusy(flupBtn, true);
+		flupBtn.dataset.busy = "1"; // PANEL_CSS dims it and blocks clicks
 		try {
 			// Un-crawled case: the date fields don't exist until .isnew is clicked and the crawl finishes.
 			if (!$(SEL.APPT)) {
@@ -1435,14 +1410,14 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			await setFollowUpDate(daysOffset);
 			await openFullCaseLog();
 
-			// Flow step 1: read Case log data before any popup
+			// Step 4: read Case log data (SE IDs, verified tags)
 			const seIds = scrapeSpeakeasyIds();
 			const verifiedTags = scrapeVerifiedTags();
-			// Flow steps 2–3
-			await refreshScreenshots();
+			// Steps 5–7: open snipit tab, read cards, pick
+			await clickWait($(SEL.REFRESH_SNIPS), 1000); // open the snipit tab so the gallery loads the latest cards
 			const shots = scrapeScreenshots();
 			const screenshots = (await askAddScreenshots(shots.length)) ? await pickScreenshots(shots) : [];
-			// Flow step 4
+			// Step 8: build and insert the note
 			const html = buildNoteTemplateHTML(templateKey, {
 				verifiedTags,
 				domTasks: overviewTasks || scrapeDomTasks(),
@@ -1453,7 +1428,7 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 		} catch (err) {
 			console.error("Follow up script failed", err);
 		} finally {
-			setBusy(flupBtn, false);
+			delete flupBtn.dataset.busy;
 		}
 	};
 
@@ -1493,8 +1468,7 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			className: "qm-btn",
 			style: "background-color:#99E9F2;color:#0C5460;padding-right:44px;user-select:none;cursor:pointer;",
 			parent: panel,
-			onClick: (e) =>
-				e.target.id !== "qm-flup-in" && executeFollowUp(flupBtn),
+			onClick: () => executeFollowUp(flupBtn), // the input stops its own clicks from bubbling
 		});
 		// Single-digit business-day offset; typing a digit replaces the value.
 		el("input", {
