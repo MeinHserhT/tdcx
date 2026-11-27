@@ -1212,7 +1212,7 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			text: "✕",
 			title: "Close",
 			parent: pop,
-			style: "position:absolute;top:8px;right:8px;width:24px;height:24px;border:none;border-radius:6px;background:#F1F3F5;color:#495057;font-size:12px;font-weight:700;line-height:1;cursor:pointer;",
+			style: "position:absolute;top:8px;right:8px;width:24px;height:24px;border:none;border-radius:6px;background:#F1F3F5;color:#ff424b;font-size:12px;font-weight:700;line-height:1;cursor:pointer;",
 			onClick: () => state.closeTaskPop?.(), // keeps ticks already applied; same as clicking outside
 		});
 		const list = el("div", {
@@ -1414,7 +1414,7 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			const seIds = scrapeSpeakeasyIds();
 			const verifiedTags = scrapeVerifiedTags();
 			// Steps 5–7: open snipit tab, read cards, pick
-			await clickWait($(SEL.REFRESH_SNIPS), 1000); // open the snipit tab so the gallery loads the latest cards
+			await clickWait($(SEL.REFRESH_SNIPS), 2000); // open the snipit tab so the gallery loads the latest cards
 			const shots = scrapeScreenshots();
 			const screenshots = (await askAddScreenshots(shots.length)) ? await pickScreenshots(shots) : [];
 			// Step 8: build and insert the note
