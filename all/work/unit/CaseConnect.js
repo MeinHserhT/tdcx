@@ -610,11 +610,8 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 	const refreshScreenshots = async () => {
 		const btn = $(SEL.REFRESH_SNIPS);
 		if (!btn) return; // gallery not on this page: read whatever is there
-		const before = $(SEL.SHOT_CARD);
 		btn.click();
-		// shortcut: assumes refresh re-renders the cards; if it updates them in place, this just waits the full 3s
-		await waitFor(() => (before ? !before.isConnected : $(SEL.SHOT_CARD)), 3000).catch(() => { });
-		await sleep(300); // let the new cards finish rendering
+		await sleep(1000)
 	};
 
 	// One entry per unique .cs-img-card. Uses title attributes because the time's textContent also contains the "schedule" icon text.
@@ -1047,11 +1044,11 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 		const overlay = el("div", {
 			id: "qm-modal-overlay",
 			parent: document.body,
-			style: "position:fixed;inset:0;background:rgba(0,0,0,0.15);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:2147483647;",
+			style: "position:fixed;inset:0;background:rgba(0,0,0,0.15);backdrop-filter:blur(1px);pointer-events:none;display:flex;align-items:center;justify-content:center;z-index:2147483647;",
 		});
 		const box = el("div", {
 			parent: overlay,
-			style: `position:relative;display:flex;flex-direction:column;background:#FFF;border-radius:16px;padding:22px;width:${width};max-height:85vh;box-shadow:0 16px 36px rgba(0,0,0,0.12);text-align:center;border:1px solid rgba(0,0,0,0.05);box-sizing:border-box;`,
+			style: `position:relative;display:flex;flex-direction:column;background:#FFF;border-radius:16px;padding:22px;width:${width};max-height:92vh;pointer-events:auto;box-shadow:0 16px 36px rgba(0,0,0,0.12);text-align:center;border:1px solid rgba(0,0,0,0.05);box-sizing:border-box;`,
 		});
 		const close = (val) => {
 			overlay.remove();
@@ -1065,7 +1062,7 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			onClick: () => close(null),
 		});
 		// The body scrolls; the box (and the ✕) stays put.
-		const body = el("div", { parent: box, style: "flex:1 1 auto;min-height:0;overflow-y:auto;" });
+		const body = el("div", { parent: box, style: "flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;" });
 		cleanups.push(() => close(null));
 		return { modal: body, close };
 	};
@@ -1111,16 +1108,16 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 			modalBtn(actions, "No, skip", NEUTRAL_BTN, () => close(false));
 		});
 
-	// Flow step 3. Resolves with the picked shots in gallery order ([] if skipped).
+	// Flow step 3. Resolves with the picked shots in gallery order ([] if skipped). The title typed on a card goes into s.note → "title: link" in the note.
 	const pickScreenshots = (shots) =>
 		new Promise((resolve) => {
-			const { modal, close } = openModal((v) => resolve(v || []), "min(1280px, 96vw)");
+			const { modal, close } = openModal((v) => resolve(v || []), "min(1600px, 96vw)");
 			const picked = new Set();
 			el("div", { text: "Choose screenshots for the case note", parent: modal, style: MODAL_TITLE });
-			el("div", { text: "Click a card to select or unselect it", parent: modal, style: MODAL_SUB });
+			el("div", { text: "Click a card to select it, then type a title for the note", parent: modal, style: MODAL_SUB });
 			const grid = el("div", {
 				parent: modal,
-				style: "display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px;text-align:left;",
+				style: "display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:14px;text-align:left;",
 			});
 			const actions = modalActions(modal, "flex-direction:row;justify-content:center;position:sticky;bottom:0;background:#FFF;padding:8px 0;");
 			const addBtn = modalBtn(actions, "Add 0 to note", PALETTE[0], () => close(shots.filter((s) => picked.has(s))));
@@ -1130,24 +1127,41 @@ ${SEL.CASE_NOTE}, ${SEL.CASE_NOTE} *:not(.qm-del-row) { font-family: ${NOTE_FONT
 				const card = el("div", {
 					parent: grid,
 					title: s.title,
-					style: "border:2px solid #E9ECEF;border-radius:10px;padding:6px;cursor:pointer;user-select:none;",
-					onClick: () => {
-						picked.has(s) ? picked.delete(s) : picked.add(s);
-						const on = picked.has(s);
-						card.style.borderColor = on ? "#1971C2" : "#E9ECEF";
-						card.style.background = on ? "#E7F5FF" : "";
-						addBtn.textContent = `Add ${picked.size} to note`;
-					},
+					style: "border:2px solid #E9ECEF;border-radius:10px;padding:8px;cursor:pointer;user-select:none;",
+					onClick: () => setPicked(!picked.has(s)), // setPicked is defined below; it only runs on click
 				});
 				el("img", {
 					src: s.thumb,
 					loading: "lazy",
 					parent: card,
-					style: "width:100%;height:170px;object-fit:cover;border-radius:6px;display:block;background:#F1F3F5;",
+					style: "width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:6px;display:block;background:#F1F3F5;",
 					onerror: (e) => s.fallback && e.target.src !== s.fallback && (e.target.src = s.fallback),
 				});
-				el("div", { text: s.note || s.title || s.id, parent: card, style: "font-size:12px;font-weight:600;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" });
+				const titleIn = el("input", {
+					type: "text",
+					value: s.note,
+					placeholder: "Type a title for the note",
+					parent: card,
+					style: "width:100%;box-sizing:border-box;margin-top:6px;padding:6px 8px;border:1px solid #CED4DA;border-radius:6px;font-size:13px;cursor:text;user-select:text;outline:none;",
+					onClick: (e) => {
+						e.stopPropagation(); // clicking the box must not unselect the card
+						if (!picked.has(s)) setPicked(true);
+					},
+					onkeydown: (e) => e.stopPropagation(), // keep page keyboard shortcuts from firing while typing
+					oninput: () => {
+						s.note = titleIn.value.trim();
+						if (!picked.has(s)) setPicked(true);
+					},
+				});
+				el("div", { text: s.title || s.id, parent: card, style: "font-size:11px;color:#495057;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" });
 				el("div", { text: s.time, parent: card, style: "font-size:11px;color:#868E96;" });
+				const setPicked = (on) => {
+					on ? picked.add(s) : picked.delete(s);
+					card.style.borderColor = on ? "#1971C2" : "#E9ECEF";
+					card.style.background = on ? "#E7F5FF" : "";
+					addBtn.textContent = `Add ${picked.size} to note`;
+					if (on && document.activeElement !== titleIn) titleIn.focus();
+				};
 			}
 		});
 
